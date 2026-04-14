@@ -38,7 +38,3 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // YOGMA HADIR
-// Iki Mengetik
-// Tidak Konflik (yosa) 1
-// Tidak Konflik (yosa) // Tidak Konflik (Iki)
-// Command Baru
