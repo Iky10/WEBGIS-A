@@ -39,4 +39,4 @@ Route::middleware(['auth'])->group(function () {
 
 // YOGMA HADIR
 // Iki Mengetik
-// Tidak Konflik (yosa)
+// Tidak Konflik (yosa) 1
