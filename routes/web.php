@@ -36,3 +36,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/webgis', [App\Http\Controllers\WebGisController::class, 'index'])->name('webgis.index');
 
 });
+
+// YOGMA HADIR
