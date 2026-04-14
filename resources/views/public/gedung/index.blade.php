@@ -1,0 +1,154 @@
+@extends('layouts.public')
+
+@section('title', 'Daftar Gedung')
+
+@push('styles')
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #1a3c5e, #2d6a9f);
+        color: #fff;
+        padding: 40px 0 30px;
+        margin-bottom: 30px;
+    }
+    .gedung-card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+    .gedung-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .gedung-card img {
+        height: 180px;
+        object-fit: cover;
+        width: 100%;
+    }
+    .gedung-card .no-foto {
+        height: 180px;
+        background: linear-gradient(135deg, #e8f0fe, #c5d8f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #90a4ae;
+        font-size: 2.5rem;
+    }
+    .filter-bar {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        margin-bottom: 24px;
+    }
+</style>
+@endpush
+
+@section('content')
+
+<div class="page-header">
+    <div class="container">
+        <h2 class="mb-1"><i class="fas fa-building mr-2"></i>Daftar Gedung</h2>
+        <p class="mb-0 opacity-75">Total {{ $gedungs->total() }} gedung ditemukan</p>
+    </div>
+</div>
+
+<div class="container">
+
+    {{-- Filter --}}
+    <div class="filter-bar">
+        <form method="GET" action="{{ route('publik.gedung') }}">
+            <div class="row align-items-end">
+                <div class="col-md-4 mb-2 mb-md-0">
+                    <label class="small text-muted mb-1">Cari Gedung</label>
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Nama gedung atau alamat..."
+                           value="{{ request('search') }}">
+                </div>
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <label class="small text-muted mb-1">Fungsi</label>
+                    <select name="fungsi" class="form-control">
+                        <option value="">-- Semua Fungsi --</option>
+                        @foreach(['Perkantoran','Pendidikan','Kesehatan','Komersial','Publik','Lainnya'] as $f)
+                            <option value="{{ $f }}" {{ request('fungsi') == $f ? 'selected' : '' }}>{{ $f }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <label class="small text-muted mb-1">Kondisi</label>
+                    <select name="kondisi" class="form-control">
+                        <option value="">-- Semua Kondisi --</option>
+                        @foreach(['Baik','Sedang','Rusak'] as $k)
+                            <option value="{{ $k }}" {{ request('kondisi') == $k ? 'selected' : '' }}>{{ $k }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-search mr-1"></i> Cari
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {{-- Grid Gedung --}}
+    <div class="row">
+        @forelse($gedungs as $gedung)
+        <div class="col-md-4 col-sm-6 mb-4">
+            <div class="gedung-card card">
+                @if($gedung->foto_utama)
+                    <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+                         alt="{{ $gedung->nama_gedung }}">
+                @else
+                    <div class="no-foto"><i class="fas fa-building"></i></div>
+                @endif
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <h6 class="card-title mb-0 font-weight-bold">{{ $gedung->nama_gedung }}</h6>
+                        @if($gedung->kondisi == 'Baik')
+                            <span class="badge badge-success ml-1">Baik</span>
+                        @elseif($gedung->kondisi == 'Sedang')
+                            <span class="badge badge-warning ml-1">Sedang</span>
+                        @elseif($gedung->kondisi == 'Rusak')
+                            <span class="badge badge-danger ml-1">Rusak</span>
+                        @endif
+                    </div>
+                    @if($gedung->fungsi)
+                        <span class="badge badge-info mb-2">{{ $gedung->fungsi }}</span>
+                    @endif
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-map-marker-alt mr-1"></i>
+                        {{ Str::limit($gedung->alamat, 55) }}
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('publik.gedung.detail', $gedung->id) }}"
+                           class="btn btn-outline-primary btn-sm flex-grow-1">
+                            <i class="fas fa-info-circle mr-1"></i> Detail
+                        </a>
+                        <a href="{{ route('publik.peta') }}?id={{ $gedung->id }}"
+                           class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @empty
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <p>Tidak ada gedung yang sesuai filter.</p>
+            <a href="{{ route('publik.gedung') }}" class="btn btn-outline-primary">Reset Filter</a>
+        </div>
+        @endforelse
+    </div>
+
+    {{-- Pagination --}}
+    <div class="d-flex justify-content-center mt-2 mb-4">
+        {{ $gedungs->withQueryString()->links() }}
+    </div>
+
+</div>
+@endsection
