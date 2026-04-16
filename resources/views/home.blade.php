@@ -151,7 +151,7 @@
                             <tr>
                                 <td class="pl-3">
                                     @if($gedung->foto_utama)
-                                        <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+                                        <img src="{{ asset($gedung->foto_utama) }}"
                                              class="img-circle mr-1"
                                              style="width:28px; height:28px; object-fit:cover;">
                                     @else
@@ -216,7 +216,7 @@
                 @endif
             </div>
 
-            {{-- Info Box Total Foto --}}
+            <!-- {{-- Info Box Total Foto --}}
             <div class="info-box bg-gradient-secondary">
                 <span class="info-box-icon">
                     <i class="fas fa-images"></i>
@@ -225,7 +225,7 @@
                     <span class="info-box-text">Total Foto Galeri Tersimpan</span>
                     <span class="info-box-number">{{ $totalFoto }} Foto</span>
                 </div>
-            </div>
+            </div> -->
 
         </div>
 
