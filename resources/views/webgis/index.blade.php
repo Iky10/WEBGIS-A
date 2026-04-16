@@ -367,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function () {
         renderMarkers(allData);
         fitAllMarkers();
     });
-    // ngoding woy
+
     // ── Fit All button ───────────────────────────────────────────
     document.getElementById('btn-fit-bounds').addEventListener('click', fitAllMarkers);
 
