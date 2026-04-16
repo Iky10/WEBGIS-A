@@ -237,25 +237,9 @@
 @push('page_scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
-    var ctx = document.getElementById('chartKondisi').getContext('2d');
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Baik', 'Sedang', 'Rusak'],
-            datasets: [{
-                data: [{{ $gedungBaik }}, {{ $gedungSedang }}, {{ $gedungRusak }}],
-                backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
-                borderWidth: 2,
-                borderColor: '#fff',
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' }
-            },
-            cutout: '65%',
-        }
-    });
+    window.CHART_DATA_BAIK = {{ $gedungBaik }};
+    window.CHART_DATA_SEDANG = {{ $gedungSedang }};
+    window.CHART_DATA_RUSAK = {{ $gedungRusak }};
 </script>
+<script src="{{ asset('js/admin-home.js') }}"></script>
 @endpush

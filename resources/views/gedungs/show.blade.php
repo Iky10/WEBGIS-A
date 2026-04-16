@@ -209,16 +209,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 @if($gedung->x && $gedung->y)
 <script>
-    var map = L.map('mini-map', { zoomControl: true, scrollWheelZoom: false })
-              .setView([{{ $gedung->x }}, {{ $gedung->y }}], 16);
-
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri'
-    }).addTo(map);
-
-    L.marker([{{ $gedung->x }}, {{ $gedung->y }}])
-     .addTo(map)
-     .bindPopup('<strong>{{ $gedung->nama_gedung }}</strong>').openPopup();
+    window.GEDUNG_X = {{ $gedung->x }};
+    window.GEDUNG_Y = {{ $gedung->y }};
+    window.GEDUNG_NAMA = "{{ $gedung->nama_gedung }}";
 </script>
+<script src="{{ asset('js/admin-gedung-show.js') }}"></script>
 @endif
 @endpush
