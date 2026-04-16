@@ -3,47 +3,7 @@
 @section('title', 'Daftar Gedung')
 
 @push('styles')
-<style>
-    .page-header {
-        background: linear-gradient(135deg, #1a3c5e, #2d6a9f);
-        color: #fff;
-        padding: 40px 0 30px;
-        margin-bottom: 30px;
-    }
-    .gedung-card {
-        border-radius: 12px;
-        overflow: hidden;
-        border: none;
-        box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-        transition: transform 0.2s, box-shadow 0.2s;
-        height: 100%;
-    }
-    .gedung-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    }
-    .gedung-card img {
-        height: 180px;
-        object-fit: cover;
-        width: 100%;
-    }
-    .gedung-card .no-foto {
-        height: 180px;
-        background: linear-gradient(135deg, #e8f0fe, #c5d8f5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #90a4ae;
-        font-size: 2.5rem;
-    }
-    .filter-bar {
-        background: #fff;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-        margin-bottom: 24px;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/public-gedung.css') }}">
 @endpush
 
 @section('content')

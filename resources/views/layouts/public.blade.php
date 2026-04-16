@@ -14,63 +14,7 @@
 
     @stack('styles')
 
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; }
-
-        /* Navbar */
-        .navbar-public {
-            background: linear-gradient(135deg, #1a3c5e 0%, #2d6a9f 100%);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            padding: 10px 0;
-        }
-        .navbar-public .navbar-brand {
-            color: #fff !important;
-            font-weight: 700;
-            font-size: 1.3rem;
-            letter-spacing: 0.5px;
-        }
-        .navbar-public .nav-link {
-            color: rgba(255,255,255,0.85) !important;
-            font-weight: 500;
-            transition: color 0.2s;
-            padding: 6px 14px !important;
-            border-radius: 6px;
-        }
-        .navbar-public .nav-link:hover,
-        .navbar-public .nav-link.active {
-            color: #fff !important;
-            background: rgba(255,255,255,0.15);
-        }
-        .navbar-public .btn-admin {
-            background: #fff;
-            color: #1a3c5e !important;
-            font-weight: 600;
-            border-radius: 20px;
-            padding: 5px 18px !important;
-            font-size: 0.85rem;
-        }
-        .navbar-public .btn-admin:hover {
-            background: #e8f0fe;
-        }
-        .navbar-toggler { border-color: rgba(255,255,255,0.5); }
-        .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.8)' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-        }
-
-        /* Footer */
-        .footer-public {
-            background: #1a3c5e;
-            color: rgba(255,255,255,0.7);
-            padding: 20px 0;
-            font-size: 0.85rem;
-            margin-top: 40px;
-        }
-        .footer-public a { color: rgba(255,255,255,0.7); }
-        .footer-public a:hover { color: #fff; text-decoration: none; }
-
-        /* Content */
-        .page-content { min-height: calc(100vh - 130px); padding-top: 20px; }
-    </style>
+<link rel="stylesheet" href="{{ asset('css/layout-public.css') }}">
 </head>
 <body>
 

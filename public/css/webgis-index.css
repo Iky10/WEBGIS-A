@@ -1,0 +1,86 @@
+    /* Popup custom */
+    .leaflet-popup-content {
+        min-width: 220px;
+        max-width: 280px;
+    }
+    .popup-foto {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-bottom: 8px;
+    }
+    .popup-no-foto {
+        width: 100%;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4f6f9;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        color: #aaa;
+        font-size: 13px;
+    }
+    .popup-title {
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 4px;
+        color: #333;
+    }
+    .popup-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+    .badge-baik    { background: #d4edda; color: #155724; }
+    .badge-sedang  { background: #fff3cd; color: #856404; }
+    .badge-rusak   { background: #f8d7da; color: #721c24; }
+    .badge-fungsi  { background: #cce5ff; color: #004085; }
+
+    .popup-info-row {
+        font-size: 12px;
+        color: #555;
+        margin-bottom: 2px;
+    }
+    .popup-info-row i {
+        width: 14px;
+        color: #888;
+    }
+    .popup-btn {
+        display: block;
+        margin-top: 8px;
+        text-align: center;
+        background: #007bff;
+        color: #fff !important;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        text-decoration: none !important;
+    }
+    .popup-btn:hover { background: #0056b3; }
+
+    /* List item gedung */
+    #list-gedung .list-group-item {
+        cursor: pointer;
+        padding: 8px 12px;
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+    }
+    #list-gedung .list-group-item:hover,
+    #list-gedung .list-group-item.active-item {
+        background: #e8f4ff;
+        border-left-color: #007bff;
+    }
+    #list-gedung .item-name {
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+    }
+    #list-gedung .item-sub {
+        font-size: 11px;
+        color: #888;
+    }

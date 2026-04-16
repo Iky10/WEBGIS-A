@@ -1,0 +1,150 @@
+    /* Hero */
+    .hero-section {
+        background: linear-gradient(135deg, #1a3c5e 0%, #2d6a9f 60%, #3d8bcd 100%);
+        color: #fff;
+        padding: 80px 0 60px;
+        position: relative;
+        overflow: hidden;
+    }
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 600px;
+        height: 600px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+    }
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+    .hero-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.85;
+        margin: 16px 0 30px;
+    }
+    .btn-hero-primary {
+        background: #fff;
+        color: #1a3c5e;
+        font-weight: 700;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-size: 1rem;
+        border: none;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-hero-primary:hover {
+        background: #e8f0fe;
+        color: #1a3c5e;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .btn-hero-outline {
+        border: 2px solid rgba(255,255,255,0.7);
+        color: #fff;
+        font-weight: 600;
+        padding: 11px 28px;
+        border-radius: 25px;
+        font-size: 1rem;
+        background: transparent;
+        margin-left: 12px;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-hero-outline:hover {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        text-decoration: none;
+    }
+    .hero-stats {
+        margin-top: 50px;
+        display: flex;
+        gap: 40px;
+    }
+    .hero-stat-item h3 {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0;
+    }
+    .hero-stat-item p {
+        margin: 0;
+        opacity: 0.8;
+        font-size: 0.9rem;
+    }
+
+    /* Map Preview */
+    #hero-map {
+        height: 350px;
+        border-radius: 12px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        border: 3px solid rgba(255,255,255,0.2);
+    }
+
+    /* Stats Cards */
+    .stat-card {
+        border-radius: 12px;
+        padding: 30px 20px;
+        text-align: center;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-card .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        font-size: 1.5rem;
+    }
+    .stat-card h3 { font-size: 2.2rem; font-weight: 800; margin: 0; }
+    .stat-card p  { color: #888; margin: 0; font-size: 0.9rem; }
+
+    /* Gedung Cards */
+    .gedung-card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+    .gedung-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    .gedung-card img {
+        height: 180px;
+        object-fit: cover;
+        width: 100%;
+    }
+    .gedung-card .no-foto {
+        height: 180px;
+        background: linear-gradient(135deg, #e8f0fe, #c5d8f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #90a4ae;
+        font-size: 2.5rem;
+    }
+    .badge-kondisi-baik   { background: #d4edda; color: #155724; }
+    .badge-kondisi-sedang { background: #fff3cd; color: #856404; }
+    .badge-kondisi-rusak  { background: #f8d7da; color: #721c24; }
+
+    /* Section */
+    .section-title {
+        font-weight: 800;
+        font-size: 1.8rem;
+        color: #1a3c5e;
+    }
+    .section-subtitle { color: #888; margin-bottom: 30px; }
