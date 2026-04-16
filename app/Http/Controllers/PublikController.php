@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Gedung;
 use App\Models\GambarGedung;
+use App\Models\JadwalRuangan;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PublikController extends Controller
@@ -79,10 +81,47 @@ class PublikController extends Controller
             ];
         });
 
+        // Get fasilitas dengan status jadwal hari ini
+        $fasilitas = $gedung->fasilitas()->get()->map(function($f) {
+            // Ambil hari sekarang dalam bahasa Inggris (Sunday-Saturday)
+            $hariIni = strtoupper(Carbon::now()->format('l'));
+            
+            // Mapping hari ke bahasa Indonesia
+            $hariMapping = [
+                'SUNDAY' => 'Minggu',
+                'MONDAY' => 'Senin',
+                'TUESDAY' => 'Selasa',
+                'WEDNESDAY' => 'Rabu',
+                'THURSDAY' => 'Kamis',
+                'FRIDAY' => 'Jumat',
+                'SATURDAY' => 'Sabtu'
+            ];
+            
+            $hariIndonesia = $hariMapping[$hariIni] ?? $hariIni;
+            
+            // Cek jadwal hari ini untuk fasilitas ini
+            $jamSekarang = Carbon::now()->format('H:i:s');
+            
+            $jadwalAktif = JadwalRuangan::where('gedung_fasilitas_id', $f->id)
+                ->where('hari', $hariIndonesia)
+                ->where('jam_mulai', '<=', $jamSekarang)
+                ->where('jam_selesai', '>=', $jamSekarang)
+                ->exists();
+            
+            return [
+                'id' => $f->id,
+                'nama_fasilitas' => $f->nama_fasilitas,
+                'kategori' => $f->kategori,
+                'keterangan' => $f->keterangan,
+                'is_aktif' => $jadwalAktif // true = sedang dipakai, false = kosong
+            ];
+        });
+
         return response()->json([
             'gedung' => $gedung,
             'foto_utama' => $gedung->foto_utama ? asset('storage/' . $gedung->foto_utama) : null,
-            'fotos' => $fotosArray
+            'fotos' => $fotosArray,
+            'fasilitas' => $fasilitas
         ]);
     }
 }
