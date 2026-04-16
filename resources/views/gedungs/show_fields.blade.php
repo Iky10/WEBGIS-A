@@ -66,7 +66,7 @@
     {!! Form::label('foto_utama', 'Foto Utama:') !!}
     @if($gedung->foto_utama)
         <div>
-            <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+            <img src="{{ asset($gedung->foto_utama) }}"
                  alt="Foto Utama"
                  class="img-thumbnail"
                  style="max-height: 200px;">
@@ -84,7 +84,7 @@
             @foreach($fotos as $foto)
                 <div class="col-sm-3 mb-3">
                     <div class="card">
-                        <img src="{{ asset('storage/' . $foto->path_foto) }}"
+                        <img src="{{ asset($foto->path_foto) }}"
                              class="card-img-top"
                              alt="{{ $foto->nama_file }}"
                              style="height: 150px; object-fit: cover;">

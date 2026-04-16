@@ -40,7 +40,7 @@ class WebGisController extends Controller
                     'tahun_berdiri'=> $gedung->tahun_berdiri ?? '-',
                     'kondisi'      => $gedung->kondisi ?? '-',
                     'foto_utama'   => $gedung->foto_utama
-                                        ? asset('storage/' . $gedung->foto_utama)
+                                        ? asset($gedung->foto_utama)
                                         : null,
                     'detail_url'   => route('gedungs.show', $gedung->id),
                 ],

@@ -77,7 +77,7 @@ class PublikController extends Controller
         $fotosArray = $fotos->map(function($f) {
             return [
                 'id' => $f->id,
-                'path' => asset('storage/' . $f->path_foto)
+                'path' => asset($f->path_foto)
             ];
         });
 
@@ -119,7 +119,7 @@ class PublikController extends Controller
 
         return response()->json([
             'gedung' => $gedung,
-            'foto_utama' => $gedung->foto_utama ? asset('storage/' . $gedung->foto_utama) : null,
+            'foto_utama' => $gedung->foto_utama ? asset($gedung->foto_utama) : null,
             'fotos' => $fotosArray,
             'fasilitas' => $fasilitas
         ]);

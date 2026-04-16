@@ -60,7 +60,7 @@
         <div class="col-md-4 col-sm-6 mb-4">
             <div class="gedung-card card">
                 @if($gedung->foto_utama)
-                    <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+                    <img src="{{ asset($gedung->foto_utama) }}"
                          alt="{{ $gedung->nama_gedung }}">
                 @else
                     <div class="no-foto"><i class="fas fa-building"></i></div>

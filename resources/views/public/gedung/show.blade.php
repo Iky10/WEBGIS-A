@@ -28,7 +28,7 @@
             {{-- Foto Utama --}}
             <div class="card border-0 shadow-sm mb-3">
                 @if($gedung->foto_utama)
-                    <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+                    <img src="{{ asset($gedung->foto_utama) }}"
                          class="card-img-top"
                          style="max-height:300px; object-fit:cover; border-radius:8px;"
                          alt="{{ $gedung->nama_gedung }}">
@@ -120,8 +120,8 @@
                         <div class="row">
                             @foreach($fotos as $foto)
                             <div class="col-4 mb-2">
-                                <a href="{{ asset('storage/' . $foto->path_foto) }}" target="_blank">
-                                    <img src="{{ asset('storage/' . $foto->path_foto) }}"
+                                <a href="{{ asset($foto->path_foto) }}" target="_blank">
+                                    <img src="{{ asset($foto->path_foto) }}"
                                          class="img-fluid rounded"
                                          style="height: 100px; width: 100%; object-fit: cover;"
                                          alt="{{ $foto->nama_file }}">

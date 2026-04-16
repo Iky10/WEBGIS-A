@@ -47,7 +47,7 @@
                     @foreach($fotos as $foto)
                         <div class="col-sm-2 mb-2">
                             <div class="card">
-                                <img src="{{ asset('storage/' . $foto->path_foto) }}"
+                                <img src="{{ asset($foto->path_foto) }}"
                                      class="card-img-top"
                                      style="height: 100px; object-fit: cover;"
                                      alt="{{ $foto->nama_file }}">

@@ -84,7 +84,7 @@
     @if(isset($gedung) && $gedung->foto_utama)
         <div class="mt-2">
             <p class="mb-1"><strong>Foto saat ini:</strong></p>
-            <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+            <img src="{{ asset($gedung->foto_utama) }}"
                  alt="Foto Utama"
                  class="img-thumbnail"
                  style="max-height: 150px;">
