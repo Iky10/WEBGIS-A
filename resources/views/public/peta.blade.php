@@ -42,10 +42,10 @@
     </div>
 
     <div class="t-btns">
-        <button class="t-btn" id="btnFilter">
+        {{-- <button class="t-btn" id="btnFilter">
             <i class="fas fa-sliders-h"></i>
             <span class="t-btn-tip">Filter</span>
-        </button>
+        </button> --}}
         <a class="t-btn" href="{{ route('publik.gedung') }}">
             <i class="fas fa-list"></i>
             <span class="t-btn-tip">Daftar Gedung</span>
@@ -65,7 +65,7 @@
     <i class="fas fa-satellite"></i>
 </div>
 
-<div id="filterPanel" class="hide">
+{{-- <div id="filterPanel" class="hide">
     <div class="fp-head">
         <div class="fp-head-icon"><i class="fas fa-layer-group"></i></div>
         <div class="fp-head-title">Filter Peta</div>
@@ -96,6 +96,96 @@
                 <div class="fp-count-lbl">gedung terlihat</div>
             </div>
             <button class="fp-reset" id="fpReset">
+                <i class="fas fa-undo"></i> Reset
+            </button>
+        </div>
+
+    </div>
+</div> --}}
+
+<!-- PANEL KANAN  -->
+<div id="rightPanel">
+    <div class="rp-head">
+        <div class="rp-head-icon"><i class="fas fa-layer-group"></i></div>
+        <div class="rp-head-title">Sistem Informasi Geografis</div>
+        <button id="rpToggle" class="rp-toggle" title="Sembunyikan panel">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+
+    <div id="rpBody" class="rp-body">
+
+        {{-- KONDISI --}}
+        <div class="rp-section">
+            <div class="rp-sec-header" data-target="secKondisi">
+                <span class="rp-sec-title">Kondisi Gedung</span>
+                <i class="fas fa-chevron-up rp-chevron"></i>
+            </div>
+            <div class="rp-sec-body" id="secKondisi">
+                <label class="rp-item" data-kondisi="">
+                    <input type="checkbox" checked> 
+                    <span class="rp-dot" style="background:#94a3b8;"></span>
+                    <span class="rp-label-text">Semua Kondisi</span>
+                    <span class="rp-count" id="cntKondisiAll">—</span>
+                </label>
+                <label class="rp-item" data-kondisi="Baik">
+                    <input type="checkbox" checked>
+                    <span class="rp-dot" style="background:#22c55e; box-shadow:0 0 5px #22c55e;"></span>
+                    <span class="rp-label-text">Baik</span>
+                    <span class="rp-count" id="cntBaik">0</span>
+                </label>
+                <label class="rp-item" data-kondisi="Sedang">
+                    <input type="checkbox" checked>
+                    <span class="rp-dot" style="background:#f59e0b; box-shadow:0 0 5px #f59e0b;"></span>
+                    <span class="rp-label-text">Sedang</span>
+                    <span class="rp-count" id="cntSedang">0</span>
+                </label>
+                <label class="rp-item" data-kondisi="Rusak">
+                    <input type="checkbox" checked>
+                    <span class="rp-dot" style="background:#ef4444; box-shadow:0 0 5px #ef4444;"></span>
+                    <span class="rp-label-text">Rusak</span>
+                    <span class="rp-count" id="cntRusak">0</span>
+                </label>
+                <label class="rp-item" data-kondisi="__unknown__">
+                    <input type="checkbox" checked>
+                    <span class="rp-dot" style="background:#475569;"></span>
+                    <span class="rp-label-text">Tidak diketahui</span>
+                    <span class="rp-count" id="cntUnknown">0</span>
+                </label>
+            </div>
+        </div>
+
+        {{-- FUNGSI --}}
+        <div class="rp-section">
+            <div class="rp-sec-header" data-target="secFungsi">
+                <span class="rp-sec-title">Fungsi Gedung</span>
+                <i class="fas fa-chevron-up rp-chevron"></i>
+            </div>
+            <div class="rp-sec-body" id="secFungsi">
+                <label class="rp-item" data-fungsi="">
+                    <input type="checkbox" checked>
+                    <span class="rp-dot" style="background:#3b82f6;"></span>
+                    <span class="rp-label-text">Semua Fungsi</span>
+                    <span class="rp-count" id="cntFungsiAll">—</span>
+                </label>
+                @foreach(['Perkantoran','Pendidikan','Kesehatan','Komersial','Publik','Lainnya'] as $f)
+                <label class="rp-item" data-fungsi="{{ $f }}">
+                    <input type="checkbox" checked>
+                    <span class="rp-dot" style="background:#3b82f6; opacity:0.7;"></span>
+                    <span class="rp-label-text">{{ $f }}</span>
+                    <span class="rp-count" id="cntFungsi{{ $f }}">0</span>
+                </label>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- FOOTER --}}
+        <div class="rp-footer">
+            <div>
+                <div class="rp-total-num" id="rpTotal">—</div>
+                <div class="rp-total-lbl">gedung terlihat</div>
+            </div>
+            <button id="rpReset" class="rp-reset-btn">
                 <i class="fas fa-undo"></i> Reset
             </button>
         </div>
