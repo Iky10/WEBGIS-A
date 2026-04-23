@@ -52,8 +52,8 @@ class Gedung extends Model
         'nama_gedung' => 'string',
         'alamat' => 'string',
         'deskripsi' => 'string',
-        'x' => 'decimal:2',
-        'y' => 'decimal:2'
+        'x' => 'decimal:8',
+        'y' => 'decimal:8'
     ];
 
     /**
