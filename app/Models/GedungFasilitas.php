@@ -16,13 +16,18 @@ class GedungFasilitas extends Model
         'gedung_id',
         'nama_fasilitas',
         'kategori',
-        'keterangan'
+        'keterangan',
+        'latitude',
+        'longitude',
+        'foto_ruangan'
     ];
 
     protected $casts = [
         'nama_fasilitas' => 'string',
         'kategori' => 'string',
-        'keterangan' => 'string'
+        'keterangan' => 'string',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8'
     ];
 
     public function gedung()
