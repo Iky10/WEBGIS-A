@@ -188,13 +188,11 @@
                     <button id="sbBtnPhotos" class="sb-cta-btn"><i class="fas fa-images"></i> Lihat Foto</button>
                 </div>
 
-                @auth
                 <div style="margin-bottom:16px;">
                     <a id="sbBtnPengajuan" href="#" class="sb-cta-btn" style="display:flex; justify-content:center; align-items:center; gap:6px; background:var(--accent); box-shadow:0 6px 20px rgba(99,102,241,.35); text-decoration:none; color:#fff; padding:10px; border-radius:8px; font-weight:700; font-size:0.82rem;">
                         <i class="fas fa-file-alt"></i> Ajukan Penggunaan Gedung
                     </a>
                 </div>
-                @endauth
 
                 <div id="sbGallery" class="sb-gallery" style="display:none;">
                     <div class="sb-sec-title">Galeri Foto</div>

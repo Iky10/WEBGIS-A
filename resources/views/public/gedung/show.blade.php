@@ -77,14 +77,12 @@
                 </div>
             </div>
             {{-- Tombol Pengajuan --}}
-            @auth
             <div class="mt-3">
                 <a href="{{ route('pengajuan_gedungs.create', ['gedung_id' => $gedung->id]) }}"
                    class="btn btn-primary btn-block">
                     <i class="fas fa-file-alt mr-1"></i> Ajukan Penggunaan Gedung
                 </a>
             </div>
-            @endauth
 
         </div>
 

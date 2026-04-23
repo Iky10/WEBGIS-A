@@ -13,6 +13,10 @@ Route::get('/gedung/{id}', [App\Http\Controllers\PublikController::class, 'detai
 Route::get('/webgis/geojson', [App\Http\Controllers\WebGisController::class, 'geojson'])->name('webgis.geojson');
 Route::get('/api/gedung/{id}', [App\Http\Controllers\PublikController::class, 'apiDetail'])->name('api.gedung.detail');
 
+// ── PENGAJUAN GEDUNG (publik, tanpa login) ───────────────────
+Route::get('pengajuan_gedungs/create', [App\Http\Controllers\PengajuanGedungController::class, 'create'])->name('pengajuan_gedungs.create');
+Route::post('pengajuan_gedungs', [App\Http\Controllers\PengajuanGedungController::class, 'store'])->name('pengajuan_gedungs.store');
+
 // ── AUTH ──────────────────────────────────────────────────────
 Auth::routes();
 
@@ -37,8 +41,12 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('jadwal_ruangans', App\Http\Controllers\JadwalRuanganController::class);
     Route::get('/webgis', [App\Http\Controllers\WebGisController::class, 'index'])->name('webgis.index');
 
-    // Pengajuan Penggunaan Gedung
-    Route::resource('pengajuan_gedungs', App\Http\Controllers\PengajuanGedungController::class);
+    // Pengajuan Gedung — Admin management (index, show, edit, update, delete, status)
+    Route::get('pengajuan_gedungs', [App\Http\Controllers\PengajuanGedungController::class, 'index'])->name('pengajuan_gedungs.index');
+    Route::get('pengajuan_gedungs/{id}', [App\Http\Controllers\PengajuanGedungController::class, 'show'])->name('pengajuan_gedungs.show');
+    Route::get('pengajuan_gedungs/{id}/edit', [App\Http\Controllers\PengajuanGedungController::class, 'edit'])->name('pengajuan_gedungs.edit');
+    Route::put('pengajuan_gedungs/{id}', [App\Http\Controllers\PengajuanGedungController::class, 'update'])->name('pengajuan_gedungs.update');
+    Route::delete('pengajuan_gedungs/{id}', [App\Http\Controllers\PengajuanGedungController::class, 'destroy'])->name('pengajuan_gedungs.destroy');
     Route::post('pengajuan_gedungs/{id}/status', [App\Http\Controllers\PengajuanGedungController::class, 'updateStatus'])->name('pengajuan_gedungs.status');
     Route::get('pengajuan_gedungs/{id}/ajukan-ulang', [App\Http\Controllers\PengajuanGedungController::class, 'ajukanUlang'])->name('pengajuan_gedungs.ajukan_ulang');
 

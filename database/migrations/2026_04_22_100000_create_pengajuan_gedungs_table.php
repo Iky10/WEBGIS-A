@@ -16,7 +16,7 @@ class CreatePengajuanGedungsTable extends Migration
         Schema::create('pengajuan_gedungs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('gedung_id');
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('nama_pemohon');
             $table->string('email_pemohon');
             $table->string('no_telepon')->nullable();

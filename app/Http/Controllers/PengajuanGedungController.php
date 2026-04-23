@@ -49,20 +49,20 @@ class PengajuanGedungController extends AppBaseController
 
     /**
      * Store a newly created PengajuanGedung in storage.
+     * Bisa diakses tanpa login (publik).
      */
     public function store(CreatePengajuanGedungRequest $request)
     {
         $input = $request->all();
 
-        // Auto-set user_id dan status
+        // Set user_id jika login, null jika guest
         $input['user_id'] = auth()->id();
         $input['status'] = 'diproses';
 
         $pengajuanGedung = $this->pengajuanGedungRepository->create($input);
 
-        Flash::success('Pengajuan penggunaan gedung berhasil dikirim.');
-
-        return redirect(route('pengajuan_gedungs.index'));
+        // Redirect ke halaman sukses publik
+        return redirect()->route('publik.peta')->with('success', 'Pengajuan penggunaan gedung berhasil dikirim! Admin akan meninjau pengajuan Anda.');
     }
 
     /**
