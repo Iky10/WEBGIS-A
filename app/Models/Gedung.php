@@ -38,10 +38,6 @@ class Gedung extends Model
         'nama_gedung',
         'alamat',
         'deskripsi',
-        'fungsi',
-        'jumlah_lantai',
-        'tahun_berdiri',
-        'kondisi',
         'x',
         'y',
         'foto_utama',
@@ -56,12 +52,8 @@ class Gedung extends Model
         'nama_gedung' => 'string',
         'alamat' => 'string',
         'deskripsi' => 'string',
-        'fungsi' => 'string',
-        'jumlah_lantai' => 'integer',
-        'tahun_berdiri' => 'integer',
-        'kondisi' => 'string',
-        'x' => 'decimal:2',
-        'y' => 'decimal:2'
+        'x' => 'decimal:8',
+        'y' => 'decimal:8'
     ];
 
     /**
@@ -79,5 +71,35 @@ class Gedung extends Model
     public function fasilitas()
     {
         return $this->hasMany(GedungFasilitas::class, 'gedung_id');
+    }
+
+    public function getStatusDipakaiAttribute()
+    {
+        $hariMap = [
+            'Sunday' => 'Minggu',
+            'Monday' => 'Senin',
+            'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday' => 'Kamis',
+            'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu',
+        ];
+        
+        $hariIni = $hariMap[date('l')];
+        $waktuSekarang = date('H:i:s');
+
+        $fasilitasIds = $this->fasilitas()->pluck('id');
+        
+        if ($fasilitasIds->isEmpty()) {
+            return 'Kosong';
+        }
+
+        $sedangDipakai = \App\Models\JadwalRuangan::whereIn('gedung_fasilitas_id', $fasilitasIds)
+            ->where('hari', $hariIni)
+            ->where('jam_mulai', '<=', $waktuSekarang)
+            ->where('jam_selesai', '>=', $waktuSekarang)
+            ->exists();
+
+        return $sedangDipakai ? 'Sedang Dipakai' : 'Kosong';
     }
 }

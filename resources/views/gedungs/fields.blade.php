@@ -4,19 +4,7 @@
     {!! Form::text('nama_gedung', null, ['class' => 'form-control', 'placeholder' => 'Masukkan nama gedung']) !!}
 </div>
 
-<!-- Fungsi Field -->
-<div class="form-group col-sm-6">
-    {!! Form::label('fungsi', 'Fungsi Gedung:') !!}
-    {!! Form::select('fungsi', [
-        ''            => '-- Pilih Fungsi --',
-        'Perkantoran' => 'Perkantoran',
-        'Pendidikan'  => 'Pendidikan',
-        'Kesehatan'   => 'Kesehatan',
-        'Komersial'   => 'Komersial',
-        'Publik'      => 'Publik',
-        'Lainnya'     => 'Lainnya',
-    ], null, ['class' => 'form-control select2']) !!}
-</div>
+
 
 <!-- Alamat Field -->
 <div class="form-group col-sm-12">
@@ -30,28 +18,7 @@
     {!! Form::textarea('deskripsi', null, ['class' => 'form-control', 'rows' => 4, 'placeholder' => 'Deskripsi singkat gedung']) !!}
 </div>
 
-<!-- Jumlah Lantai Field -->
-<div class="form-group col-sm-4">
-    {!! Form::label('jumlah_lantai', 'Jumlah Lantai:') !!}
-    {!! Form::number('jumlah_lantai', null, ['class' => 'form-control', 'min' => 1]) !!}
-</div>
 
-<!-- Tahun Berdiri Field -->
-<div class="form-group col-sm-4">
-    {!! Form::label('tahun_berdiri', 'Tahun Berdiri:') !!}
-    {!! Form::number('tahun_berdiri', null, ['class' => 'form-control', 'min' => 1900, 'max' => 2099]) !!}
-</div>
-
-<!-- Kondisi Field -->
-<div class="form-group col-sm-4">
-    {!! Form::label('kondisi', 'Kondisi:') !!}
-    {!! Form::select('kondisi', [
-        ''       => '-- Pilih Kondisi --',
-        'Baik'   => 'Baik',
-        'Sedang' => 'Sedang',
-        'Rusak'  => 'Rusak',
-    ], null, ['class' => 'form-control']) !!}
-</div>
 
 <!-- Koordinat -->
 <div class="form-group col-sm-6">
@@ -84,7 +51,7 @@
     @if(isset($gedung) && $gedung->foto_utama)
         <div class="mt-2">
             <p class="mb-1"><strong>Foto saat ini:</strong></p>
-            <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+            <img src="{{ asset($gedung->foto_utama) }}"
                  alt="Foto Utama"
                  class="img-thumbnail"
                  style="max-height: 150px;">

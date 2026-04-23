@@ -14,13 +14,13 @@
     </a>
 </li>
 
-{{-- Menu WebGIS --}}
+<!--
 <li class="nav-item">
     <a href="{{ route('webgis.index') }}" class="nav-link {{ Request::is('webgis*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-map-marked-alt"></i>
         <p>WebGIS Peta</p>
     </a>
-</li>
+</li>-->
 
 {{-- Menu Fasilitas & Ruangan --}}
 <li class="nav-item">

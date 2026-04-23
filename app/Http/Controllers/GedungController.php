@@ -51,8 +51,8 @@ class GedungController extends AppBaseController
         if ($request->hasFile('foto_utama')) {
             $file = $request->file('foto_utama');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('gedung/utama', $filename, 'public');
-            $input['foto_utama'] = $path;
+            $file->move(public_path('images/gedung/utama'), $filename);
+            $input['foto_utama'] = 'images/gedung/utama/' . $filename;
         }
 
         $gedung = $this->gedungRepository->create($input);
@@ -61,12 +61,12 @@ class GedungController extends AppBaseController
         if ($request->hasFile('foto_gedung')) {
             foreach ($request->file('foto_gedung') as $index => $foto) {
                 $filename = time() . '_' . $index . '_' . $foto->getClientOriginalName();
-                $path = $foto->storeAs('gedung/galeri', $filename, 'public');
+                $foto->move(public_path('images/gedung/galeri'), $filename);
 
                 GambarGedung::create([
                     'gedung_id'  => $gedung->id,
                     'nama_file'  => $foto->getClientOriginalName(),
-                    'path_foto'  => $path,
+                    'path_foto'  => 'images/gedung/galeri/' . $filename,
                     'keterangan' => '',
                     'is_utama'   => $index === 0 ? 1 : 0,
                     'urutan'     => $index,
@@ -134,13 +134,13 @@ class GedungController extends AppBaseController
         // Update foto utama jika ada file baru
         if ($request->hasFile('foto_utama')) {
             // Hapus foto lama jika ada
-            if ($gedung->foto_utama) {
-                Storage::disk('public')->delete($gedung->foto_utama);
+            if ($gedung->foto_utama && file_exists(public_path($gedung->foto_utama))) {
+                unlink(public_path($gedung->foto_utama));
             }
             $file = $request->file('foto_utama');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('gedung/utama', $filename, 'public');
-            $input['foto_utama'] = $path;
+            $file->move(public_path('images/gedung/utama'), $filename);
+            $input['foto_utama'] = 'images/gedung/utama/' . $filename;
         }
 
         $gedung = $this->gedungRepository->update($input, $id);
@@ -151,12 +151,12 @@ class GedungController extends AppBaseController
 
             foreach ($request->file('foto_gedung') as $index => $foto) {
                 $filename = time() . '_' . $index . '_' . $foto->getClientOriginalName();
-                $path = $foto->storeAs('gedung/galeri', $filename, 'public');
+                $foto->move(public_path('images/gedung/galeri'), $filename);
 
                 GambarGedung::create([
                     'gedung_id'  => $id,
                     'nama_file'  => $foto->getClientOriginalName(),
-                    'path_foto'  => $path,
+                    'path_foto'  => 'images/gedung/galeri/' . $filename,
                     'keterangan' => '',
                     'is_utama'   => 0,
                     'urutan'     => $lastUrutan + $index + 1,
@@ -184,12 +184,14 @@ class GedungController extends AppBaseController
         // Hapus semua foto galeri dari storage
         $fotos = GambarGedung::where('gedung_id', $id)->get();
         foreach ($fotos as $foto) {
-            Storage::disk('public')->delete($foto->path_foto);
+            if ($foto->path_foto && file_exists(public_path($foto->path_foto))) {
+                unlink(public_path($foto->path_foto));
+            }
         }
 
         // Hapus foto utama dari storage
-        if ($gedung->foto_utama) {
-            Storage::disk('public')->delete($gedung->foto_utama);
+        if ($gedung->foto_utama && file_exists(public_path($gedung->foto_utama))) {
+            unlink(public_path($gedung->foto_utama));
         }
 
         $this->gedungRepository->delete($id);
@@ -205,7 +207,9 @@ class GedungController extends AppBaseController
     public function destroyFoto($id)
     {
         $foto = GambarGedung::findOrFail($id);
-        Storage::disk('public')->delete($foto->path_foto);
+        if ($foto->path_foto && file_exists(public_path($foto->path_foto))) {
+            unlink(public_path($foto->path_foto));
+        }
         $foto->delete();
 
         Flash::success('Foto berhasil dihapus.');

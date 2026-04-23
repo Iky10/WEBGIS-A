@@ -36,15 +36,6 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <label class="small text-muted mb-1">Kondisi</label>
-                    <select name="kondisi" class="form-control">
-                        <option value="">-- Semua Kondisi --</option>
-                        @foreach(['Baik','Sedang','Rusak'] as $k)
-                            <option value="{{ $k }}" {{ request('kondisi') == $k ? 'selected' : '' }}>{{ $k }}</option>
-                        @endforeach
-                    </select>
-                </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary btn-block">
                         <i class="fas fa-search mr-1"></i> Cari
@@ -60,7 +51,7 @@
         <div class="col-md-4 col-sm-6 mb-4">
             <div class="gedung-card card">
                 @if($gedung->foto_utama)
-                    <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+                    <img src="{{ asset($gedung->foto_utama) }}"
                          alt="{{ $gedung->nama_gedung }}">
                 @else
                     <div class="no-foto"><i class="fas fa-building"></i></div>
@@ -68,12 +59,10 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <h6 class="card-title mb-0 font-weight-bold">{{ $gedung->nama_gedung }}</h6>
-                        @if($gedung->kondisi == 'Baik')
-                            <span class="badge badge-success ml-1">Baik</span>
-                        @elseif($gedung->kondisi == 'Sedang')
-                            <span class="badge badge-warning ml-1">Sedang</span>
-                        @elseif($gedung->kondisi == 'Rusak')
-                            <span class="badge badge-danger ml-1">Rusak</span>
+                        @if($gedung->status_dipakai == 'Sedang Dipakai')
+                            <span class="badge badge-success ml-1">Sedang Dipakai</span>
+                        @else
+                            <span class="badge badge-secondary ml-1">Kosong</span>
                         @endif
                     </div>
                     @if($gedung->fungsi)

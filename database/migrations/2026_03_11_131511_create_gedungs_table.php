@@ -19,10 +19,6 @@ class CreateGedungsTable extends Migration
             $table->string('nama_gedung');
             $table->text('alamat');
             $table->text('deskripsi');
-            $table->string('fungsi');
-            $table->integer('jumlah_lantai');
-            $table->integer('tahun_berdiri');
-            $table->string('kondisi');
             $table->decimal('x');
             $table->decimal('y');
             $table->timestamps();

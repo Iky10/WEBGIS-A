@@ -38,9 +38,9 @@ class WebGisController extends Controller
                     'fungsi'       => $gedung->fungsi ?? '-',
                     'jumlah_lantai'=> $gedung->jumlah_lantai ?? '-',
                     'tahun_berdiri'=> $gedung->tahun_berdiri ?? '-',
-                    'kondisi'      => $gedung->kondisi ?? '-',
+                    'kondisi'      => $gedung->status_dipakai,
                     'foto_utama'   => $gedung->foto_utama
-                                        ? asset('storage/' . $gedung->foto_utama)
+                                        ? asset($gedung->foto_utama)
                                         : null,
                     'detail_url'   => route('gedungs.show', $gedung->id),
                 ],

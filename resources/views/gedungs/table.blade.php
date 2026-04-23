@@ -5,10 +5,7 @@
             <th>Nama Gedung</th>
         <th>Alamat</th>
         <th>Deskripsi</th>
-        <th>Fungsi</th>
-        <th>Jumlah Lantai</th>
-        <th>Tahun Berdiri</th>
-        <th>Kondisi</th>
+
         <th>X</th>
         <th>Y</th>
             <th colspan="3">Action</th>
@@ -20,10 +17,7 @@
                 <td>{{ $gedung->nama_gedung }}</td>
             <td>{{ $gedung->alamat }}</td>
             <td>{{ $gedung->deskripsi }}</td>
-            <td>{{ $gedung->fungsi }}</td>
-            <td>{{ $gedung->jumlah_lantai }}</td>
-            <td>{{ $gedung->tahun_berdiri }}</td>
-            <td>{{ $gedung->kondisi }}</td>
+
             <td>{{ $gedung->x }}</td>
             <td>{{ $gedung->y }}</td>
                 <td width="120">

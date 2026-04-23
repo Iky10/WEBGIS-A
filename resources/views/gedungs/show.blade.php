@@ -31,7 +31,7 @@
             <div class="card card-outline card-primary">
                 <div class="card-body p-0">
                     @if($gedung->foto_utama)
-                        <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+                        <img src="{{ asset($gedung->foto_utama) }}"
                              alt="{{ $gedung->nama_gedung }}"
                              class="img-fluid w-100"
                              style="max-height: 280px; object-fit: cover; border-radius: 4px;">
@@ -158,9 +158,9 @@
                             @foreach($fotos as $foto)
                                 <div class="col-sm-4 mb-3">
                                     <div class="card shadow-sm h-100">
-                                        <a href="{{ asset('storage/' . $foto->path_foto) }}"
+                                        <a href="{{ asset($foto->path_foto) }}"
                                            target="_blank">
-                                            <img src="{{ asset('storage/' . $foto->path_foto) }}"
+                                            <img src="{{ asset($foto->path_foto) }}"
                                                  class="card-img-top"
                                                  alt="{{ $foto->nama_file }}"
                                                  style="height: 130px; object-fit: cover;">

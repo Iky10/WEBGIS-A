@@ -46,6 +46,17 @@ class GedungFasilitasController extends AppBaseController
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'gedung_id' => 'required|exists:gedungs,id',
+            'nama_fasilitas' => 'required|string|max:255',
+            'kategori' => 'required|string|max:255',
+            'keterangan' => 'nullable|string'
+        ], [
+            'gedung_id.required' => 'Gedung harus dipilih.',
+            'nama_fasilitas.required' => 'Nama fasilitas / ruangan wajib diisi.',
+            'kategori.required' => 'Kategori wajib dipilih.'
+        ]);
+
         $input = $request->all();
         // Handle checkbox for is_aktif
         $input['is_aktif'] = $request->has('is_aktif') ? true : false;
@@ -97,6 +108,17 @@ class GedungFasilitasController extends AppBaseController
      */
     public function update($id, Request $request)
     {
+        $request->validate([
+            'gedung_id' => 'required|exists:gedungs,id',
+            'nama_fasilitas' => 'required|string|max:255',
+            'kategori' => 'required|string|max:255',
+            'keterangan' => 'nullable|string'
+        ], [
+            'gedung_id.required' => 'Gedung harus dipilih.',
+            'nama_fasilitas.required' => 'Nama fasilitas / ruangan wajib diisi.',
+            'kategori.required' => 'Kategori wajib dipilih.'
+        ]);
+
         $gedungFasilitas = $this->gedungFasilitasRepository->find($id);
 
         if (empty($gedungFasilitas)) {

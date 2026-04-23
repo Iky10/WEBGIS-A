@@ -4,11 +4,7 @@
     <p>{{ $gedung->nama_gedung }}</p>
 </div>
 
-<!-- Fungsi -->
-<div class="col-sm-6">
-    {!! Form::label('fungsi', 'Fungsi:') !!}
-    <p>{{ $gedung->fungsi ?? '-' }}</p>
-</div>
+
 
 <!-- Alamat -->
 <div class="col-sm-12">
@@ -22,30 +18,16 @@
     <p>{{ $gedung->deskripsi ?? '-' }}</p>
 </div>
 
-<!-- Jumlah Lantai -->
-<div class="col-sm-4">
-    {!! Form::label('jumlah_lantai', 'Jumlah Lantai:') !!}
-    <p>{{ $gedung->jumlah_lantai ?? '-' }}</p>
-</div>
 
-<!-- Tahun Berdiri -->
-<div class="col-sm-4">
-    {!! Form::label('tahun_berdiri', 'Tahun Berdiri:') !!}
-    <p>{{ $gedung->tahun_berdiri ?? '-' }}</p>
-</div>
 
 <!-- Kondisi -->
-<div class="col-sm-4">
-    {!! Form::label('kondisi', 'Kondisi:') !!}
+<div class="col-sm-12">
+    {!! Form::label('kondisi', 'Status Pemakaian:') !!}
     <p>
-        @if($gedung->kondisi == 'Baik')
-            <span class="badge badge-success">Baik</span>
-        @elseif($gedung->kondisi == 'Sedang')
-            <span class="badge badge-warning">Sedang</span>
-        @elseif($gedung->kondisi == 'Rusak')
-            <span class="badge badge-danger">Rusak</span>
+        @if($gedung->status_dipakai == 'Sedang Dipakai')
+            <span class="badge badge-success">Sedang Dipakai</span>
         @else
-            -
+            <span class="badge badge-secondary">Kosong</span>
         @endif
     </p>
 </div>
@@ -66,7 +48,7 @@
     {!! Form::label('foto_utama', 'Foto Utama:') !!}
     @if($gedung->foto_utama)
         <div>
-            <img src="{{ asset('storage/' . $gedung->foto_utama) }}"
+            <img src="{{ asset($gedung->foto_utama) }}"
                  alt="Foto Utama"
                  class="img-thumbnail"
                  style="max-height: 200px;">
@@ -84,7 +66,7 @@
             @foreach($fotos as $foto)
                 <div class="col-sm-3 mb-3">
                     <div class="card">
-                        <img src="{{ asset('storage/' . $foto->path_foto) }}"
+                        <img src="{{ asset($foto->path_foto) }}"
                              class="card-img-top"
                              alt="{{ $foto->nama_file }}"
                              style="height: 150px; object-fit: cover;">
