@@ -29,7 +29,7 @@ class GedungController extends AppBaseController
     {
         $gedungs = $this->gedungRepository->all();
 
-        return view('gedungs.index')->with('gedungs', $gedungs);
+        return view('dashboard.gedungs.index')->with('gedungs', $gedungs);
     }
 
     /**
@@ -37,7 +37,7 @@ class GedungController extends AppBaseController
      */
     public function create()
     {
-        return view('gedungs.create');
+        return view('dashboard.gedungs.create');
     }
 
     /**
@@ -93,7 +93,7 @@ class GedungController extends AppBaseController
 
         $fotos = GambarGedung::where('gedung_id', $id)->orderBy('urutan')->get();
 
-        return view('gedungs.show')
+        return view('dashboard.gedungs.show')
             ->with('gedung', $gedung)
             ->with('fotos', $fotos);
     }
@@ -112,7 +112,7 @@ class GedungController extends AppBaseController
 
         $fotos = GambarGedung::where('gedung_id', $id)->orderBy('urutan')->get();
 
-        return view('gedungs.edit')
+        return view('dashboard.gedungs.edit')
             ->with('gedung', $gedung)
             ->with('fotos', $fotos);
     }

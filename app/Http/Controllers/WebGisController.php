@@ -12,7 +12,7 @@ class WebGisController extends Controller
      */
     public function index()
     {
-        return view('webgis.index');
+        return view('dashboard.webgis.index');
     }
 
     /**

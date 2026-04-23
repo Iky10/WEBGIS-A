@@ -5,12 +5,12 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Daftar Ruangan & Fasilitas</h1>
+                    <h1>Jadwal Ruangan</h1>
                 </div>
                 <div class="col-sm-6">
                     <a class="btn btn-primary float-right"
-                       href="{{ route('gedung_fasilitas.create') }}">
-                        Tambah Baru
+                       href="{{ route('jadwal_ruangans.create') }}">
+                        Tambah Jadwal
                     </a>
                 </div>
             </div>
@@ -25,7 +25,7 @@
 
         <div class="card">
             <div class="card-body p-0">
-                @include('gedung_fasilitas.table')
+                @include('dashboard.jadwal_ruangans.table')
 
                 <div class="card-footer clearfix">
                     <div class="float-right">

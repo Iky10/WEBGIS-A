@@ -5,7 +5,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-12">
-                    <h1>Edit Jadwal Ruangan</h1>
+                    <h1>Edit Ruangan / Fasilitas</h1>
                 </div>
             </div>
         </div>
@@ -17,17 +17,17 @@
 
         <div class="card">
 
-            {!! Form::model($jadwalRuangan, ['route' => ['jadwal_ruangans.update', $jadwalRuangan->id], 'method' => 'patch']) !!}
+            {!! Form::model($gedungFasilitas, ['route' => ['gedung_fasilitas.update', $gedungFasilitas->id], 'method' => 'patch']) !!}
 
             <div class="card-body">
                 <div class="row">
-                    @include('jadwal_ruangans.fields')
+                    @include('dashboard.gedung_fasilitas.fields')
                 </div>
             </div>
 
             <div class="card-footer">
                 {!! Form::submit('Simpan', ['class' => 'btn btn-primary']) !!}
-                <a href="{{ route('jadwal_ruangans.index') }}" class="btn btn-default">Batal</a>
+                <a href="{{ route('gedung_fasilitas.index') }}" class="btn btn-default">Batal</a>
             </div>
 
             {!! Form::close() !!}

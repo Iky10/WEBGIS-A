@@ -31,7 +31,7 @@ class GambarGedungController extends AppBaseController
     {
         $gambarGedungs = $this->gambarGedungRepository->all();
 
-        return view('gambar_gedungs.index')
+        return view('dashboard.gambar_gedungs.index')
             ->with('gambarGedungs', $gambarGedungs);
     }
 
@@ -42,7 +42,7 @@ class GambarGedungController extends AppBaseController
      */
     public function create()
     {
-        return view('gambar_gedungs.create');
+        return view('dashboard.gambar_gedungs.create');
     }
 
     /**
@@ -80,7 +80,7 @@ class GambarGedungController extends AppBaseController
             return redirect(route('gambarGedungs.index'));
         }
 
-        return view('gambar_gedungs.show')->with('gambarGedung', $gambarGedung);
+        return view('dashboard.gambar_gedungs.show')->with('gambarGedung', $gambarGedung);
     }
 
     /**
@@ -100,7 +100,7 @@ class GambarGedungController extends AppBaseController
             return redirect(route('gambarGedungs.index'));
         }
 
-        return view('gambar_gedungs.edit')->with('gambarGedung', $gambarGedung);
+        return view('dashboard.gambar_gedungs.edit')->with('gambarGedung', $gambarGedung);
     }
 
     /**

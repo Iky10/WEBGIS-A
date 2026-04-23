@@ -5,7 +5,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-12">
-                    <h1>Tambah Jadwal Ruangan</h1>
+                    <h1>Edit Jadwal Ruangan</h1>
                 </div>
             </div>
         </div>
@@ -17,14 +17,12 @@
 
         <div class="card">
 
-            {!! Form::open(['route' => 'jadwal_ruangans.store']) !!}
+            {!! Form::model($jadwalRuangan, ['route' => ['jadwal_ruangans.update', $jadwalRuangan->id], 'method' => 'patch']) !!}
 
             <div class="card-body">
-
                 <div class="row">
-                    @include('jadwal_ruangans.fields')
+                    @include('dashboard.jadwal_ruangans.fields')
                 </div>
-
             </div>
 
             <div class="card-footer">

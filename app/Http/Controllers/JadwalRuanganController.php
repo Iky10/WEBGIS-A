@@ -26,7 +26,7 @@ class JadwalRuanganController extends AppBaseController
     {
         $jadwalRuangans = $this->jadwalRuanganRepository->all();
 
-        return view('jadwal_ruangans.index')
+        return view('dashboard.jadwal_ruangans.index')
             ->with('jadwalRuangans', $jadwalRuangans);
     }
 
@@ -39,7 +39,7 @@ class JadwalRuanganController extends AppBaseController
             return [$item->id => $item->gedung->nama_gedung . ' - ' . $item->nama_fasilitas];
         });
 
-        return view('jadwal_ruangans.create')->with('fasilitas', $fasilitas);
+        return view('dashboard.jadwal_ruangans.create')->with('fasilitas', $fasilitas);
     }
 
     /**
@@ -85,7 +85,7 @@ class JadwalRuanganController extends AppBaseController
             return redirect(route('jadwal_ruangans.index'));
         }
 
-        return view('jadwal_ruangans.show')->with('jadwalRuangan', $jadwalRuangan);
+        return view('dashboard.jadwal_ruangans.show')->with('jadwalRuangan', $jadwalRuangan);
     }
 
     /**
@@ -105,7 +105,7 @@ class JadwalRuanganController extends AppBaseController
             return [$item->id => $item->gedung->nama_gedung . ' - ' . $item->nama_fasilitas];
         });
 
-        return view('jadwal_ruangans.edit')
+        return view('dashboard.jadwal_ruangans.edit')
             ->with('jadwalRuangan', $jadwalRuangan)
             ->with('fasilitas', $fasilitas);
     }

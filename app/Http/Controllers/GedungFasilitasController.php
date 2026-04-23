@@ -28,7 +28,7 @@ class GedungFasilitasController extends AppBaseController
     {
         $gedungFasilitas = $this->gedungFasilitasRepository->all();
 
-        return view('gedung_fasilitas.index')
+        return view('dashboard.gedung_fasilitas.index')
             ->with('gedungFasilitas', $gedungFasilitas);
     }
 
@@ -38,7 +38,7 @@ class GedungFasilitasController extends AppBaseController
     public function create()
     {
         $gedungs = Gedung::pluck('nama_gedung', 'id');
-        return view('gedung_fasilitas.create')->with('gedungs', $gedungs);
+        return view('dashboard.gedung_fasilitas.create')->with('gedungs', $gedungs);
     }
 
     /**
@@ -81,7 +81,7 @@ class GedungFasilitasController extends AppBaseController
             return redirect(route('gedung_fasilitas.index'));
         }
 
-        return view('gedung_fasilitas.show')->with('gedungFasilitas', $gedungFasilitas);
+        return view('dashboard.gedung_fasilitas.show')->with('gedungFasilitas', $gedungFasilitas);
     }
 
     /**
@@ -98,7 +98,7 @@ class GedungFasilitasController extends AppBaseController
         }
 
         $gedungs = Gedung::pluck('nama_gedung', 'id');
-        return view('gedung_fasilitas.edit')
+        return view('dashboard.gedung_fasilitas.edit')
             ->with('gedungFasilitas', $gedungFasilitas)
             ->with('gedungs', $gedungs);
     }

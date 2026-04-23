@@ -3,7 +3,7 @@
 
     /* ── MAP INIT ─────────────────────────────── */
     var map = L.map('map', { zoomControl: false, attributionControl: true })
-        .setView([-1.2654, 116.8312], 12);
+        .setView([-0.53597801, 117.12345243], 18);
 
     /* ── TILE LAYERS ──────────────────────────── */
     var light = L.tileLayer(

@@ -26,7 +26,7 @@
                 {!! Form::open(['route' => 'gedungs.store', 'method' => 'POST', 'files' => true]) !!}
 
                     <div class="row">
-                        @include('gedungs.fields')
+                        @include('dashboard.gedungs.fields')
                     </div>
 
                     <div class="form-group col-sm-12 mt-3">

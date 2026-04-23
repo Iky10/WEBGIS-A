@@ -26,7 +26,7 @@
                 {!! Form::model($gedung, ['route' => ['gedungs.update', $gedung->id], 'method' => 'patch', 'files' => true]) !!}
 
                     <div class="row">
-                        @include('gedungs.fields')
+                        @include('dashboard.gedungs.fields')
                     </div>
 
                     <div class="form-group col-sm-12 mt-3">

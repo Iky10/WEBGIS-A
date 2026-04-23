@@ -33,7 +33,7 @@ class HomeController extends Controller
         // 5 gedung terbaru
         $gedungTerbaru = Gedung::latest()->take(5)->get();
 
-        return view('home', compact(
+        return view('dashboard.home', compact(
             'totalGedung',
             'totalFoto',
             'gedungKosong',

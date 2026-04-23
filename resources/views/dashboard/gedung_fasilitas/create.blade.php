@@ -22,7 +22,7 @@
             <div class="card-body">
 
                 <div class="row">
-                    @include('gedung_fasilitas.fields')
+                    @include('dashboard.gedung_fasilitas.fields')
                 </div>
 
             </div>

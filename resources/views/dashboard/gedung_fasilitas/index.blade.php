@@ -5,12 +5,12 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Gedungs</h1>
+                    <h1>Daftar Ruangan & Fasilitas</h1>
                 </div>
                 <div class="col-sm-6">
                     <a class="btn btn-primary float-right"
-                       href="{{ route('gedungs.create') }}">
-                        Add New
+                       href="{{ route('gedung_fasilitas.create') }}">
+                        Tambah Baru
                     </a>
                 </div>
             </div>
@@ -25,7 +25,7 @@
 
         <div class="card">
             <div class="card-body p-0">
-                @include('gedungs.table')
+                @include('dashboard.gedung_fasilitas.table')
 
                 <div class="card-footer clearfix">
                     <div class="float-right">
@@ -38,4 +38,3 @@
     </div>
 
 @endsection
-
