@@ -80,12 +80,11 @@
             @endforeach
         </div>
 
-        <span class="fp-label">Kondisi</span>
+        <span class="fp-label">Status Pemakaian</span>
         <div class="fp-chips" id="chipsKondisi">
             <div class="chip on" data-v="">Semua</div>
-            <div class="chip" data-v="Baik">Baik</div>
-            <div class="chip" data-v="Sedang">Sedang</div>
-            <div class="chip" data-v="Rusak">Rusak</div>
+            <div class="chip" data-v="Sedang Dipakai">Sedang Dipakai</div>
+            <div class="chip" data-v="Kosong">Kosong</div>
         </div>
 
         <div class="fp-sep"></div>
@@ -110,10 +109,9 @@
 </div>
 
 <div id="legend">
-    <div class="leg-title">Kondisi Gedung</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Baik</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#f59e0b;box-shadow:0 0 5px #f59e0b;"></div>Sedang</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#ef4444;box-shadow:0 0 5px #ef4444;"></div>Rusak</div>
+    <div class="leg-title">Status Pemakaian</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Sedang Dipakai</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#6c757d;box-shadow:0 0 5px #6c757d;"></div>Kosong</div>
     <div class="leg-row"><div class="leg-dot" style="background:#475569;"></div>Tidak diketahui</div>
 </div>
 
@@ -170,7 +168,7 @@
                 
                 <div class="sb-stats">
                     <div class="sb-stat"><span id="sbFungsi" class="sb-stat-v">-</span><span class="sb-stat-k">Fungsi</span></div>
-                    <div class="sb-stat"><span id="sbKondisi" class="sb-stat-v">-</span><span class="sb-stat-k">Kondisi</span></div>
+                    <div class="sb-stat"><span id="sbKondisi" class="sb-stat-v">-</span><span class="sb-stat-k">Status</span></div>
                     <div class="sb-stat"><span id="sbLantai" class="sb-stat-v">-</span><span class="sb-stat-k">Lantai</span></div>
                     <div class="sb-stat"><span id="sbTahun" class="sb-stat-v">-</span><span class="sb-stat-k">Tahun</span></div>
                 </div>

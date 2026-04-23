@@ -52,15 +52,12 @@
                             <td>{{ $gedung->fungsi ?? '-' }}</td>
                         </tr>
                         <tr class="bg-light">
-                            <td class="text-muted pl-3">Kondisi</td>
+                            <td class="text-muted pl-3">Status Pemakaian</td>
                             <td>
-                                @if($gedung->kondisi == 'Baik')
-                                    <span class="badge badge-success">Baik</span>
-                                @elseif($gedung->kondisi == 'Sedang')
-                                    <span class="badge badge-warning">Sedang</span>
-                                @elseif($gedung->kondisi == 'Rusak')
-                                    <span class="badge badge-danger">Rusak</span>
-                                @else -
+                                @if($gedung->status_dipakai == 'Sedang Dipakai')
+                                    <span class="badge badge-success">Sedang Dipakai</span>
+                                @else
+                                    <span class="badge badge-secondary">Kosong</span>
                                 @endif
                             </td>
                         </tr>

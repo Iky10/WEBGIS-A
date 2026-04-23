@@ -19,6 +19,8 @@
     <div class="content px-3">
         @include('flash::message')
 
+        @include('adminlte-templates::common.errors')
+
         <div class="card">
             <div class="card-body">
                 {!! Form::open(['route' => 'gedungs.store', 'method' => 'POST', 'files' => true]) !!}

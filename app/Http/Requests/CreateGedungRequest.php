@@ -26,4 +26,19 @@ class CreateGedungRequest extends FormRequest
     {
         return Gedung::$rules;
     }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'nama_gedung.required' => 'Nama gedung wajib diisi.',
+            'alamat.required' => 'Alamat wajib diisi.',
+            'x.required' => 'Koordinat X (Latitude) wajib diisi.',
+            'y.required' => 'Koordinat Y (Longitude) wajib diisi.'
+        ];
+    }
 }
