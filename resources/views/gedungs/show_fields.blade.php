@@ -4,11 +4,7 @@
     <p>{{ $gedung->nama_gedung }}</p>
 </div>
 
-<!-- Fungsi -->
-<div class="col-sm-6">
-    {!! Form::label('fungsi', 'Fungsi:') !!}
-    <p>{{ $gedung->fungsi ?? '-' }}</p>
-</div>
+
 
 <!-- Alamat -->
 <div class="col-sm-12">
@@ -22,30 +18,16 @@
     <p>{{ $gedung->deskripsi ?? '-' }}</p>
 </div>
 
-<!-- Jumlah Lantai -->
-<div class="col-sm-4">
-    {!! Form::label('jumlah_lantai', 'Jumlah Lantai:') !!}
-    <p>{{ $gedung->jumlah_lantai ?? '-' }}</p>
-</div>
 
-<!-- Tahun Berdiri -->
-<div class="col-sm-4">
-    {!! Form::label('tahun_berdiri', 'Tahun Berdiri:') !!}
-    <p>{{ $gedung->tahun_berdiri ?? '-' }}</p>
-</div>
 
 <!-- Kondisi -->
-<div class="col-sm-4">
-    {!! Form::label('kondisi', 'Kondisi:') !!}
+<div class="col-sm-12">
+    {!! Form::label('kondisi', 'Status Pemakaian:') !!}
     <p>
-        @if($gedung->kondisi == 'Baik')
-            <span class="badge badge-success">Baik</span>
-        @elseif($gedung->kondisi == 'Sedang')
-            <span class="badge badge-warning">Sedang</span>
-        @elseif($gedung->kondisi == 'Rusak')
-            <span class="badge badge-danger">Rusak</span>
+        @if($gedung->status_dipakai == 'Sedang Dipakai')
+            <span class="badge badge-success">Sedang Dipakai</span>
         @else
-            -
+            <span class="badge badge-secondary">Kosong</span>
         @endif
     </p>
 </div>

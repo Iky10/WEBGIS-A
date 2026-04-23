@@ -29,4 +29,28 @@ class GedungFasilitas extends Model
     {
         return $this->belongsTo(Gedung::class, 'gedung_id');
     }
+
+    public function getStatusDipakaiAttribute()
+    {
+        $hariMap = [
+            'Sunday' => 'Minggu',
+            'Monday' => 'Senin',
+            'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday' => 'Kamis',
+            'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu',
+        ];
+        
+        $hariIni = $hariMap[date('l')];
+        $waktuSekarang = date('H:i:s');
+
+        $sedangDipakai = \App\Models\JadwalRuangan::where('gedung_fasilitas_id', $this->id)
+            ->where('hari', $hariIni)
+            ->where('jam_mulai', '<=', $waktuSekarang)
+            ->where('jam_selesai', '>=', $waktuSekarang)
+            ->exists();
+
+        return $sedangDipakai ? 'Sedang Dipakai' : 'Kosong';
+    }
 }

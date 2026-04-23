@@ -1,8 +1,9 @@
 // ── Peta Koordinat Picker ──────────────────────────────
-    var defaultLat = parseFloat(document.getElementById('input_lat').value) || -2.5;
-    var defaultLng = parseFloat(document.getElementById('input_lng').value) || 118.0;
+    var defaultLat = parseFloat(document.getElementById('input_lat').value) || -0.53721103;
+    var defaultLng = parseFloat(document.getElementById('input_lng').value) || 117.12494026;
+    var initialZoom = document.getElementById('input_lat').value ? 18 : 17;
 
-    var map = L.map('map-picker').setView([defaultLat, defaultLng], 5);
+    var map = L.map('map-picker').setView([defaultLat, defaultLng], initialZoom);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'

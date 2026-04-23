@@ -22,7 +22,7 @@
     <div class="row">
 
         {{-- Total Gedung --}}
-        <div class="col-lg-3 col-sm-6">
+        <div class="col-lg-4 col-sm-6">
             <div class="small-box bg-primary">
                 <div class="inner">
                     <h3>{{ $totalGedung }}</h3>
@@ -35,42 +35,28 @@
             </div>
         </div>
 
-        {{-- Gedung Kondisi Baik --}}
-        <div class="col-lg-3 col-sm-6">
+        {{-- Gedung Status Kosong --}}
+        <div class="col-lg-4 col-sm-6">
+            <div class="small-box bg-secondary">
+                <div class="inner">
+                    <h3>{{ $gedungKosong }}</h3>
+                    <p>Status Gedung Kosong</p>
+                </div>
+                <div class="icon"><i class="fas fa-door-closed"></i></div>
+                <a href="{{ route('gedungs.index') }}" class="small-box-footer">
+                    Lihat Detail <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        {{-- Gedung Status Sedang Dipakai --}}
+        <div class="col-lg-4 col-sm-6">
             <div class="small-box bg-success">
                 <div class="inner">
-                    <h3>{{ $gedungBaik }}</h3>
-                    <p>Kondisi Baik</p>
+                    <h3>{{ $gedungDipakai }}</h3>
+                    <p>Status Gedung Sedang Dipakai</p>
                 </div>
-                <div class="icon"><i class="fas fa-check-circle"></i></div>
-                <a href="{{ route('gedungs.index') }}" class="small-box-footer">
-                    Lihat Detail <i class="fas fa-arrow-circle-right"></i>
-                </a>
-            </div>
-        </div>
-
-        {{-- Gedung Kondisi Sedang --}}
-        <div class="col-lg-3 col-sm-6">
-            <div class="small-box bg-warning">
-                <div class="inner">
-                    <h3>{{ $gedungSedang }}</h3>
-                    <p>Kondisi Sedang</p>
-                </div>
-                <div class="icon"><i class="fas fa-exclamation-circle"></i></div>
-                <a href="{{ route('gedungs.index') }}" class="small-box-footer">
-                    Lihat Detail <i class="fas fa-arrow-circle-right"></i>
-                </a>
-            </div>
-        </div>
-
-        {{-- Gedung Kondisi Rusak --}}
-        <div class="col-lg-3 col-sm-6">
-            <div class="small-box bg-danger">
-                <div class="inner">
-                    <h3>{{ $gedungRusak }}</h3>
-                    <p>Kondisi Rusak</p>
-                </div>
-                <div class="icon"><i class="fas fa-times-circle"></i></div>
+                <div class="icon"><i class="fas fa-door-open"></i></div>
                 <a href="{{ route('gedungs.index') }}" class="small-box-footer">
                     Lihat Detail <i class="fas fa-arrow-circle-right"></i>
                 </a>
@@ -87,7 +73,7 @@
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-pie"></i> Kondisi Gedung
+                        <i class="fas fa-chart-pie"></i> Status Pemakaian Gedung
                     </h5>
                 </div>
                 <div class="card-body">
@@ -95,31 +81,7 @@
                 </div>
             </div>
 
-            {{-- Statistik Per Fungsi --}}
-            <div class="card card-outline card-info">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-layer-group"></i> Per Fungsi
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    @forelse($perFungsi as $item)
-                    <div class="d-flex align-items-center px-3 py-2 border-bottom">
-                        <span class="badge badge-info mr-2">{{ $item->fungsi }}</span>
-                        <div class="flex-grow-1">
-                            <div class="progress progress-sm mb-0">
-                                <div class="progress-bar bg-info"
-                                     style="width: {{ $totalGedung > 0 ? ($item->total / $totalGedung * 100) : 0 }}%">
-                                </div>
-                            </div>
-                        </div>
-                        <span class="ml-2 font-weight-bold">{{ $item->total }}</span>
-                    </div>
-                    @empty
-                    <p class="text-center text-muted py-3 mb-0">Belum ada data.</p>
-                    @endforelse
-                </div>
-            </div>
+
         </div>
 
         {{-- Tabel Gedung Terbaru --}}
@@ -140,8 +102,8 @@
                         <thead class="bg-light">
                             <tr>
                                 <th class="pl-3">Nama Gedung</th>
-                                <th>Fungsi</th>
-                                <th>Kondisi</th>
+
+                                <th>Status Pemakaian</th>
                                 <th>Ditambahkan</th>
                                 <th>Aksi</th>
                             </tr>
@@ -162,22 +124,12 @@
                                     @endif
                                     <strong>{{ $gedung->nama_gedung }}</strong>
                                 </td>
+
                                 <td>
-                                    @if($gedung->fungsi)
-                                        <span class="badge badge-info">{{ $gedung->fungsi }}</span>
+                                    @if($gedung->status_dipakai == 'Sedang Dipakai')
+                                        <span class="badge badge-success">Sedang Dipakai</span>
                                     @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($gedung->kondisi == 'Baik')
-                                        <span class="badge badge-success">Baik</span>
-                                    @elseif($gedung->kondisi == 'Sedang')
-                                        <span class="badge badge-warning">Sedang</span>
-                                    @elseif($gedung->kondisi == 'Rusak')
-                                        <span class="badge badge-danger">Rusak</span>
-                                    @else
-                                        <span class="text-muted">-</span>
+                                        <span class="badge badge-secondary">Kosong</span>
                                     @endif
                                 </td>
                                 <td>
@@ -237,9 +189,8 @@
 @push('page_scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
-    window.CHART_DATA_BAIK = {{ $gedungBaik }};
-    window.CHART_DATA_SEDANG = {{ $gedungSedang }};
-    window.CHART_DATA_RUSAK = {{ $gedungRusak }};
+    window.CHART_DATA_KOSONG = {{ $gedungKosong }};
+    window.CHART_DATA_DIPAKAI = {{ $gedungDipakai }};
 </script>
 <script src="{{ asset('js/admin-home.js') }}"></script>
 @endpush

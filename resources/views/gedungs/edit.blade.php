@@ -19,6 +19,8 @@
     <div class="content px-3">
         @include('flash::message')
 
+        @include('adminlte-templates::common.errors')
+
         <div class="card">
             <div class="card-body">
                 {!! Form::model($gedung, ['route' => ['gedungs.update', $gedung->id], 'method' => 'patch', 'files' => true]) !!}

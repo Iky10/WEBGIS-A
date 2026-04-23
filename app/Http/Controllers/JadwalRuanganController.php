@@ -47,6 +47,22 @@ class JadwalRuanganController extends AppBaseController
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'gedung_fasilitas_id' => 'required|exists:gedung_fasilitas,id',
+            'nama_kegiatan' => 'required|string|max:255',
+            'hari' => 'required|string|max:20',
+            'jam_mulai' => 'required',
+            'jam_selesai' => 'required|after:jam_mulai',
+            'keterangan' => 'nullable|string'
+        ], [
+            'gedung_fasilitas_id.required' => 'Fasilitas / Ruangan harus dipilih.',
+            'nama_kegiatan.required' => 'Nama kegiatan wajib diisi.',
+            'hari.required' => 'Hari wajib dipilih.',
+            'jam_mulai.required' => 'Jam mulai wajib diisi.',
+            'jam_selesai.required' => 'Jam selesai wajib diisi.',
+            'jam_selesai.after' => 'Jam selesai harus lebih besar dari jam mulai.'
+        ]);
+
         $input = $request->all();
 
         $jadwalRuangan = $this->jadwalRuanganRepository->create($input);
@@ -99,6 +115,22 @@ class JadwalRuanganController extends AppBaseController
      */
     public function update($id, Request $request)
     {
+        $request->validate([
+            'gedung_fasilitas_id' => 'required|exists:gedung_fasilitas,id',
+            'nama_kegiatan' => 'required|string|max:255',
+            'hari' => 'required|string|max:20',
+            'jam_mulai' => 'required',
+            'jam_selesai' => 'required|after:jam_mulai',
+            'keterangan' => 'nullable|string'
+        ], [
+            'gedung_fasilitas_id.required' => 'Fasilitas / Ruangan harus dipilih.',
+            'nama_kegiatan.required' => 'Nama kegiatan wajib diisi.',
+            'hari.required' => 'Hari wajib dipilih.',
+            'jam_mulai.required' => 'Jam mulai wajib diisi.',
+            'jam_selesai.required' => 'Jam selesai wajib diisi.',
+            'jam_selesai.after' => 'Jam selesai harus lebih besar dari jam mulai.'
+        ]);
+
         $jadwalRuangan = $this->jadwalRuanganRepository->find($id);
 
         if (empty($jadwalRuangan)) {
