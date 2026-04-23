@@ -39,10 +39,10 @@
 
     /* ── HELPERS ──────────────────────────────── */
     function getColor(k) {
-        return k === 'Baik' ? '#22c55e' : k === 'Sedang' ? '#f59e0b' : k === 'Rusak' ? '#ef4444' : '#475569';
+        return k === 'Sedang Dipakai' ? '#22c55e' : k === 'Kosong' ? '#6c757d' : '#475569';
     }
     function getBadgeClass(k) {
-        return k === 'Baik' ? 'b-baik' : k === 'Sedang' ? 'b-sedang' : k === 'Rusak' ? 'b-rusak' : '';
+        return k === 'Sedang Dipakai' ? 'badge-success' : k === 'Kosong' ? 'badge-secondary' : '';
     }
 
     /* ── MARKER ICON ──────────────────────────── */
@@ -991,8 +991,11 @@
                 // Deskripsi
                 document.getElementById('sbDesc').innerHTML = p.deskripsi || '-';
 
-                // Update tombol pengajuan dengan gedung ID
-                document.getElementById('sbBtnPengajuan').href = '/pengajuan_gedungs/create?gedung_id=' + p.id;
+                // Update tombol pengajuan dengan gedung ID (hanya jika user login)
+                var btnPengajuan = document.getElementById('sbBtnPengajuan');
+                if (btnPengajuan) {
+                    btnPengajuan.href = '/pengajuan_gedungs/create?gedung_id=' + p.id;
+                }
 
                 // Photos
                 var grid = document.getElementById('sbGalleryGrid');
