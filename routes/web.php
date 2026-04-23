@@ -4,9 +4,9 @@ use Illuminate\Support\Facades\Route;
 
 // ── PUBLIK (tanpa login) ──────────────────────────────────────
 // Halaman utama langsung peta layar penuh
-Route::get('/',            [App\Http\Controllers\PublikController::class, 'home'])        ->name('publik.home');
-Route::get('/peta',        [App\Http\Controllers\PublikController::class, 'peta'])        ->name('publik.peta');
-Route::get('/gedung',      [App\Http\Controllers\PublikController::class, 'gedung'])      ->name('publik.gedung');
+Route::get('/', [App\Http\Controllers\PublikController::class, 'home'])->name('publik.home');
+Route::get('/peta', [App\Http\Controllers\PublikController::class, 'peta'])->name('publik.peta');
+Route::get('/gedung', [App\Http\Controllers\PublikController::class, 'gedung'])->name('publik.gedung');
 Route::get('/gedung/{id}', [App\Http\Controllers\PublikController::class, 'detailGedung'])->name('publik.gedung.detail');
 
 // API GeoJSON untuk Leaflet (publik)
@@ -19,7 +19,7 @@ Auth::routes();
 // ── ADMIN (wajib login) ───────────────────────────────────────
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/home',            [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/admin/dashboard', [App\Http\Controllers\HomeController::class, 'index'])->name('admin.dashboard');
 
     // Hapus foto galeri — harus SEBELUM resource gedungs
@@ -36,6 +36,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('gedung_fasilitas', App\Http\Controllers\GedungFasilitasController::class);
     Route::resource('jadwal_ruangans', App\Http\Controllers\JadwalRuanganController::class);
     Route::get('/webgis', [App\Http\Controllers\WebGisController::class, 'index'])->name('webgis.index');
+
+    // Pengajuan Penggunaan Gedung
+    Route::resource('pengajuan_gedungs', App\Http\Controllers\PengajuanGedungController::class);
+    Route::post('pengajuan_gedungs/{id}/status', [App\Http\Controllers\PengajuanGedungController::class, 'updateStatus'])->name('pengajuan_gedungs.status');
+    Route::get('pengajuan_gedungs/{id}/ajukan-ulang', [App\Http\Controllers\PengajuanGedungController::class, 'ajukanUlang'])->name('pengajuan_gedungs.ajukan_ulang');
 
 });
 
