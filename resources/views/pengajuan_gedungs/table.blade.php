@@ -2,6 +2,7 @@
     <table class="table" id="pengajuanGedungs-table">
         <thead>
             <tr>
+                <th>Kode</th>
                 <th>Pemohon</th>
                 <th>Gedung</th>
                 <th>Kegiatan</th>
@@ -13,6 +14,7 @@
         <tbody>
             @foreach($pengajuanGedungs as $pengajuan)
                 <tr>
+                    <td><code>{{ $pengajuan->kode_pengajuan }}</code></td>
                     <td>{{ $pengajuan->nama_pemohon }}</td>
                     <td>{{ optional($pengajuan->gedung)->nama_gedung ?? 'N/A' }}</td>
                     <td>{{ $pengajuan->nama_kegiatan }} <br><small

@@ -38,7 +38,11 @@
                     <div class="col-md-6">
                         <table class="table table-borderless">
                             <tr>
-                                <th width="180">Nama Pemohon</th>
+                                <th width="180">Kode Pengajuan</th>
+                                <td><code style="font-size:1.1em;">{{ $pengajuanGedung->kode_pengajuan }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Nama Pemohon</th>
                                 <td>{{ $pengajuanGedung->nama_pemohon }}</td>
                             </tr>
                             <tr>

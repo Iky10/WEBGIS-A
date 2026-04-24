@@ -16,6 +16,9 @@ Route::get('/api/gedung/{id}', [App\Http\Controllers\PublikController::class, 'a
 // ── PENGAJUAN GEDUNG (publik, tanpa login) ───────────────────
 Route::get('pengajuan_gedungs/create', [App\Http\Controllers\PengajuanGedungController::class, 'create'])->name('pengajuan_gedungs.create');
 Route::post('pengajuan_gedungs', [App\Http\Controllers\PengajuanGedungController::class, 'store'])->name('pengajuan_gedungs.store');
+Route::get('pengajuan/sukses/{kode}', [App\Http\Controllers\PengajuanGedungController::class, 'sukses'])->name('pengajuan.sukses');
+Route::get('pengajuan/cek-status', [App\Http\Controllers\PengajuanGedungController::class, 'cekStatus'])->name('pengajuan.cek_status');
+Route::post('pengajuan/cek-status', [App\Http\Controllers\PengajuanGedungController::class, 'cekStatusResult'])->name('pengajuan.cek_status_result');
 
 // ── AUTH ──────────────────────────────────────────────────────
 Auth::routes();

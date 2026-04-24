@@ -37,6 +37,7 @@ class PengajuanGedung extends Model
     protected $dates = ['deleted_at'];
 
     public $fillable = [
+        'kode_pengajuan',
         'gedung_id',
         'user_id',
         'nama_pemohon',
@@ -61,6 +62,7 @@ class PengajuanGedung extends Model
      * @var array
      */
     protected $casts = [
+        'kode_pengajuan' => 'string',
         'nama_pemohon' => 'string',
         'email_pemohon' => 'string',
         'no_telepon' => 'string',
@@ -108,5 +110,22 @@ class PengajuanGedung extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Generate kode pengajuan otomatis: PG-YYYYMMDD-XXX
+     */
+    public static function generateKode()
+    {
+        $today = now()->format('Ymd');
+        $lastToday = self::where('kode_pengajuan', 'like', "PG-{$today}-%")
+            ->orderBy('kode_pengajuan', 'desc')
+            ->first();
+
+        $urutan = $lastToday
+            ? intval(substr($lastToday->kode_pengajuan, -3)) + 1
+            : 1;
+
+        return "PG-{$today}-" . str_pad($urutan, 3, '0', STR_PAD_LEFT);
     }
 }

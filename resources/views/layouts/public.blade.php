@@ -47,6 +47,12 @@
                         <i class="fas fa-building mr-1"></i> Daftar Gedung
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ Request::is('pengajuan/cek-status*') ? 'active' : '' }}"
+                       href="{{ route('pengajuan.cek_status') }}">
+                        <i class="fas fa-search mr-1"></i> Cek Status
+                    </a>
+                </li>
             </ul>
             <ul class="navbar-nav">
                 <li class="nav-item">
