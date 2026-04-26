@@ -7,23 +7,79 @@
 <!-- Nama Fasilitas Field -->
 <div class="form-group col-sm-6">
     {!! Form::label('nama_fasilitas', 'Nama Ruangan / Fasilitas:') !!}
-    {!! Form::text('nama_fasilitas', null, ['class' => 'form-control','maxlength' => 255,'maxlength' => 255]) !!}
+    {!! Form::text('nama_fasilitas', null, ['class' => 'form-control','maxlength' => 255, 'placeholder' => 'Masukkan nama ruangan']) !!}
 </div>
 
 <!-- Kategori Field -->
 <div class="form-group col-sm-6">
     {!! Form::label('kategori', 'Kategori:') !!}
     {!! Form::select('kategori', [
-        'Ruangan' => 'Ruangan',
-        'Kelas' => 'Kelas',
-        'Laboratorium' => 'Laboratorium',
-        'Fasilitas Umum' => 'Fasilitas Umum',
-        'Lainnya' => 'Lainnya'
-    ], null, ['class' => 'form-control custom-select']) !!}
+        'Ruang Kelas' => 'Ruang Kelas',
+        'Post Penjagaan' => 'Post Penjagaan',
+        'Ruang Kuliah Umum' => 'Ruang Kuliah Umum',
+        'Perpustakaan' => 'Perpustakaan',
+        'Kepala Ruangan / Pengurus' => 'Kepala Ruangan / Pengurus',
+        'Ruangan Sekretariatan / Administrasi' => 'Ruangan Sekretariatan / Administrasi'
+    ], null, ['class' => 'form-control custom-select', 'placeholder' => 'Pilih Kategori']) !!}
 </div>
 
 <!-- Keterangan Field -->
 <div class="form-group col-sm-12 col-lg-12">
     {!! Form::label('keterangan', 'Keterangan:') !!}
-    {!! Form::textarea('keterangan', null, ['class' => 'form-control', 'rows' => 3]) !!}
+    {!! Form::textarea('keterangan', null, ['class' => 'form-control', 'rows' => 3, 'placeholder' => 'Keterangan tambahan (opsional)']) !!}
 </div>
+
+<!-- Koordinat -->
+<div class="form-group col-sm-6">
+    {!! Form::label('latitude', 'Latitude:') !!}
+    {!! Form::text('latitude', null, ['class' => 'form-control', 'id' => 'input_lat_ruangan', 'placeholder' => 'contoh: -0.53597801']) !!}
+</div>
+
+<div class="form-group col-sm-6">
+    {!! Form::label('longitude', 'Longitude:') !!}
+    {!! Form::text('longitude', null, ['class' => 'form-control', 'id' => 'input_lng_ruangan', 'placeholder' => 'contoh: 117.12345243']) !!}
+</div>
+
+<!-- Peta Pilih Koordinat -->
+<div class="form-group col-sm-12">
+    <label>Klik peta untuk menentukan lokasi ruangan:</label>
+    <div id="map-picker-ruangan" style="height: 350px; border-radius: 8px; border: 1px solid #ced4da;"></div>
+    <small class="text-muted">Klik pada peta untuk mengisi koordinat secara otomatis. Marker bisa digeser.</small>
+</div>
+
+<!-- Foto Ruangan Field -->
+<div class="form-group col-sm-12">
+    {!! Form::label('foto_ruangan', 'Foto Ruangan:') !!}
+    <div class="custom-file">
+        {!! Form::file('foto_ruangan', ['class' => 'custom-file-input', 'id' => 'foto_ruangan', 'accept' => 'image/*']) !!}
+        <label class="custom-file-label" for="foto_ruangan">Pilih foto ruangan...</label>
+    </div>
+    <small class="text-muted">Format: JPG, PNG, WEBP. Maks 2MB.</small>
+
+    <!-- Preview foto saat ini (edit mode) -->
+    @if(isset($gedungFasilitas) && $gedungFasilitas->foto_ruangan)
+        <div class="mt-2">
+            <p class="mb-1"><strong>Foto saat ini:</strong></p>
+            <img src="{{ asset($gedungFasilitas->foto_ruangan) }}"
+                 alt="Foto Ruangan"
+                 class="img-thumbnail"
+                 style="max-height: 150px;">
+        </div>
+    @endif
+
+    <div id="preview-ruangan" class="mt-2" style="display:none;">
+        <p class="mb-1"><strong>Preview:</strong></p>
+        <img id="img-preview-ruangan" src="#" alt="Preview" class="img-thumbnail" style="max-height: 150px;">
+    </div>
+</div>
+
+@push('page_css')
+<!-- Leaflet CSS untuk peta picker -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+@endpush
+
+@push('page_scripts')
+<!-- Leaflet JS untuk peta picker -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ asset('js/admin-ruangan-fields.js') }}"></script>
+@endpush
