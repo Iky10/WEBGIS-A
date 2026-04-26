@@ -1,0 +1,93 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class PengajuanGedung extends Model
+{
+    use SoftDeletes, HasFactory;
+
+    public $table = 'pengajuan_gedungs';
+
+    protected $dates = ['deleted_at'];
+
+    public $fillable = [
+        'kode_pengajuan',
+        'gedung_id',
+        'user_id',
+        'nama_pemohon',
+        'email_pemohon',
+        'no_telepon',
+        'asal_instansi',
+        'jenis_kegiatan',
+        'nama_kegiatan',
+        'tanggal_mulai',
+        'tanggal_selesai',
+        'jam_mulai',
+        'jam_selesai',
+        'jumlah_peserta',
+        'keperluan',
+        'status',
+        'catatan_admin',
+    ];
+
+    protected $casts = [
+        'nama_pemohon'   => 'string',
+        'email_pemohon'  => 'string',
+        'no_telepon'     => 'string',
+        'asal_instansi'  => 'string',
+        'jenis_kegiatan' => 'string',
+        'nama_kegiatan'  => 'string',
+        'tanggal_mulai'  => 'date',
+        'tanggal_selesai' => 'date',
+        'jumlah_peserta' => 'integer',
+    ];
+
+    public static $rules = [
+        'gedung_id'       => 'required|exists:gedungs,id',
+        'nama_pemohon'    => 'required|string|max:255',
+        'email_pemohon'   => 'required|email|max:255',
+        'no_telepon'      => 'required|string|max:20',
+        'asal_instansi'   => 'required|string|max:255',
+        'jenis_kegiatan'  => 'required|string|max:255',
+        'nama_kegiatan'   => 'required|string|max:255',
+        'tanggal_mulai'   => 'required|date',
+        'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+        'jam_mulai'       => 'required',
+        'jam_selesai'     => 'required',
+        'jumlah_peserta'  => 'nullable|integer|min:1',
+    ];
+
+    /**
+     * Generate kode pengajuan otomatis: PG-YYYYMMDD-XXX
+     */
+    public static function generateKode()
+    {
+        $today = now()->format('Ymd');
+        $prefix = "PG-{$today}-";
+        $last = static::where('kode_pengajuan', 'like', "{$prefix}%")
+            ->orderBy('kode_pengajuan', 'desc')
+            ->first();
+
+        $nextNum = $last
+            ? ((int) substr($last->kode_pengajuan, -3)) + 1
+            : 1;
+
+        return $prefix . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+    }
+
+    // ── Relasi ──
+
+    public function gedung()
+    {
+        return $this->belongsTo(Gedung::class, 'gedung_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+}

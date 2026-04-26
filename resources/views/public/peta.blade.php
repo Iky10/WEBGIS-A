@@ -188,6 +188,13 @@
                     <button id="sbBtnPhotos" class="sb-cta-btn"><i class="fas fa-images"></i> Lihat Foto</button>
                 </div>
 
+                <div style="margin-bottom:16px;">
+                    <a id="sbBtnPengajuan" href="{{ route('pengajuan_gedungs.create') }}"
+                       class="sb-cta-btn" style="display:block; text-align:center; text-decoration:none; padding:10px; background:var(--accent); color:#fff; border-radius:8px; font-weight:700; font-size:0.82rem;">
+                        <i class="fas fa-file-alt"></i> Ajukan Penggunaan Gedung
+                    </a>
+                </div>
+
                 <div id="sbGallery" class="sb-gallery" style="display:none;">
                     <div class="sb-sec-title">Galeri Foto</div>
                     <div id="sbGalleryGrid" class="sb-gallery-grid">

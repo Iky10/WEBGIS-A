@@ -7,6 +7,9 @@
     </a>
 </li>
 
+{{-- ═══ Menu Khusus Admin ═══ --}}
+@if(Auth::user()->isAdmin())
+
 {{-- Menu Gedung --}}
 <li class="nav-item">
     <a href="{{ route('gedungs.index') }}"
@@ -15,15 +18,6 @@
         <p>Data Gedung</p>
     </a>
 </li>
-
-<!--
-<li class="nav-item">
-    <a href="{{ route('webgis.index') }}"
-       class="nav-link {{ Request::is('webgis*') ? 'active' : '' }}">
-        <i class="nav-icon fas fa-map-marked-alt"></i>
-        <p>WebGIS Peta</p>
-    </a>
-</li>-->
 
 {{-- Menu Fasilitas & Ruangan --}}
 <li class="nav-item">
@@ -40,6 +34,28 @@
        class="nav-link {{ Request::is('jadwal_ruangans*') ? 'active' : '' }}">
         <i class="nav-icon far fa-calendar-alt"></i>
         <p>Jadwal Ruangan</p>
+    </a>
+</li>
+
+{{-- Menu Pengajuan Gedung (Semua Pengajuan) --}}
+<li class="nav-item">
+    <a href="{{ route('pengajuan_gedungs.index') }}"
+       class="nav-link {{ Request::is('pengajuan_gedungs') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-file-alt"></i>
+        <p>Pengajuan Gedung</p>
+    </a>
+</li>
+
+@endif
+
+{{-- ═══ Menu Semua User ═══ --}}
+
+{{-- Riwayat Pengajuan Saya --}}
+<li class="nav-item">
+    <a href="{{ route('pengajuan_gedungs.riwayat') }}"
+       class="nav-link {{ Request::is('pengajuan-gedung/riwayat*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-history"></i>
+        <p>Riwayat Pengajuan</p>
     </a>
 </li>
 

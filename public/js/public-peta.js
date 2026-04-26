@@ -984,6 +984,13 @@
                 document.getElementById('sbName').textContent = p.nama_gedung;
                 document.getElementById('sbAddr').textContent = p.alamat || '-';
 
+                // Update pengajuan button href with gedung_id
+                var pengajuanBtn = document.getElementById('sbBtnPengajuan');
+                if (pengajuanBtn) {
+                    var baseUrl = pengajuanBtn.getAttribute('href').split('?')[0];
+                    pengajuanBtn.setAttribute('href', baseUrl + '?gedung_id=' + p.id);
+                }
+
 
                 // Deskripsi
                 document.getElementById('sbDesc').innerHTML = p.deskripsi || '-';
