@@ -43,6 +43,15 @@
     </a>
 </li>
 
+{{-- Menu Jadwal Semester --}}
+<li class="nav-item">
+    <a href="{{ route('jadwal_semester.index') }}"
+       class="nav-link {{ Request::is('jadwal_semester*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-file-image"></i>
+        <p>Jadwal Semester</p>
+    </a>
+</li>
+
 {{-- Kembali ke Publik --}}
 <li class="nav-item">
     <a href="{{ route('publik.home') }}"

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Gedung;
 use App\Models\GambarGedung;
+use App\Models\GedungFasilitas;
 use App\Models\JadwalRuangan;
+use App\Models\JadwalSemester;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -66,6 +68,26 @@ class PublikController extends Controller
     }
 
     /**
+     * API untuk mengambil data jadwal semester per gedung (dipanggil via AJAX di popup/sidebar Peta)
+     */
+    public function apiJadwalSemester($id)
+    {
+        $gedung = Gedung::with('jadwalSemester')->find($id);
+
+        if (!$gedung) {
+            return response()->json(['success' => false, 'message' => 'Gedung tidak ditemukan'], 404);
+        }
+
+        // Return array of jadwal semester, sorted by semester number
+        $jadwals = $gedung->jadwalSemester->sortBy('semester')->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $jadwals
+        ]);
+    }
+
+    /**
      * Detail satu gedung (API).
      */
     public function apiDetail($id)
@@ -113,6 +135,9 @@ class PublikController extends Controller
                 'nama_fasilitas' => $f->nama_fasilitas,
                 'kategori' => $f->kategori,
                 'keterangan' => $f->keterangan,
+                'latitude' => $f->latitude,
+                'longitude' => $f->longitude,
+                'foto_ruangan' => $f->foto_ruangan ? asset($f->foto_ruangan) : null,
                 'is_aktif' => $jadwalAktif // true = sedang dipakai, false = kosong
             ];
         });

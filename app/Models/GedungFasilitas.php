@@ -35,6 +35,11 @@ class GedungFasilitas extends Model
         return $this->belongsTo(Gedung::class, 'gedung_id');
     }
 
+    public function jadwalRuangans()
+    {
+        return $this->hasMany(JadwalRuangan::class, 'gedung_fasilitas_id');
+    }
+
     public function getStatusDipakaiAttribute()
     {
         $hariMap = [
