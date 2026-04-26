@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Flash;
-use Response;
 
 class PengajuanGedungController extends AppBaseController
 {
@@ -26,16 +25,11 @@ class PengajuanGedungController extends AppBaseController
     }
 
     /**
-     * Admin: Daftar semua pengajuan
+     * Admin: Daftar semua pengajuan.
+     * Dilindungi oleh middleware 'admin' di routes/web.php.
      */
-    public function index(Request $request)
+    public function index()
     {
-        // Hanya admin yang boleh lihat semua pengajuan
-        if (!Auth::user()->isAdmin()) {
-            Flash::error('Akses ditolak.');
-            return redirect(route('pengajuan_gedungs.riwayat'));
-        }
-
         $pengajuanGedungs = PengajuanGedung::with(['gedung', 'user'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -63,7 +57,7 @@ class PengajuanGedungController extends AppBaseController
      */
     public function store(CreatePengajuanGedungRequest $request)
     {
-        $input = $request->all();
+        $input = $request->validated();
         $input['user_id'] = Auth::id();
         $input['kode_pengajuan'] = PengajuanGedung::generateKode();
         $input['status'] = 'diproses';
@@ -110,25 +104,18 @@ class PengajuanGedungController extends AppBaseController
     }
 
     /**
-     * Admin: Update status pengajuan (disetujui/ditolak)
+     * Admin: Update status pengajuan (disetujui/ditolak).
+     * Dilindungi oleh middleware 'admin' di routes/web.php.
      */
     public function updateStatus(Request $request, $id)
     {
-        // Hanya admin yang boleh update status
-        if (!Auth::user()->isAdmin()) {
-            Flash::error('Akses ditolak.');
-            return redirect(route('pengajuan_gedungs.riwayat'));
-        }
-
-        $request->validate([
-            'status' => 'required|in:disetujui,ditolak',
+        $validated = $request->validate([
+            'status'        => 'required|in:disetujui,ditolak',
             'catatan_admin' => 'nullable|string|max:1000',
         ]);
 
         $pengajuan = PengajuanGedung::with('gedung')->findOrFail($id);
-        $pengajuan->status = $request->status;
-        $pengajuan->catatan_admin = $request->catatan_admin;
-        $pengajuan->save();
+        $pengajuan->update($validated);
 
         // Kirim email notifikasi ke pemohon
         try {
@@ -137,7 +124,7 @@ class PengajuanGedungController extends AppBaseController
             Log::warning('Gagal mengirim email status pengajuan: ' . $e->getMessage());
         }
 
-        $statusLabel = $request->status === 'disetujui' ? 'disetujui' : 'ditolak';
+        $statusLabel = $validated['status'] === 'disetujui' ? 'disetujui' : 'ditolak';
         Flash::success("Pengajuan {$pengajuan->kode_pengajuan} telah {$statusLabel}.");
 
         return redirect(route('pengajuan_gedungs.index'));
@@ -158,16 +145,11 @@ class PengajuanGedungController extends AppBaseController
     }
 
     /**
-     * Admin: Hapus pengajuan
+     * Admin: Hapus pengajuan.
+     * Dilindungi oleh middleware 'admin' di routes/web.php.
      */
     public function destroy($id)
     {
-        // Hanya admin yang boleh hapus
-        if (!Auth::user()->isAdmin()) {
-            Flash::error('Akses ditolak.');
-            return redirect(route('pengajuan_gedungs.riwayat'));
-        }
-
         $pengajuanGedung = $this->pengajuanGedungRepository->find($id);
 
         if (empty($pengajuanGedung)) {

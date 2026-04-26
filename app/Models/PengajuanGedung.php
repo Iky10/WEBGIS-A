@@ -12,8 +12,6 @@ class PengajuanGedung extends Model
 
     public $table = 'pengajuan_gedungs';
 
-    protected $dates = ['deleted_at'];
-
     public $fillable = [
         'kode_pengajuan',
         'gedung_id',
@@ -35,15 +33,16 @@ class PengajuanGedung extends Model
     ];
 
     protected $casts = [
-        'nama_pemohon'   => 'string',
-        'email_pemohon'  => 'string',
-        'no_telepon'     => 'string',
-        'asal_instansi'  => 'string',
-        'jenis_kegiatan' => 'string',
-        'nama_kegiatan'  => 'string',
-        'tanggal_mulai'  => 'date',
+        'nama_pemohon'    => 'string',
+        'email_pemohon'   => 'string',
+        'no_telepon'      => 'string',
+        'asal_instansi'   => 'string',
+        'jenis_kegiatan'  => 'string',
+        'nama_kegiatan'   => 'string',
+        'tanggal_mulai'   => 'date',
         'tanggal_selesai' => 'date',
-        'jumlah_peserta' => 'integer',
+        'jumlah_peserta'  => 'integer',
+        'deleted_at'      => 'datetime',
     ];
 
     public static $rules = [
