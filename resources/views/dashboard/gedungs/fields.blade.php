@@ -64,6 +64,23 @@
     </div>
 </div>
 
+<!-- Bisa Diajukan Toggle -->
+<div class="form-group col-sm-12">
+    <div class="custom-control custom-switch">
+        {!! Form::hidden('bisa_diajukan', 0) !!}
+        {!! Form::checkbox('bisa_diajukan', 1, isset($gedung) ? $gedung->bisa_diajukan : true, [
+            'class' => 'custom-control-input',
+            'id' => 'bisa_diajukan'
+        ]) !!}
+        <label class="custom-control-label" for="bisa_diajukan">
+            <strong>Gedung ini bisa diajukan penggunaannya</strong>
+        </label>
+    </div>
+    <small class="text-muted">
+        Nonaktifkan jika gedung ini tidak bisa diajukan (misal: Rektorat, Koperasi, Ruang Dosen, dll).
+    </small>
+</div>
+
 <!-- Foto Galeri Field -->
 <div class="form-group col-sm-12">
     {!! Form::label('foto_gedung', 'Foto Galeri (bisa lebih dari satu):') !!}

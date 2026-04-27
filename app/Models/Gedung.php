@@ -41,6 +41,7 @@ class Gedung extends Model
         'x',
         'y',
         'foto_utama',
+        'bisa_diajukan',
     ];
 
     /**
@@ -53,8 +54,17 @@ class Gedung extends Model
         'alamat' => 'string',
         'deskripsi' => 'string',
         'x' => 'decimal:8',
-        'y' => 'decimal:8'
+        'y' => 'decimal:8',
+        'bisa_diajukan' => 'boolean',
     ];
+
+    /**
+     * Scope: hanya gedung yang bisa diajukan penggunaan.
+     */
+    public function scopeBisaDiajukan($query)
+    {
+        return $query->where('bisa_diajukan', true);
+    }
 
     /**
      * Validation rules

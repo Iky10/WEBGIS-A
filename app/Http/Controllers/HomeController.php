@@ -15,6 +15,11 @@ class HomeController extends Controller
 
     public function index()
     {
+        // User biasa tidak boleh akses dashboard admin
+        if (!auth()->user()->isAdmin()) {
+            return redirect('/');
+        }
+
         // Statistik utama
         $totalGedung    = Gedung::count();
         $totalFoto      = GambarGedung::count();

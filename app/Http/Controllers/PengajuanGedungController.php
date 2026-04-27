@@ -43,10 +43,14 @@ class PengajuanGedungController extends AppBaseController
      */
     public function create(Request $request)
     {
-        $gedungs = Gedung::orderBy('nama_gedung')->pluck('nama_gedung', 'id');
+        $gedungs = Gedung::bisaDiajukan()->orderBy('nama_gedung')->pluck('nama_gedung', 'id');
         $selectedGedung = $request->query('gedung_id');
 
-        return view('dashboard.pengajuan_gedungs.create')
+        $view = Auth::user()->isAdmin()
+            ? 'dashboard.pengajuan_gedungs.create'
+            : 'public.pengajuan.create';
+
+        return view($view)
             ->with('gedungs', $gedungs)
             ->with('selectedGedung', $selectedGedung);
     }
@@ -99,7 +103,11 @@ class PengajuanGedungController extends AppBaseController
             return redirect(route('pengajuan_gedungs.riwayat'));
         }
 
-        return view('dashboard.pengajuan_gedungs.show')
+        $view = Auth::user()->isAdmin()
+            ? 'dashboard.pengajuan_gedungs.show'
+            : 'public.pengajuan.show';
+
+        return view($view)
             ->with('pengajuanGedung', $pengajuanGedung);
     }
 
@@ -140,7 +148,7 @@ class PengajuanGedungController extends AppBaseController
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('dashboard.pengajuan_gedungs.riwayat')
+        return view('public.pengajuan.riwayat')
             ->with('pengajuanGedungs', $pengajuanGedungs);
     }
 

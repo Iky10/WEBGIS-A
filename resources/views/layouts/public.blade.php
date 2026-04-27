@@ -49,11 +49,40 @@
                 </li>
             </ul>
             <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link btn-admin" href="{{ route('login') }}">
-                        <i class="fas fa-lock mr-1"></i> Admin
-                    </a>
-                </li>
+                @auth
+                    {{-- Menu Pengajuan untuk user yang login --}}
+                    <li class="nav-item">
+                        <a class="nav-link {{ Request::is('pengajuan-gedung*') ? 'active' : '' }}"
+                           href="{{ route('pengajuan_gedungs.riwayat') }}">
+                            <i class="fas fa-file-alt mr-1"></i> Pengajuan Saya
+                        </a>
+                    </li>
+
+                    @if(Auth::user()->isAdmin())
+                        <li class="nav-item">
+                            <a class="nav-link btn-admin" href="{{ route('home') }}">
+                                <i class="fas fa-cogs mr-1"></i> Dashboard
+                            </a>
+                        </li>
+                    @endif
+
+                    {{-- Logout --}}
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="#"
+                           onclick="event.preventDefault(); document.getElementById('logout-form-public').submit();">
+                            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                        </a>
+                        <form id="logout-form-public" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf
+                        </form>
+                    </li>
+                @else
+                    <li class="nav-item">
+                        <a class="nav-link btn-admin" href="{{ route('login') }}">
+                            <i class="fas fa-sign-in-alt mr-1"></i> Login
+                        </a>
+                    </li>
+                @endauth
             </ul>
         </div>
     </div>
