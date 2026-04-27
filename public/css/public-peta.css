@@ -898,3 +898,534 @@ html, body {
     .gis-popup { width:265px; }
     #sidebar { width:100%; }
 }
+
+/* ═══════════════════════════════════════════
+   LEGEND SEPARATOR
+═══════════════════════════════════════════ */
+.leg-sep {
+    height:1px;
+    background:var(--border);
+    margin:10px 0;
+}
+
+/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════════
+   RUANG KELAS POPUP MULTI-STEP
+═══════════════════════════════════════════ */
+.ruangan-popup {
+    width:280px; /* Diperbesar sedikit */
+    background:var(--surface-hi);
+    border:1px solid var(--border-hi);
+    border-radius:var(--radius-md);
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,.6);
+    font-family:'Plus Jakarta Sans',sans-serif;
+}
+
+.rp-slider {
+    display:flex;
+    width:300%; /* 3 panel x 100% */
+    transition:transform 0.25s ease-in-out; /* Animasi dipercepat */
+}
+
+/* 3-Step Navigation */
+.rp-slider.step-1 { transform:translateX(0); }
+.rp-slider.step-2 { transform:translateX(-33.333%); }
+.rp-slider.step-3 { transform:translateX(-66.666%); }
+
+.rp-panel {
+    width:33.333%; /* Sepertiga dari lebar total */
+    flex-shrink:0;
+}
+
+/* Panel 1 */
+.rp-header {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 14px;
+    border-bottom:1px solid var(--border);
+    background:rgba(255,255,255,.02);
+}
+.rp-icon {
+    width:36px; height:36px;
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+    flex-shrink:0;
+}
+.rp-header-text {
+    flex:1;
+    min-width:0;
+}
+.rp-name {
+    font-size:.9rem;
+    font-weight:800;
+    color:var(--text);
+    line-height:1.2;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.rp-kategori {
+    font-size:.65rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    color:var(--muted);
+}
+.rp-body {
+    padding:12px 14px;
+}
+.rp-gedung {
+    font-size:.75rem;
+    color:var(--muted);
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+.rp-gedung i {
+    color:var(--accent);
+    font-size:.7rem;
+}
+.rp-img {
+    width:100%;
+    height:140px; /* Diperbesar */
+    object-fit:cover;
+    border-radius:8px;
+    border:1px solid var(--border);
+    margin-bottom:10px;
+}
+.rp-status {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:12px;
+}
+.rp-status-dot {
+    width:8px; height:8px;
+    border-radius:50%;
+}
+.rp-status-text {
+    font-size:.75rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+}
+.rp-keterangan {
+    font-size:.75rem;
+    color:var(--muted);
+    line-height:1.4;
+    margin-bottom:14px;
+}
+.rp-btn-detail {
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    background:linear-gradient(135deg, #3b82f6, #2563eb);
+    color:#fff;
+    border:none;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:.8rem;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .2s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    box-shadow:0 4px 12px rgba(59,130,246,.3);
+}
+.rp-btn-detail:hover {
+    transform:translateY(-1px);
+    box-shadow:0 6px 16px rgba(59,130,246,.4);
+}
+
+/* Panel 2 (Detail Ruangan) Specific */
+.rp-detail-card {
+    background:rgba(255,255,255,.03);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+    margin-bottom:10px;
+}
+.rp-detail-label {
+    font-size:.65rem;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:4px;
+}
+.rp-detail-value {
+    font-size:.8rem;
+    color:var(--text);
+    line-height:1.4;
+}
+.rp-btn-jadwal {
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    background:rgba(16,185,129,.1);
+    color:#34d399;
+    border:1px solid rgba(16,185,129,.2);
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:.8rem;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .2s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+}
+.rp-btn-jadwal:hover {
+    background:rgba(16,185,129,.2);
+    color:#6ee7b7;
+    transform:translateY(-1px);
+}
+.mt-3 { margin-top: 12px; }
+
+/* Header & Body for Panel 2 & 3 */
+.rp-detail-header {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 14px;
+    border-bottom:1px solid var(--border);
+    background:rgba(255,255,255,.02);
+}
+.rp-btn-back {
+    background:rgba(255,255,255,.05);
+    border:1px solid var(--border);
+    color:var(--text);
+    width:32px; height:32px;
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:background .2s;
+}
+.rp-btn-back:hover {
+    background:rgba(255,255,255,.1);
+}
+.rp-detail-title {
+    font-size:.9rem;
+    font-weight:800;
+    color:var(--text);
+}
+.rp-detail-body {
+    padding:14px;
+    max-height:300px;
+    overflow-y:auto;
+}
+
+/* Semester Tabs */
+.rp-semester-tabs {
+    display:flex;
+    gap:6px;
+    margin-bottom:16px;
+    overflow-x:auto;
+    padding-bottom:4px;
+}
+.rp-semester-tabs::-webkit-scrollbar { height: 4px; }
+.rp-sem-tab {
+    background:rgba(255,255,255,.05);
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:6px 12px;
+    border-radius:100px;
+    font-size:.7rem;
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:all .2s;
+}
+.rp-sem-tab.active {
+    background:#3b82f6;
+    border-color:#3b82f6;
+    color:#fff;
+}
+
+/* Semester Contents */
+.rp-sem-content {
+    display:none;
+    animation:fadeIn 0.3s ease;
+}
+.rp-sem-content.active {
+    display:block;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+.rp-tahun-ajaran {
+    font-size:.7rem;
+    color:#fbbf24;
+    background:rgba(245,158,11,.1);
+    padding:4px 8px;
+    border-radius:6px;
+    display:inline-block;
+    margin-bottom:10px;
+}
+.rp-jadwal-img {
+    width:100%;
+    border-radius:8px;
+    border:1px solid var(--border);
+    cursor:zoom-in;
+    margin-bottom:10px;
+}
+.rp-preview-box {
+    background:rgba(255,255,255,.02);
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:20px;
+    text-align:center;
+    font-size:.75rem;
+    color:var(--muted);
+    margin-bottom:10px;
+}
+.rp-btn-download {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    width:100%;
+    padding:8px;
+    background:rgba(34,197,94,.1);
+    color:#4ade80;
+    border:1px solid rgba(34,197,94,.2);
+    border-radius:6px;
+    font-size:.75rem;
+    font-weight:700;
+    text-decoration:none;
+    transition:all .2s;
+}
+.rp-btn-download:hover {
+    background:rgba(34,197,94,.2);
+    color:#86efac;
+    text-decoration:none;
+}
+
+/* Lightbox */
+.rk-lightbox {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.9);
+    z-index:99999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s ease;
+}
+.rk-lightbox.show {
+    opacity:1;
+    pointer-events:all;
+}
+.rk-lightbox img {
+    max-width:90%;
+    max-height:90vh;
+    border-radius:8px;
+    transform:scale(0.9);
+    transition:transform .3s ease;
+}
+.rk-lightbox.show img {
+    transform:scale(1);
+}
+.rk-lightbox-close {
+    position:absolute;
+    top:20px;
+    right:20px;
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.2);
+    color:#fff;
+    width:40px; height:40px;
+    border-radius:50%;
+    font-size:1.2rem;
+    cursor:pointer;
+}
+
+/* Sidebar Jadwal Toggle */
+.js-toggle-container {
+    display:flex;
+    background:rgba(255,255,255,.03);
+    border-radius:8px;
+    padding:4px;
+    border:1px solid var(--border);
+}
+.js-toggle-btn {
+    flex:1;
+    padding:6px;
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:0.7rem;
+    font-weight:700;
+    border-radius:6px;
+    cursor:pointer;
+    transition:all .2s;
+    font-family:'Plus Jakarta Sans',sans-serif;
+}
+.js-toggle-btn.active {
+    background:var(--accent);
+    color:#fff;
+    box-shadow:0 2px 8px rgba(59,130,246,.3);
+}
+
+/* Popup Gallery (Panel 3) */
+/* Popup Carousel */
+.rp-carousel {
+    position:relative;
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    background:#000;
+    min-height:160px;
+}
+.rp-carousel-slide {
+    width:100%;
+    height:180px;
+    object-fit:cover;
+    display:none;
+    cursor:zoom-in;
+    transition:opacity .3s ease;
+}
+.rp-carousel-slide.active {
+    display:block;
+}
+.rp-carousel-nav {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    padding:10px 0;
+}
+.rp-carousel-btn {
+    width:32px; height:32px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.05);
+    color:var(--text);
+    font-size:0.8rem;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all .2s;
+}
+.rp-carousel-btn:hover {
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+}
+.rp-carousel-counter {
+    font-size:0.8rem;
+    font-weight:700;
+    color:var(--text);
+    min-width:50px;
+    text-align:center;
+}
+
+/* Fasilitas Item & Expand */
+.sb-fas-item {
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px;
+    transition:all 0.3s ease;
+}
+.sb-fas-expand-btn {
+    display:block;
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    background:rgba(255,255,255,.03);
+    border:1px dashed var(--border);
+    border-radius:8px;
+    color:var(--accent);
+    font-size:0.8rem;
+    font-weight:700;
+    cursor:pointer;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    transition:all .2s;
+}
+.sb-fas-expand-btn:hover {
+    background:var(--accent-dim);
+    border-color:var(--accent);
+}
+
+/* Jadwal Dropdown */
+.sb-jadwal-dropdown {
+    width:100%;
+    padding:10px 12px;
+    background:rgba(255,255,255,.05);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color:var(--text);
+    font-size:0.82rem;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-weight:600;
+    cursor:pointer;
+    appearance:none;
+    -webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    transition:all .2s;
+}
+.sb-jadwal-dropdown:focus {
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-dim);
+}
+.sb-jadwal-dropdown option {
+    background:var(--sidebar);
+    color:var(--text);
+}
+
+/* Sidebar Gallery Carousel */
+.sb-gallery-carousel {
+    position:relative;
+}
+.sb-gallery-slides {
+    position:relative;
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    background:#000;
+    min-height:140px;
+}
+.sb-gallery-slide {
+    width:100%;
+    height:200px;
+    object-fit:cover;
+    display:none;
+    cursor:zoom-in;
+}
+.sb-gallery-slide.active {
+    display:block;
+}
+.sb-gallery-nav {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    padding:10px 0;
+}
+
+/* Tooltip Ruangan (Hover) */
+.ruangan-tooltip {
+    background: #ffffff;
+    color: #1e293b;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+/* Optional: Make the leaflet tooltip triangle white */
+.leaflet-tooltip.ruangan-tooltip::before {
+    border-top-color: #ffffff;
+}

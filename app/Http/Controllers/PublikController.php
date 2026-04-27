@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Gedung;
 use App\Models\GambarGedung;
 use App\Models\JadwalRuangan;
+use App\Models\JadwalSemester;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -63,6 +64,37 @@ class PublikController extends Controller
         $fotos  = GambarGedung::where('gedung_id', $id)->orderBy('urutan')->get();
 
         return view('public.gedung.show', compact('gedung', 'fotos'));
+    }
+
+    /**
+     * API: ambil semua jadwal semester untuk gedung tertentu.
+     * Dipanggil via AJAX dari popup peta / halaman detail gedung.
+     */
+    public function apiJadwalSemester($id)
+    {
+        $gedung = Gedung::with('jadwalSemester')->find($id);
+
+        if (!$gedung) {
+            return response()->json(['success' => false, 'message' => 'Gedung tidak ditemukan'], 404);
+        }
+
+        $jadwals = $gedung->jadwalSemester
+            ->sortBy('semester')
+            ->values()
+            ->map(function ($j) {
+                return [
+                    'id'           => $j->id,
+                    'semester'     => $j->semester,
+                    'tahun_ajaran' => $j->tahun_ajaran,
+                    'file_jadwal'  => $j->file_jadwal ? asset($j->file_jadwal) : null,
+                    'keterangan'   => $j->keterangan,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $jadwals,
+        ]);
     }
 
     /**
