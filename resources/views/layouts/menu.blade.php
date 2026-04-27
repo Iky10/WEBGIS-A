@@ -67,15 +67,6 @@
 
 {{-- ═══ Menu Semua User ═══ --}}
 
-{{-- Riwayat Pengajuan Saya --}}
-<li class="nav-item">
-    <a href="{{ route('pengajuan_gedungs.riwayat') }}"
-       class="nav-link {{ Request::is('pengajuan-gedung/riwayat*') ? 'active' : '' }}">
-        <i class="nav-icon fas fa-history"></i>
-        <p>Riwayat Pengajuan</p>
-    </a>
-</li>
-
 {{-- Kembali ke Publik --}}
 <li class="nav-item">
     <a href="{{ route('publik.home') }}"
