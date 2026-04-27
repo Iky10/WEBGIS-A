@@ -289,6 +289,25 @@ html, body {
 }
 .t-btn:hover .t-btn-tip { opacity:1; }
 
+.t-btn-text {
+    width: auto;
+    padding: 0 16px;
+    gap: 8px;
+    font-weight: 800;
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 4px 14px var(--accent-glow) !important;
+}
+.t-btn-text:hover {
+    background: #2563eb !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--accent-glow) !important;
+}
+.t-btn-text .t-btn-tip {
+    display: none;
+}
+
 /* ═══════════════════════════════════════════
    FILTER PANEL
 ═══════════════════════════════════════════ */
@@ -757,6 +776,7 @@ html, body {
    ROUTING PANEL (LIEDMAN)
    ═══════════════════════════════════════════ */
 .leaflet-routing-container {
+    display: none !important;
     background: var(--surface-hi) !important;
     border: 1px solid var(--border-hi) !important;
     border-radius: var(--radius-md) !important;

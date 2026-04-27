@@ -73,9 +73,9 @@
                 @csrf
             </form>
         @else
-            <a class="t-btn" href="{{ route('login') }}">
+            <a class="t-btn t-btn-text" href="{{ route('login') }}">
                 <i class="fas fa-sign-in-alt"></i>
-                <span class="t-btn-tip">Login</span>
+                <span>Login</span>
             </a>
         @endauth
     </div>
