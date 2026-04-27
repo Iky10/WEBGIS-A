@@ -109,10 +109,18 @@
 </div>
 
 <div id="legend">
-    <div class="leg-title">Status Pemakaian</div>
+    <div class="leg-title">Status Pemakaian Gedung</div>
     <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Sedang Dipakai</div>
     <div class="leg-row"><div class="leg-dot" style="background:#6c757d;box-shadow:0 0 5px #6c757d;"></div>Kosong</div>
     <div class="leg-row"><div class="leg-dot" style="background:#475569;"></div>Tidak diketahui</div>
+    <div class="leg-sep"></div>
+    <div class="leg-title">Kategori Ruangan</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></div>Ruang Kelas</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#ef4444;box-shadow:0 0 5px #ef4444;"></div>Post Penjagaan</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#8b5cf6;box-shadow:0 0 5px #8b5cf6;"></div>Ruang Kuliah Umum</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#f59e0b;box-shadow:0 0 5px #f59e0b;"></div>Perpustakaan</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#10b981;box-shadow:0 0 5px #10b981;"></div>Kepala Ruangan</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#6366f1;box-shadow:0 0 5px #6366f1;"></div>Sekretariatan</div>
 </div>
 
 <div id="coords">Arahkan mouse ke peta</div>
@@ -183,6 +191,33 @@
                     <div id="sbFasilitas" class="sb-sec-text">Informasi fasilitas & kelas pada gedung ini belum tersedia saat ini.</div>
                 </div>
 
+                <!-- SECTION JADWAL SEMESTER -->
+                <div id="sbJadwalSemester" class="sb-section" style="display:none;">
+                    <div class="sb-sec-title" style="border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:12px;">
+                        <i class="fas fa-calendar-alt" style="color:var(--accent);"></i> Jadwal Semester
+                    </div>
+
+                    <!-- Toggle Ganjil / Genap -->
+                    <div class="js-toggle-container">
+                        <button class="js-toggle-btn active" id="btnJadwalGanjil" onclick="toggleJadwalSemester('ganjil')">Semester Ganjil</button>
+                        <button class="js-toggle-btn" id="btnJadwalGenap" onclick="toggleJadwalSemester('genap')">Semester Genap</button>
+                    </div>
+
+                    <!-- Tabs per Semester -->
+                    <div id="sbJadwalTabs" class="rp-semester-tabs" style="margin-top:10px;"></div>
+
+                    <!-- Dropdown Tahun Ajaran -->
+                    <div id="sbJadwalDropdownWrap" style="margin-top:10px; display:none;">
+                        <label style="font-size:0.75rem; color:var(--muted); font-weight:600; margin-bottom:4px; display:block;">Tahun Ajaran:</label>
+                        <select id="sbJadwalDropdown" class="sb-jadwal-dropdown" onchange="onJadwalDropdownChange()"></select>
+                    </div>
+
+                    <!-- Viewer (single preview) -->
+                    <div id="sbJadwalViewer" style="margin-top:12px;">
+                        <!-- Rendered by JS: image preview + buttons -->
+                    </div>
+                </div>
+
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
                     <button id="sbBtnRoute" class="sb-cta-btn" style="background:var(--success); box-shadow:0 6px 20px rgba(34,197,94,.35);"><i class="fas fa-directions"></i> Rute ke Sini</button>
                     <button id="sbBtnPhotos" class="sb-cta-btn"><i class="fas fa-images"></i> Lihat Foto</button>
@@ -197,8 +232,15 @@
 
                 <div id="sbGallery" class="sb-gallery" style="display:none;">
                     <div class="sb-sec-title">Galeri Foto</div>
-                    <div id="sbGalleryGrid" class="sb-gallery-grid">
-                        <!-- Fotos inserted here -->
+                    <div class="sb-gallery-carousel">
+                        <div id="sbGallerySlides" class="sb-gallery-slides">
+                            <!-- Foto slides inserted here by JS -->
+                        </div>
+                        <div class="sb-gallery-nav" id="sbGalleryNav" style="display:none;">
+                            <button class="rp-carousel-btn" onclick="sbGalleryNav(-1)"><i class="fas fa-chevron-left"></i></button>
+                            <span class="rp-carousel-counter" id="sbGalleryCounter">1 / 1</span>
+                            <button class="rp-carousel-btn" onclick="sbGalleryNav(1)"><i class="fas fa-chevron-right"></i></button>
+                        </div>
                     </div>
                 </div>
 
@@ -212,6 +254,8 @@
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 <script>
     window.WEBGIS_URL = '{{ route("webgis.geojson") }}';
+    window.WEBGIS_RUANGAN_URL = '{{ route("webgis.geojson.ruangan") }}';
+    window.API_JADWAL_SEMESTER_URL = '{{ url('/api/gedung') }}';
 </script>
 <script src="{{ asset('js/public-peta.js') }}"></script>
 
