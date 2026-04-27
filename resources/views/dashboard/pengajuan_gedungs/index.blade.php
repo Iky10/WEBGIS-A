@@ -84,11 +84,18 @@
         transition: none !important;
         transform: none !important;
     }
+    #filter-dropdown-pengajuan {
+        position: relative;
+    }
     #filter-dropdown-pengajuan .dropdown-menu {
         transition: none !important;
         transform: none !important;
         will-change: auto;
-        margin-top: 2px;
+        top: 100% !important;
+        left: auto !important;
+        right: 0;
+        margin-top: 4px !important;
+        z-index: 1050;
     }
     #filter-dropdown-pengajuan .dropdown-menu.show {
         opacity: 1;
