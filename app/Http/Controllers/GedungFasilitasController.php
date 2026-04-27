@@ -187,4 +187,56 @@ class GedungFasilitasController extends AppBaseController
 
         return redirect(route('gedung_fasilitas.index'));
     }
+
+    /**
+     * Toggle the status of the specified GedungFasilitas.
+     */
+    public function toggleStatus($id)
+    {
+        $gedungFasilitas = $this->gedungFasilitasRepository->find($id);
+
+        if (empty($gedungFasilitas)) {
+            return response()->json(['success' => false, 'message' => 'Fasilitas tidak ditemukan'], 404);
+        }
+
+        $gedungFasilitas->is_aktif = !$gedungFasilitas->is_aktif;
+        $gedungFasilitas->save();
+
+        $statusText = $gedungFasilitas->is_aktif ? 'Aktif' : 'Tidak Aktif';
+        return response()->json([
+            'success' => true,
+            'message' => 'Status berhasil diubah menjadi ' . $statusText,
+            'is_aktif' => $gedungFasilitas->is_aktif
+        ]);
+    }
+
+    /**
+     * Remove multiple GedungFasilitas from storage.
+     */
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->ids;
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada data yang dipilih'], 400);
+        }
+
+        $deletedCount = 0;
+        foreach ($ids as $id) {
+            $gedungFasilitas = $this->gedungFasilitasRepository->find($id);
+            if ($gedungFasilitas) {
+                // Hapus foto ruangan dari storage
+                if ($gedungFasilitas->foto_ruangan && file_exists(public_path($gedungFasilitas->foto_ruangan))) {
+                    unlink(public_path($gedungFasilitas->foto_ruangan));
+                }
+                $this->gedungFasilitasRepository->delete($id);
+                $deletedCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $deletedCount . ' data fasilitas berhasil dihapus.'
+        ]);
+    }
 }

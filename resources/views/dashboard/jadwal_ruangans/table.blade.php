@@ -1,4 +1,3 @@
-<div class="table-responsive">
     <table class="table" id="jadwalRuangans-table">
         <thead>
         <tr>
@@ -22,10 +21,10 @@
                     {!! Form::open(['route' => ['jadwal_ruangans.destroy', $jadwal->id], 'method' => 'delete']) !!}
                     <div class='btn-group'>
                         <a href="{{ route('jadwal_ruangans.edit', [$jadwal->id]) }}"
-                           class='btn btn-default btn-xs'>
+                           class='btn btn-default btn-sm'>
                             <i class="far fa-edit"></i>
                         </a>
-                        {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'button', 'class' => 'btn btn-danger btn-xs', 'onclick' => 'confirmDelete(this.closest("form"), "Yakin ingin menghapus jadwal ruangan ini?")']) !!}
+                        {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'button', 'class' => 'btn btn-danger btn-sm', 'onclick' => 'confirmDelete(this.closest("form"), "Yakin ingin menghapus jadwal ruangan ini?")']) !!}
                     </div>
                     {!! Form::close() !!}
                 </td>
@@ -33,4 +32,3 @@
         @endforeach
         </tbody>
     </table>
-</div>

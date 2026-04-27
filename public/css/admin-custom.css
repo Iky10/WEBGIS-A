@@ -103,22 +103,58 @@
 }
 
 /* --- DataTables Override --- */
-.dataTables_wrapper .dataTables_filter input {
-    border-radius: 4px;
-    border: 1px solid #ced4da;
-    padding: 4px 10px;
+
+/* Length menu: label + select sejajar */
+.dataTables_wrapper .dataTables_length label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+    font-weight: 400;
     font-size: 0.85rem;
-    margin-left: 6px;
+    white-space: nowrap;
 }
 .dataTables_wrapper .dataTables_length select {
     border-radius: 4px;
     border: 1px solid #ced4da;
-    padding: 4px 24px 4px 8px;
+    padding: 5px 28px 5px 10px;
     font-size: 0.85rem;
-    min-width: 65px;
-    appearance: auto;
-    -webkit-appearance: auto;
+    width: 60px;
+    margin: 0 0.4rem;
+    /* Custom arrow — angka rapat dengan panah */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23495057' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 10px 6px;
+    cursor: pointer;
 }
+
+/* Search input */
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    margin-left: 6px;
+}
+
+/* Filter area: flexbox agar tombol sejajar search */
+.dataTables_wrapper .dataTables_filter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+.dataTables_wrapper .dataTables_filter label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* Info & Pagination */
 .dataTables_wrapper .dataTables_info {
     font-size: 0.8rem;
     color: #6c757d;
@@ -129,6 +165,24 @@
     margin: 0 2px;
     font-size: 0.82rem;
 }
+
+/* DataTables custom focus states */
+.dataTables_wrapper .form-control:focus, 
+.dataTables_wrapper .custom-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Animasi Caret (panah) pada Dropdown Filter */
+.dataTables_wrapper .dropdown-toggle::after {
+    transition: transform 0.3s ease;
+    vertical-align: middle;
+}
+.dataTables_wrapper .dropdown.show .dropdown-toggle::after {
+    transform: rotate(180deg);
+}
+
+/* Spacing wrapper */
 .dataTables_wrapper .dataTables_filter,
 .dataTables_wrapper .dataTables_length {
     margin-bottom: 0.75rem;
@@ -137,6 +191,25 @@
 .dataTables_wrapper .dataTables_info,
 .dataTables_wrapper .dataTables_paginate {
     padding: 0.5rem 0.75rem;
+}
+
+/* --- Dropdown Animation --- */
+.dropdown-menu {
+    animation: adminDropFadeIn 0.2s ease-out;
+    margin-top: 4px;
+}
+@keyframes adminDropFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Caret toggle rotation */
+.dropdown-toggle::after {
+    transition: transform 0.25s ease;
+}
+.show > .dropdown-toggle::after,
+.dropdown.show .dropdown-toggle::after {
+    transform: rotate(180deg);
 }
 
 /* --- Sidebar Badge --- */
