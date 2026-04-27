@@ -65,6 +65,48 @@
 
     </div>
 
+    {{-- Baris 1b: Statistik Pengajuan --}}
+    <div class="row">
+        <div class="col-lg-4 col-sm-6">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3>{{ $totalPengajuan }}</h3>
+                    <p>Total Pengajuan</p>
+                </div>
+                <div class="icon"><i class="fas fa-file-alt"></i></div>
+                <a href="{{ route('pengajuan_gedungs.index') }}" class="small-box-footer">
+                    Lihat Semua <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-sm-6">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>{{ $pengajuanMenunggu }}</h3>
+                    <p>Menunggu Persetujuan</p>
+                </div>
+                <div class="icon"><i class="fas fa-hourglass-half"></i></div>
+                <a href="{{ route('pengajuan_gedungs.index') }}" class="small-box-footer">
+                    Proses Sekarang <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-sm-6">
+            <div class="small-box bg-teal">
+                <div class="inner">
+                    <h3>{{ $pengajuanDisetujui }}</h3>
+                    <p>Disetujui Hari Ini</p>
+                </div>
+                <div class="icon"><i class="fas fa-check-double"></i></div>
+                <a href="{{ route('pengajuan_gedungs.index') }}" class="small-box-footer">
+                    Lihat Detail <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
     {{-- Baris 2: Grafik + Tabel Terbaru --}}
     <div class="row">
 
@@ -182,6 +224,58 @@
         </div>
 
     </div>
+
+    {{-- Baris 3: Pengajuan Menunggu Persetujuan --}}
+    @if($pengajuanTerbaru->isNotEmpty())
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-outline card-warning">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle text-warning"></i> Pengajuan Menunggu Persetujuan
+                        <span class="badge badge-warning text-white ml-1">{{ $pengajuanMenunggu }}</span>
+                    </h5>
+                    <div class="card-tools">
+                        <a href="{{ route('pengajuan_gedungs.index') }}" class="btn btn-sm btn-default">
+                            Kelola Semua <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="pl-3">Kode</th>
+                                <th>Pemohon</th>
+                                <th>Gedung</th>
+                                <th>Kegiatan</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($pengajuanTerbaru as $pj)
+                            <tr>
+                                <td class="pl-3"><strong>{{ $pj->kode_pengajuan }}</strong></td>
+                                <td>{{ $pj->nama_pemohon }}</td>
+                                <td>{{ $pj->gedung->nama_gedung ?? '-' }}</td>
+                                <td>{{ $pj->nama_kegiatan }}</td>
+                                <td>{{ $pj->tanggal_mulai->format('d/m/Y') }}</td>
+                                <td>
+                                    <a href="{{ route('pengajuan_gedungs.show', $pj->id) }}"
+                                       class="btn btn-xs btn-default">
+                                        <i class="fas fa-eye"></i> Lihat
+                                    </a>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
 </div>
 @endsection

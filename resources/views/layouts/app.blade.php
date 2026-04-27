@@ -37,6 +37,9 @@
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
+    <!-- DataTables -->
+    @include('layouts.datatables_css')
+
     @stack('third_party_stylesheets')
 
     @stack('page_css')
@@ -202,6 +205,9 @@
         });
     }
 </script>
+
+<!-- DataTables -->
+@include('layouts.datatables_js')
 
 @stack('third_party_scripts')
 

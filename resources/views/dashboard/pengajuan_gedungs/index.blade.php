@@ -24,3 +24,24 @@
         </div>
     </div>
 @endsection
+
+@push('page_scripts')
+<script>
+    $(function () {
+        $('#pengajuanGedungs-table').DataTable({
+            language: {
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                infoEmpty: "Tidak ada data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords: "Data tidak ditemukan",
+                emptyTable: "Belum ada pengajuan",
+                paginate: { first: "Awal", last: "Akhir", next: "›", previous: "‹" }
+            },
+            pageLength: 10,
+            order: [[0, 'desc']],
+        });
+    });
+</script>
+@endpush

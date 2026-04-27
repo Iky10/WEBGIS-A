@@ -17,7 +17,7 @@
         <div class="card">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover" id="riwayatPengajuan-table">
                         <thead>
                             <tr>
                                 <th>Kode</th>
@@ -67,3 +67,24 @@
         </div>
     </div>
 @endsection
+
+@push('page_scripts')
+<script>
+    $(function () {
+        $('#riwayatPengajuan-table').DataTable({
+            language: {
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                infoEmpty: "Tidak ada data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords: "Data tidak ditemukan",
+                emptyTable: "Belum ada riwayat pengajuan",
+                paginate: { first: "Awal", last: "Akhir", next: "›", previous: "‹" }
+            },
+            pageLength: 10,
+            order: [[0, 'desc']],
+        });
+    });
+</script>
+@endpush
