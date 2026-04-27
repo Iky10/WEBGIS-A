@@ -37,8 +37,14 @@
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
     <!-- DataTables -->
     @include('layouts.datatables_css')
+
+    <!-- Admin Custom -->
+    <link rel="stylesheet" href="{{ asset('css/admin-custom.css') }}">
 
     @stack('third_party_stylesheets')
 
@@ -103,12 +109,12 @@
     <!-- Main Footer -->
     <footer class="main-footer">
         <div class="float-right d-none d-sm-block">
-            <b>Version</b> 3.1.0
+            <b>WebGIS</b> v2.0
         </div>
         <strong>
-           Copyright &copy; 2014-2021 <a href="https://adminlte.io">AdminLTE.io</a>.
+           &copy; {{ date('Y') }} <a href="{{ url('/') }}">WebGIS Politeknik Negeri Samarinda</a>.
         </strong>
-        All rights reserved.
+        Sistem Informasi Geografis Gedung.
     </footer>
 </div>
 
@@ -151,6 +157,9 @@
 
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Toastr -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 <script src="{{ asset('js/layout-app.js') }}"></script>
 
@@ -208,6 +217,44 @@
 
 <!-- DataTables -->
 @include('layouts.datatables_js')
+
+{{-- Toastr: Konversi Flash Message → Toast --}}
+<script>
+    $(function () {
+        // Konfigurasi Toastr
+        toastr.options = {
+            closeButton: true,
+            progressBar: true,
+            positionClass: 'toast-top-right',
+            timeOut: 4000,
+            extendedTimeOut: 2000,
+            showEasing: 'swing',
+            hideEasing: 'linear',
+            showMethod: 'fadeIn',
+            hideMethod: 'fadeOut'
+        };
+
+        // Konversi flash message ke toast dan sembunyikan alert aslinya
+        var $flash = $('.alert:not(.alert-danger):not(.alert-important)');
+        if ($flash.length) {
+            $flash.each(function() {
+                var msg = $(this).text().trim();
+                if (msg && msg !== '×') {
+                    if ($(this).hasClass('alert-success')) {
+                        toastr.success(msg);
+                    } else if ($(this).hasClass('alert-warning')) {
+                        toastr.warning(msg);
+                    } else if ($(this).hasClass('alert-info')) {
+                        toastr.info(msg);
+                    } else {
+                        toastr.info(msg);
+                    }
+                    $(this).hide();
+                }
+            });
+        }
+    });
+</script>
 
 @stack('third_party_scripts')
 

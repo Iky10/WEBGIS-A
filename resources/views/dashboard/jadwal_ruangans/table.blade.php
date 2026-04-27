@@ -7,7 +7,7 @@
             <th>Hari</th>
             <th>Mulai</th>
             <th>Selesai</th>
-            <th colspan="3">Action</th>
+            <th>Aksi</th>
         </tr>
         </thead>
         <tbody>

@@ -18,10 +18,8 @@
 
 <div class="content px-3">
 
-    {{-- Baris 1: Kartu Statistik --}}
+    {{-- ═══ Baris 1: Statistik Gedung ═══ --}}
     <div class="row">
-
-        {{-- Total Gedung --}}
         <div class="col-lg-4 col-sm-6">
             <div class="small-box bg-primary">
                 <div class="inner">
@@ -35,12 +33,11 @@
             </div>
         </div>
 
-        {{-- Gedung Status Kosong --}}
         <div class="col-lg-4 col-sm-6">
             <div class="small-box bg-secondary">
                 <div class="inner">
                     <h3>{{ $gedungKosong }}</h3>
-                    <p>Status Gedung Kosong</p>
+                    <p>Gedung Kosong</p>
                 </div>
                 <div class="icon"><i class="fas fa-door-closed"></i></div>
                 <a href="{{ route('gedungs.index') }}" class="small-box-footer">
@@ -49,12 +46,11 @@
             </div>
         </div>
 
-        {{-- Gedung Status Sedang Dipakai --}}
         <div class="col-lg-4 col-sm-6">
             <div class="small-box bg-success">
                 <div class="inner">
                     <h3>{{ $gedungDipakai }}</h3>
-                    <p>Status Gedung Sedang Dipakai</p>
+                    <p>Gedung Sedang Dipakai</p>
                 </div>
                 <div class="icon"><i class="fas fa-door-open"></i></div>
                 <a href="{{ route('gedungs.index') }}" class="small-box-footer">
@@ -62,12 +58,11 @@
                 </a>
             </div>
         </div>
-
     </div>
 
-    {{-- Baris 1b: Statistik Pengajuan --}}
+    {{-- ═══ Baris 2: Statistik Pengajuan ═══ --}}
     <div class="row">
-        <div class="col-lg-4 col-sm-6">
+        <div class="col-lg-3 col-sm-6">
             <div class="small-box bg-info">
                 <div class="inner">
                     <h3>{{ $totalPengajuan }}</h3>
@@ -80,7 +75,7 @@
             </div>
         </div>
 
-        <div class="col-lg-4 col-sm-6">
+        <div class="col-lg-3 col-sm-6">
             <div class="small-box bg-warning">
                 <div class="inner">
                     <h3>{{ $pengajuanMenunggu }}</h3>
@@ -93,11 +88,11 @@
             </div>
         </div>
 
-        <div class="col-lg-4 col-sm-6">
+        <div class="col-lg-3 col-sm-6">
             <div class="small-box bg-teal">
                 <div class="inner">
                     <h3>{{ $pengajuanDisetujui }}</h3>
-                    <p>Disetujui Hari Ini</p>
+                    <p>Disetujui</p>
                 </div>
                 <div class="icon"><i class="fas fa-check-double"></i></div>
                 <a href="{{ route('pengajuan_gedungs.index') }}" class="small-box-footer">
@@ -105,29 +100,40 @@
                 </a>
             </div>
         </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3>{{ $pengajuanDitolak }}</h3>
+                    <p>Ditolak</p>
+                </div>
+                <div class="icon"><i class="fas fa-times-circle"></i></div>
+                <a href="{{ route('pengajuan_gedungs.index') }}" class="small-box-footer">
+                    Lihat Detail <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
     </div>
 
-    {{-- Baris 2: Grafik + Tabel Terbaru --}}
+    {{-- ═══ Baris 3: Grafik + Gedung Terbaru ═══ --}}
     <div class="row">
 
-        {{-- Grafik Kondisi --}}
-        <div class="col-md-4">
+        {{-- Grafik Status Pemakaian --}}
+        <div class="col-md-5">
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-chart-pie"></i> Status Pemakaian Gedung
                     </h5>
                 </div>
-                <div class="card-body">
-                    <canvas id="chartKondisi" height="220"></canvas>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <canvas id="chartKondisi" style="max-height: 240px;"></canvas>
                 </div>
             </div>
-
-
         </div>
 
         {{-- Tabel Gedung Terbaru --}}
-        <div class="col-md-8">
+        <div class="col-md-7">
             <div class="card card-outline card-success">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
@@ -144,7 +150,6 @@
                         <thead class="bg-light">
                             <tr>
                                 <th class="pl-3">Nama Gedung</th>
-
                                 <th>Status Pemakaian</th>
                                 <th>Ditambahkan</th>
                                 <th>Aksi</th>
@@ -166,7 +171,6 @@
                                     @endif
                                     <strong>{{ $gedung->nama_gedung }}</strong>
                                 </td>
-
                                 <td>
                                     @if($gedung->status_dipakai == 'Sedang Dipakai')
                                         <span class="badge badge-success">Sedang Dipakai</span>
@@ -192,7 +196,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
+                                <td colspan="4" class="text-center text-muted py-4">
                                     Belum ada data gedung.
                                     <a href="{{ route('gedungs.create') }}">Tambah sekarang</a>
                                 </td>
@@ -209,23 +213,11 @@
                 </div>
                 @endif
             </div>
-
-            <!-- {{-- Info Box Total Foto --}}
-            <div class="info-box bg-gradient-secondary">
-                <span class="info-box-icon">
-                    <i class="fas fa-images"></i>
-                </span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Total Foto Galeri Tersimpan</span>
-                    <span class="info-box-number">{{ $totalFoto }} Foto</span>
-                </div>
-            </div> -->
-
         </div>
 
     </div>
 
-    {{-- Baris 3: Pengajuan Menunggu Persetujuan --}}
+    {{-- ═══ Baris 4: Pengajuan Menunggu Persetujuan ═══ --}}
     @if($pengajuanTerbaru->isNotEmpty())
     <div class="row">
         <div class="col-12">
@@ -233,7 +225,7 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-exclamation-triangle text-warning"></i> Pengajuan Menunggu Persetujuan
-                        <span class="badge badge-warning text-white ml-1">{{ $pengajuanMenunggu }}</span>
+                        <span class="badge badge-warning ml-1">{{ $pengajuanMenunggu }}</span>
                     </h5>
                     <div class="card-tools">
                         <a href="{{ route('pengajuan_gedungs.index') }}" class="btn btn-sm btn-default">
