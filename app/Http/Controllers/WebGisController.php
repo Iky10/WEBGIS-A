@@ -42,7 +42,7 @@ class WebGisController extends Controller
                     'foto_utama'   => $gedung->foto_utama
                                         ? asset($gedung->foto_utama)
                                         : null,
-                    'detail_url'   => route('gedungs.show', $gedung->id),
+                    'detail_url'   => route('publik.gedung.detail', $gedung->id),
                 ],
             ];
         });
