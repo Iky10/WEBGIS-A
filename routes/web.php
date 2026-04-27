@@ -11,7 +11,9 @@ Route::get('/gedung/{id}', [App\Http\Controllers\PublikController::class, 'detai
 
 // API GeoJSON untuk Leaflet (publik)
 Route::get('/webgis/geojson', [App\Http\Controllers\WebGisController::class, 'geojson'])->name('webgis.geojson');
+Route::get('/webgis/geojson-ruangan', [App\Http\Controllers\WebGisController::class, 'geojsonRuangan'])->name('webgis.geojson.ruangan');
 Route::get('/api/gedung/{id}', [App\Http\Controllers\PublikController::class, 'apiDetail'])->name('api.gedung.detail');
+Route::get('/api/gedung/{id}/jadwal-semester', [App\Http\Controllers\PublikController::class, 'apiJadwalSemester'])->name('api.gedung.jadwal-semester');
 
 // ── AUTH ──────────────────────────────────────────────────────
 Auth::routes();
@@ -46,6 +48,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // WebGIS Admin
     Route::resource('gedung_fasilitas', App\Http\Controllers\GedungFasilitasController::class);
     Route::resource('jadwal_ruangans', App\Http\Controllers\JadwalRuanganController::class);
+    Route::resource('jadwal_semester', App\Http\Controllers\JadwalSemesterController::class);
     Route::get('/webgis', [App\Http\Controllers\WebGisController::class, 'index'])->name('webgis.index');
 
     // Pengajuan Gedung — route khusus admin

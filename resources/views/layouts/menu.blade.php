@@ -37,6 +37,15 @@
     </a>
 </li>
 
+{{-- Menu Jadwal Semester --}}
+<li class="nav-item">
+    <a href="{{ route('jadwal_semester.index') }}"
+       class="nav-link {{ Request::is('jadwal_semester*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-file-image"></i>
+        <p>Jadwal Semester</p>
+    </a>
+</li>
+
 {{-- Menu Pengajuan Gedung (Semua Pengajuan) --}}
 <li class="nav-item">
     <a href="{{ route('pengajuan_gedungs.index') }}"
