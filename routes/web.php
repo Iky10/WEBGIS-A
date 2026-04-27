@@ -46,6 +46,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('gambar_gedungs', App\Http\Controllers\GambarGedungController::class);
 
     // WebGIS Admin
+    Route::post('gedung_fasilitas/{id}/toggle-status', [App\Http\Controllers\GedungFasilitasController::class, 'toggleStatus'])->name('gedung_fasilitas.toggle-status');
+    Route::delete('gedung_fasilitas/bulk-delete', [App\Http\Controllers\GedungFasilitasController::class, 'bulkDelete'])->name('gedung_fasilitas.bulk-delete');
     Route::resource('gedung_fasilitas', App\Http\Controllers\GedungFasilitasController::class);
     Route::resource('jadwal_ruangans', App\Http\Controllers\JadwalRuanganController::class);
     Route::resource('jadwal_semester', App\Http\Controllers\JadwalSemesterController::class);
@@ -54,6 +56,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Pengajuan Gedung — route khusus admin
     Route::get('pengajuan_gedungs', [App\Http\Controllers\PengajuanGedungController::class, 'index'])->name('pengajuan_gedungs.index');
     Route::patch('pengajuan_gedungs/{id}/status', [App\Http\Controllers\PengajuanGedungController::class, 'updateStatus'])->name('pengajuan_gedungs.update-status');
+    Route::delete('pengajuan_gedungs/bulk-delete', [App\Http\Controllers\PengajuanGedungController::class, 'bulkDelete'])->name('pengajuan_gedungs.bulk-delete');
     Route::delete('pengajuan_gedungs/{pengajuan_gedung}', [App\Http\Controllers\PengajuanGedungController::class, 'destroy'])->name('pengajuan_gedungs.destroy');
 
 });

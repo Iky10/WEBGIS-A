@@ -1,7 +1,12 @@
-<div class="table-responsive">
     <table class="table table-hover" id="pengajuanGedungs-table">
         <thead>
             <tr>
+                <th width="40" class="text-center align-middle">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="checkAllPengajuan">
+                        <label class="custom-control-label" for="checkAllPengajuan"></label>
+                    </div>
+                </th>
                 <th>Kode</th>
                 <th>Pemohon</th>
                 <th>Gedung</th>
@@ -14,6 +19,12 @@
         <tbody>
         @forelse($pengajuanGedungs as $pengajuan)
             <tr>
+                <td class="text-center align-middle">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input check-row-pengajuan" id="check_pg_{{ $pengajuan->id }}" value="{{ $pengajuan->id }}">
+                        <label class="custom-control-label" for="check_pg_{{ $pengajuan->id }}"></label>
+                    </div>
+                </td>
                 <td><strong>{{ $pengajuan->kode_pengajuan }}</strong></td>
                 <td>
                     {{ $pengajuan->nama_pemohon }}
@@ -29,23 +40,23 @@
                 </td>
                 <td>
                     @if($pengajuan->status === 'disetujui')
-                        <span class="badge badge-success">Disetujui</span>
+                        <span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i>Disetujui</span>
                     @elseif($pengajuan->status === 'ditolak')
-                        <span class="badge badge-danger">Ditolak</span>
+                        <span class="badge badge-danger"><i class="fas fa-times-circle mr-1"></i>Ditolak</span>
                     @else
-                        <span class="badge badge-warning text-white">Diproses</span>
+                        <span class="badge badge-warning text-white"><i class="fas fa-clock mr-1"></i>Diproses</span>
                     @endif
                 </td>
                 <td style="width: 180px;">
-                    <div class="btn-group">
+                    <div class="d-flex align-items-center">
                         <a href="{{ route('pengajuan_gedungs.show', $pengajuan->id) }}"
-                           class="btn btn-default btn-sm">
+                           class="btn btn-default btn-sm mr-1" title="Lihat Detail">
                             <i class="far fa-eye"></i>
                         </a>
 
                         @if($pengajuan->status === 'diproses')
                             <form action="{{ route('pengajuan_gedungs.update-status', $pengajuan->id) }}"
-                                  method="POST" style="display:inline;">
+                                  method="POST" class="mr-1 mb-0" style="display:inline;">
                                 @csrf @method('PATCH')
                                 <input type="hidden" name="status" value="disetujui">
                                 <button type="button" class="btn btn-success btn-sm"
@@ -55,10 +66,10 @@
                                 </button>
                             </form>
                             <form action="{{ route('pengajuan_gedungs.update-status', $pengajuan->id) }}"
-                                  method="POST" style="display:inline;">
+                                  method="POST" class="mr-1 mb-0" style="display:inline;">
                                 @csrf @method('PATCH')
                                 <input type="hidden" name="status" value="ditolak">
-                                <button type="button" class="btn btn-danger btn-sm"
+                                <button type="button" class="btn btn-secondary btn-sm"
                                         title="Tolak"
                                         onclick="confirmAction(this.closest('form'), 'Tolak Pengajuan?', 'Pengajuan ini akan ditolak.', 'warning', 'Ya, tolak!')">
                                     <i class="fas fa-times"></i>
@@ -67,7 +78,7 @@
                         @endif
 
                         <form action="{{ route('pengajuan_gedungs.destroy', $pengajuan->id) }}"
-                              method="POST" style="display:inline;">
+                              method="POST" class="mb-0" style="display:inline;">
                             @csrf @method('DELETE')
                             <button type="button" class="btn btn-danger btn-sm"
                                     title="Hapus"
@@ -80,9 +91,8 @@
             </tr>
         @empty
             <tr>
-                <td colspan="7" class="text-center text-muted py-4">Belum ada pengajuan.</td>
+                <td colspan="8" class="text-center text-muted py-4">Belum ada pengajuan.</td>
             </tr>
         @endforelse
         </tbody>
     </table>
-</div>

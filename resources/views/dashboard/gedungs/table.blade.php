@@ -1,4 +1,3 @@
-<div class="table-responsive">
     <table class="table" id="gedungs-table">
         <thead>
         <tr>
@@ -22,14 +21,14 @@
                     {!! Form::open(['route' => ['gedungs.destroy', $gedung->id], 'method' => 'delete']) !!}
                     <div class='btn-group'>
                         <a href="{{ route('gedungs.show', [$gedung->id]) }}"
-                           class='btn btn-default btn-xs'>
+                           class='btn btn-default btn-sm'>
                             <i class="far fa-eye"></i>
                         </a>
                         <a href="{{ route('gedungs.edit', [$gedung->id]) }}"
-                           class='btn btn-default btn-xs'>
+                           class='btn btn-default btn-sm'>
                             <i class="far fa-edit"></i>
                         </a>
-                        {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'button', 'class' => 'btn btn-danger btn-xs', 'onclick' => 'confirmDelete(this.closest("form"), "Yakin ingin menghapus gedung ini?")']) !!}
+                        {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'button', 'class' => 'btn btn-danger btn-sm', 'onclick' => 'confirmDelete(this.closest("form"), "Yakin ingin menghapus gedung ini?")']) !!}
                     </div>
                     {!! Form::close() !!}
                 </td>
@@ -37,4 +36,3 @@
         @endforeach
         </tbody>
     </table>
-</div>

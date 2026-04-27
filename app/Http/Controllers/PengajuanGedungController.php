@@ -189,4 +189,23 @@ class PengajuanGedungController extends AppBaseController
 
         return redirect(route('pengajuan_gedungs.index'));
     }
+
+    /**
+     * Admin: Hapus pengajuan secara massal (AJAX).
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids'   => 'required|array',
+            'ids.*' => 'integer|exists:pengajuan_gedungs,id',
+        ]);
+
+        $count = PengajuanGedung::whereIn('id', $request->ids)->count();
+        PengajuanGedung::whereIn('id', $request->ids)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => $count . ' pengajuan berhasil dihapus.',
+        ]);
+    }
 }
