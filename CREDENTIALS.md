@@ -1,47 +1,47 @@
-# 🔐 Credentials WebGIS Gedung
+# Dokumentasi Credentials dan Workflows WEBGIS-A
 
-## Akun Bawaan (Seeder)
+Berikut adalah panduan lengkap kredensial sistem dan alur kerja (workflows) pada aplikasi WebGIS Pengajuan Penggunaan Gedung.
 
-### Admin
-| Field    | Value              |
-|----------|--------------------|
-| Nama     | Admin WebGIS       |
-| Email    | `admin@webgis.com` |
-| Password | `admin123`         |
-| Role     | `admin`            |
+## 1. Credentials Default
 
-### User
-| Field    | Value             |
-|----------|-------------------|
-| Nama     | User Biasa        |
-| Email    | `user@webgis.com` |
-| Password | `user123`         |
-| Role     | `user`            |
+Sistem ini memiliki dua peran utama: **Admin** dan **User**. Anda dapat menggunakan akun berikut untuk testing, atau mendaftar (register) sebagai pengguna baru.
 
-## Cara Reset / Seed Ulang
+### 🔑 Admin
+*   **Email:** `admin@webgis.com`
+*   **Password:** `admin123`
+*   **Akses:** Mengelola master data gedung, menyetujui/menolak pengajuan, serta mengelola webgis secara keseluruhan.
 
-```bash
-php artisan migrate:fresh --seed
-```
+### 👤 User
+*   **Email:** `user@webgis.com`
+*   **Password:** `user123`
+*   **Akses:** Melihat peta, mencari gedung, melihat detail fasilitas, dan mengajukan penggunaan gedung yang tersedia.
 
-> **Peringatan:** Perintah di atas akan menghapus SEMUA data dan membuat ulang dari awal.
+---
 
-## Registrasi User Baru
+## 2. Workflows Pengajuan Penggunaan Gedung
 
-User baru bisa mendaftar melalui:
-- Halaman Login → klik **"Register a new membership"**
-- Atau langsung akses: `http://localhost:8000/register`
+### Skenario 1: Registrasi Pengguna Baru
+1. Pengunjung masuk ke halaman WebGIS.
+2. Klik tombol **Register** pada navigasi (atau akses `/register`).
+3. Isi data: Nama, Email, Password, dan Konfirmasi Password.
+4. Setelah sukses mendaftar, sistem otomatis memberikan role `user` dan mengarahkan pengguna ke halaman peta dengan keadaan sudah *login*.
 
-User yang baru mendaftar otomatis mendapat role `user` dan diarahkan ke halaman publik.
+### Skenario 2: Pengajuan Gedung oleh User
+1. Pengguna (dalam keadaan sudah login) melihat peta kampus.
+2. Pengguna mencari dan memilih gedung yang ingin diajukan.
+   *(Catatan: Gedung seperti Rektorat, Koperasi, dan Ruang Dosen tidak dapat diajukan karena atribut `bisa_diajukan = false`.)*
+3. Pengguna mengklik tombol **Ajukan Penggunaan** yang akan mengarah ke formulir `/pengajuan-gedung/create`.
+4. Formulir hanya akan menampilkan gedung-gedung yang valid untuk diajukan dalam dropdown.
+5. Pengguna mengisi detail pengajuan (Tanggal Mulai, Tanggal Selesai, Kegiatan, dan Lampiran PDF Surat Permohonan).
+6. Setelah di-*submit*, pengajuan akan berstatus `Pending`. Pengguna diarahkan ke halaman **Riwayat Pengajuan**.
 
-## Alur Akses (Role-Based)
+### Skenario 3: Admin Meninjau Pengajuan
+1. Admin login ke sistem menggunakan kredensial admin.
+2. Admin membuka dashboard **Pengajuan Gedung**.
+3. Admin melihat pengajuan berstatus `Pending`, memeriksa dokumen lampiran, dan memastikan jadwal tidak bentrok.
+4. Admin mengubah status menjadi `Disetujui` atau `Ditolak` (disertai catatan atau alasan jika perlu).
+5. (Opsional/Jika SMTP aktif) Sistem otomatis mengirim email notifikasi ke pemohon mengenai perubahan status.
 
-### User Biasa (role = `user`)
-1. Register / Login → Redirect ke **Halaman Publik**
-2. Navbar: Beranda | Peta | Daftar Gedung | **Pengajuan Saya** | Logout
-3. Fitur: Buat pengajuan gedung, lihat riwayat, lihat detail
-
-### Admin (role = `admin`)
-1. Login → Redirect ke **Dashboard Admin** (AdminLTE)
-2. Sidebar: Dashboard | Data Gedung | Master Ruangan | Jadwal Ruangan | Pengajuan Gedung | Riwayat Pengajuan
-3. Fitur: CRUD gedung, kelola ruangan, kelola jadwal, approve/tolak pengajuan
+### Skenario 4: Melihat Status oleh User
+1. Pengguna dapat kembali ke menu **Riwayat Pengajuan Saya** pada navigasi peta publik.
+2. Pengguna melihat status terbaru apakah disetujui atau ditolak, dan bisa melihat riwayat pengajuan sebelumnya.

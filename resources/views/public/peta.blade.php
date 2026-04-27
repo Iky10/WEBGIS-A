@@ -54,10 +54,30 @@
             <i class="fas fa-trash-alt"></i>
             <span class="t-btn-tip">Reset Rute</span>
         </button>
-        <a class="t-btn" href="{{ route('login') }}">
-            <i class="fas fa-lock"></i>
-            <span class="t-btn-tip">Admin</span>
-        </a>
+        @auth
+            <a class="t-btn" href="{{ route('pengajuan_gedungs.riwayat') }}">
+                <i class="fas fa-file-alt"></i>
+                <span class="t-btn-tip">Pengajuan Saya</span>
+            </a>
+            @if(Auth::user()->isAdmin())
+                <a class="t-btn" href="{{ route('home') }}">
+                    <i class="fas fa-cogs"></i>
+                    <span class="t-btn-tip">Dashboard</span>
+                </a>
+            @endif
+            <a class="t-btn" href="#" onclick="event.preventDefault(); document.getElementById('logout-form-peta').submit();" style="color:#ef4444;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="t-btn-tip">Logout</span>
+            </a>
+            <form id="logout-form-peta" action="{{ route('logout') }}" method="POST" class="d-none" style="display: none;">
+                @csrf
+            </form>
+        @else
+            <a class="t-btn" href="{{ route('login') }}">
+                <i class="fas fa-sign-in-alt"></i>
+                <span class="t-btn-tip">Login</span>
+            </a>
+        @endauth
     </div>
 </div>
 
