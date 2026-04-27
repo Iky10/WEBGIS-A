@@ -19,6 +19,16 @@
     <div class="content px-3">
         @include('flash::message')
 
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">
@@ -99,8 +109,8 @@
                                        placeholder="Alasan persetujuan/penolakan...">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('Yakin memperbarui status pengajuan ini?')">
+                        <button type="button" class="btn btn-primary"
+                                onclick="confirmAction(this.closest('form'), 'Perbarui Status?', 'Yakin memperbarui status pengajuan ini?', 'question', 'Ya, simpan!')">
                             <i class="fas fa-save"></i> Simpan Keputusan
                         </button>
                     </form>

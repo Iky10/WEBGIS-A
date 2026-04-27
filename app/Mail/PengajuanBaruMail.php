@@ -7,7 +7,9 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\PengajuanGedung;
 
-class PengajuanBaruMail extends Mailable
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class PengajuanBaruMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

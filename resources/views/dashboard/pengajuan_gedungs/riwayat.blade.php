@@ -7,12 +7,6 @@
                 <div class="col-sm-6">
                     <h1>Riwayat Pengajuan Saya</h1>
                 </div>
-                <div class="col-sm-6">
-                    <a class="btn btn-primary float-right"
-                       href="{{ route('pengajuan_gedungs.create') }}">
-                        <i class="fas fa-plus"></i> Ajukan Baru
-                    </a>
-                </div>
             </div>
         </div>
     </section>
@@ -30,6 +24,7 @@
                                 <th>Gedung</th>
                                 <th>Kegiatan</th>
                                 <th>Tanggal</th>
+                                <th>Jam</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
@@ -41,13 +36,14 @@
                                 <td>{{ $pengajuan->gedung->nama_gedung ?? '-' }}</td>
                                 <td>{{ $pengajuan->nama_kegiatan }}</td>
                                 <td>{{ $pengajuan->tanggal_mulai->format('d/m/Y') }}</td>
+                                <td>{{ \Carbon\Carbon::parse($pengajuan->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($pengajuan->jam_selesai)->format('H:i') }}</td>
                                 <td>
                                     @if($pengajuan->status === 'disetujui')
                                         <span class="badge badge-success">Disetujui</span>
                                     @elseif($pengajuan->status === 'ditolak')
                                         <span class="badge badge-danger">Ditolak</span>
                                     @else
-                                        <span class="badge badge-warning">Diproses</span>
+                                        <span class="badge badge-warning text-white">Diproses</span>
                                     @endif
                                 </td>
                                 <td>
@@ -59,7 +55,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">
+                                <td colspan="7" class="text-center text-muted py-4">
                                     Belum ada pengajuan. <a href="{{ route('pengajuan_gedungs.create') }}">Buat pengajuan baru</a>
                                 </td>
                             </tr>

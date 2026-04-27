@@ -53,10 +53,10 @@ class PengajuanGedung extends Model
         'asal_instansi'   => 'required|string|max:255',
         'jenis_kegiatan'  => 'required|string|max:255',
         'nama_kegiatan'   => 'required|string|max:255',
-        'tanggal_mulai'   => 'required|date',
+        'tanggal_mulai'   => 'required|date|after_or_equal:today',
         'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
         'jam_mulai'       => 'required',
-        'jam_selesai'     => 'required',
+        'jam_selesai'     => 'required|after:jam_mulai',
         'jumlah_peserta'  => 'nullable|integer|min:1',
     ];
 
@@ -67,7 +67,8 @@ class PengajuanGedung extends Model
     {
         $today = now()->format('Ymd');
         $prefix = "PG-{$today}-";
-        $last = static::where('kode_pengajuan', 'like', "{$prefix}%")
+        $last = static::withTrashed()
+            ->where('kode_pengajuan', 'like', "{$prefix}%")
             ->orderBy('kode_pengajuan', 'desc')
             ->first();
 

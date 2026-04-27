@@ -75,9 +75,9 @@
                             <form action="{{ route('gedungs.foto.destroy', $foto->id) }}" method="POST" class="mt-1">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit"
+                                <button type="button"
                                         class="btn btn-danger btn-xs"
-                                        onclick="return confirm('Hapus foto ini?')">
+                                        onclick="confirmDelete(this.closest('form'), 'Hapus foto ini?')">
                                     <i class="fas fa-trash"></i> Hapus
                                 </button>
                             </form>

@@ -34,6 +34,9 @@
           integrity="sha512-aEe/ZxePawj0+G2R+AaIxgrQuKT68I28qh+wgLrcAJOz3rxCP+TwrK5SPN+E5I+1IQjNtcfvb96HDagwrKRdBw=="
           crossorigin="anonymous"/>
 
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     @stack('third_party_stylesheets')
 
     @stack('page_css')
@@ -143,7 +146,62 @@
         integrity="sha512-DAc/LqVY2liDbikmJwUS1MSE3pIH0DFprKHZKPcJC7e3TtAOzT55gEMTleegwyuIWgCfOPOM8eLbbvFaG9F/cA=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script src="{{ asset('js/layout-app.js') }}"></script>
+
+{{-- SweetAlert2: Global Confirm Functions --}}
+<script>
+    /**
+     * Konfirmasi hapus data dengan SweetAlert2
+     * @param {HTMLElement} formEl - Form element yang akan di-submit
+     * @param {string} message - Pesan konfirmasi (opsional)
+     */
+    function confirmDelete(formEl, message) {
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: message || 'Data yang dihapus tidak dapat dikembalikan!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> Ya, hapus!',
+            cancelButtonText: '<i class="fas fa-times mr-1"></i> Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                formEl.submit();
+            }
+        });
+    }
+
+    /**
+     * Konfirmasi aksi umum dengan SweetAlert2
+     * @param {HTMLElement} formEl - Form element yang akan di-submit
+     * @param {string} title - Judul dialog
+     * @param {string} message - Pesan konfirmasi
+     * @param {string} icon - Icon SweetAlert2 (warning, question, info)
+     * @param {string} confirmText - Teks tombol konfirmasi
+     */
+    function confirmAction(formEl, title, message, icon, confirmText) {
+        Swal.fire({
+            title: title || 'Apakah Anda yakin?',
+            text: message || '',
+            icon: icon || 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: confirmText || 'Ya, lanjutkan!',
+            cancelButtonText: '<i class="fas fa-times mr-1"></i> Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                formEl.submit();
+            }
+        });
+    }
+</script>
 
 @stack('third_party_scripts')
 

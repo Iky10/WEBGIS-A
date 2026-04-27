@@ -102,19 +102,36 @@ class Gedung extends Model
         
         $hariIni = $hariMap[date('l')];
         $waktuSekarang = date('H:i:s');
+        $tanggalHariIni = now()->toDateString();
 
+        // 1. Cek jadwal ruangan reguler (semester)
         $fasilitasIds = $this->fasilitas()->pluck('id');
         
-        if ($fasilitasIds->isEmpty()) {
-            return 'Kosong';
+        if ($fasilitasIds->isNotEmpty()) {
+            $sedangDipakaiRutin = \App\Models\JadwalRuangan::whereIn('gedung_fasilitas_id', $fasilitasIds)
+                ->where('hari', $hariIni)
+                ->where('jam_mulai', '<=', $waktuSekarang)
+                ->where('jam_selesai', '>=', $waktuSekarang)
+                ->exists();
+
+            if ($sedangDipakaiRutin) {
+                return 'Sedang Dipakai';
+            }
         }
 
-        $sedangDipakai = \App\Models\JadwalRuangan::whereIn('gedung_fasilitas_id', $fasilitasIds)
-            ->where('hari', $hariIni)
+        // 2. Cek pengajuan gedung yang disetujui pada hari & jam ini
+        $sedangDipakaiPengajuan = \App\Models\PengajuanGedung::where('gedung_id', $this->id)
+            ->where('status', 'disetujui')
+            ->where('tanggal_mulai', '<=', $tanggalHariIni)
+            ->where('tanggal_selesai', '>=', $tanggalHariIni)
             ->where('jam_mulai', '<=', $waktuSekarang)
             ->where('jam_selesai', '>=', $waktuSekarang)
             ->exists();
 
-        return $sedangDipakai ? 'Sedang Dipakai' : 'Kosong';
+        if ($sedangDipakaiPengajuan) {
+            return 'Sedang Dipakai';
+        }
+
+        return 'Kosong';
     }
 }

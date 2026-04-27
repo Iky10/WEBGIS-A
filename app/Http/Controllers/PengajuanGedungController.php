@@ -43,14 +43,16 @@ class PengajuanGedungController extends AppBaseController
      */
     public function create(Request $request)
     {
+        // Admin tidak perlu mengajukan gedung — redirect ke daftar pengajuan
+        if (Auth::user()->isAdmin()) {
+            Flash::error('Admin tidak dapat mengajukan penggunaan gedung.');
+            return redirect(route('pengajuan_gedungs.index'));
+        }
+
         $gedungs = Gedung::bisaDiajukan()->orderBy('nama_gedung')->pluck('nama_gedung', 'id');
         $selectedGedung = $request->query('gedung_id');
 
-        $view = Auth::user()->isAdmin()
-            ? 'dashboard.pengajuan_gedungs.create'
-            : 'public.pengajuan.create';
-
-        return view($view)
+        return view('public.pengajuan.create')
             ->with('gedungs', $gedungs)
             ->with('selectedGedung', $selectedGedung);
     }
@@ -69,14 +71,19 @@ class PengajuanGedungController extends AppBaseController
         $pengajuan = $this->pengajuanGedungRepository->create($input);
         $pengajuan->load('gedung');
 
-        // Kirim email notifikasi ke semua admin
-        try {
-            $admins = User::where('role', 'admin')->pluck('email');
-            if ($admins->isNotEmpty()) {
-                Mail::to($admins)->send(new PengajuanBaruMail($pengajuan));
+        // Kirim email notifikasi ke semua admin (skip jika SMTP belum dikonfigurasi)
+        if (config('mail.default') !== 'log') {
+            try {
+                $admins = User::where('role', 'admin')->pluck('email');
+                if ($admins->isNotEmpty()) {
+                    Mail::to($admins)->send(new PengajuanBaruMail($pengajuan));
+                    Log::info("Email notifikasi pengajuan baru terkirim ke admin.");
+                }
+            } catch (\Throwable $e) {
+                Log::error('Gagal mengirim email notifikasi pengajuan baru: ' . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            Log::warning('Gagal mengirim email notifikasi pengajuan baru: ' . $e->getMessage());
+        } else {
+            Log::info("Email notifikasi admin dilewati (MAIL_MAILER=log). Pengajuan: {$pengajuan->kode_pengajuan}");
         }
 
         Flash::success('Pengajuan berhasil dikirim! Kode: ' . $pengajuan->kode_pengajuan);
@@ -125,11 +132,18 @@ class PengajuanGedungController extends AppBaseController
         $pengajuan = PengajuanGedung::with('gedung')->findOrFail($id);
         $pengajuan->update($validated);
 
-        // Kirim email notifikasi ke pemohon
-        try {
-            Mail::to($pengajuan->email_pemohon)->send(new PengajuanStatusMail($pengajuan));
-        } catch (\Exception $e) {
-            Log::warning('Gagal mengirim email status pengajuan: ' . $e->getMessage());
+        Log::info("Pengajuan {$pengajuan->kode_pengajuan} status diupdate menjadi: {$validated['status']} oleh admin: " . Auth::user()->name);
+
+        // Kirim email notifikasi ke pemohon (skip jika SMTP belum dikonfigurasi)
+        if (config('mail.default') !== 'log') {
+            try {
+                Mail::to($pengajuan->email_pemohon)->send(new PengajuanStatusMail($pengajuan));
+                Log::info("Email notifikasi terkirim ke: {$pengajuan->email_pemohon}");
+            } catch (\Throwable $e) {
+                Log::warning('Gagal mengirim email status pengajuan: ' . $e->getMessage());
+            }
+        } else {
+            Log::info("Email notifikasi dilewati (MAIL_MAILER=log). Pengajuan: {$pengajuan->kode_pengajuan}");
         }
 
         $statusLabel = $validated['status'] === 'disetujui' ? 'disetujui' : 'ditolak';
@@ -148,7 +162,11 @@ class PengajuanGedungController extends AppBaseController
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('public.pengajuan.riwayat')
+        $view = Auth::user()->isAdmin()
+            ? 'dashboard.pengajuan_gedungs.riwayat'
+            : 'public.pengajuan.riwayat';
+
+        return view($view)
             ->with('pengajuanGedungs', $pengajuanGedungs);
     }
 

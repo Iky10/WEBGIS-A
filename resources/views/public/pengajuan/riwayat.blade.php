@@ -64,14 +64,7 @@
     </div>
 
     <div class="container py-4">
-        @if(session('flash_notification'))
-            @foreach(session('flash_notification', collect())->toArray() as $msg)
-                <div class="alert alert-{{ $msg['level'] ?? 'info' }} alert-dismissible fade show">
-                    {!! $msg['message'] !!}
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                </div>
-            @endforeach
-        @endif
+        {{-- Flash notification ditangani oleh layout global (SweetAlert2) --}}
 
         @if($pengajuanGedungs->isEmpty())
             <div class="pengajuan-card card">
