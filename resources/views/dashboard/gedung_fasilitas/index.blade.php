@@ -10,7 +10,7 @@
                 <div class="col-sm-6">
                     <a class="btn btn-primary float-right"
                        href="{{ route('gedung_fasilitas.create') }}">
-                        Tambah Baru
+                        <i class="fas fa-plus mr-1"></i> Tambah Baru
                     </a>
                 </div>
             </div>
@@ -26,15 +26,29 @@
         <div class="card">
             <div class="card-body p-0">
                 @include('dashboard.gedung_fasilitas.table')
-
-                <div class="card-footer clearfix">
-                    <div class="float-right">
-                        
-                    </div>
-                </div>
             </div>
-
         </div>
     </div>
 
 @endsection
+
+@push('page_scripts')
+<script>
+    $(function () {
+        $('#gedungFasilitas-table').DataTable({
+            language: {
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                infoEmpty: "Tidak ada data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords: "Data tidak ditemukan",
+                emptyTable: "Belum ada data ruangan",
+                paginate: { first: "Awal", last: "Akhir", next: "›", previous: "‹" }
+            },
+            pageLength: 10,
+            order: [[1, 'asc']],
+        });
+    });
+</script>
+@endpush

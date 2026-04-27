@@ -10,7 +10,7 @@
                 <div class="col-sm-6">
                     <a class="btn btn-primary float-right"
                        href="{{ route('jadwal_ruangans.create') }}">
-                        Tambah Jadwal
+                        <i class="fas fa-plus mr-1"></i> Tambah Jadwal
                     </a>
                 </div>
             </div>
@@ -26,15 +26,29 @@
         <div class="card">
             <div class="card-body p-0">
                 @include('dashboard.jadwal_ruangans.table')
-
-                <div class="card-footer clearfix">
-                    <div class="float-right">
-                        
-                    </div>
-                </div>
             </div>
-
         </div>
     </div>
 
 @endsection
+
+@push('page_scripts')
+<script>
+    $(function () {
+        $('#jadwalRuangans-table').DataTable({
+            language: {
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                infoEmpty: "Tidak ada data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords: "Data tidak ditemukan",
+                emptyTable: "Belum ada jadwal ruangan",
+                paginate: { first: "Awal", last: "Akhir", next: "›", previous: "‹" }
+            },
+            pageLength: 10,
+            order: [[2, 'asc']],
+        });
+    });
+</script>
+@endpush

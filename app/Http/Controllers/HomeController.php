@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Gedung;
 use App\Models\GambarGedung;
+use App\Models\PengajuanGedung;
 
 class HomeController extends Controller
 {
@@ -35,15 +36,32 @@ class HomeController extends Controller
             }
         }
 
+        // Statistik pengajuan gedung
+        $totalPengajuan = PengajuanGedung::count();
+        $pengajuanMenunggu = PengajuanGedung::where('status', 'diproses')->count();
+        $pengajuanDisetujui = PengajuanGedung::where('status', 'disetujui')
+            ->whereDate('updated_at', today())->count();
+
         // 5 gedung terbaru
         $gedungTerbaru = Gedung::latest()->take(5)->get();
+
+        // 5 pengajuan terbaru yang menunggu persetujuan
+        $pengajuanTerbaru = PengajuanGedung::with(['user', 'gedung'])
+            ->where('status', 'diproses')
+            ->latest()
+            ->take(5)
+            ->get();
 
         return view('dashboard.home', compact(
             'totalGedung',
             'totalFoto',
             'gedungKosong',
             'gedungDipakai',
-            'gedungTerbaru'
+            'gedungTerbaru',
+            'totalPengajuan',
+            'pengajuanMenunggu',
+            'pengajuanDisetujui',
+            'pengajuanTerbaru'
         ));
     }
 }

@@ -3,23 +3,21 @@
         <thead>
         <tr>
             <th>Nama Gedung</th>
-        <th>Alamat</th>
-        <th>Deskripsi</th>
-
-        <th>X</th>
-        <th>Y</th>
-            <th colspan="3">Action</th>
+            <th>Alamat</th>
+            <th>Deskripsi</th>
+            <th>X</th>
+            <th>Y</th>
+            <th>Aksi</th>
         </tr>
         </thead>
         <tbody>
         @foreach($gedungs as $gedung)
             <tr>
                 <td>{{ $gedung->nama_gedung }}</td>
-            <td>{{ $gedung->alamat }}</td>
-            <td>{{ $gedung->deskripsi }}</td>
-
-            <td>{{ $gedung->x }}</td>
-            <td>{{ $gedung->y }}</td>
+                <td>{{ $gedung->alamat }}</td>
+                <td>{{ $gedung->deskripsi }}</td>
+                <td>{{ $gedung->x }}</td>
+                <td>{{ $gedung->y }}</td>
                 <td width="120">
                     {!! Form::open(['route' => ['gedungs.destroy', $gedung->id], 'method' => 'delete']) !!}
                     <div class='btn-group'>
