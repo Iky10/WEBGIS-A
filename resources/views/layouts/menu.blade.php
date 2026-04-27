@@ -52,7 +52,7 @@
 @endphp
 <li class="nav-item">
     <a href="{{ route('pengajuan_gedungs.index') }}"
-       class="nav-link {{ Request::is('pengajuan_gedungs') ? 'active' : '' }}">
+       class="nav-link {{ Request::is('pengajuan_gedungs*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-file-alt"></i>
         <p>
             Pengajuan Gedung

@@ -39,8 +39,8 @@ class HomeController extends Controller
         // Statistik pengajuan gedung
         $totalPengajuan = PengajuanGedung::count();
         $pengajuanMenunggu = PengajuanGedung::where('status', 'diproses')->count();
-        $pengajuanDisetujui = PengajuanGedung::where('status', 'disetujui')
-            ->whereDate('updated_at', today())->count();
+        $pengajuanDisetujui = PengajuanGedung::where('status', 'disetujui')->count();
+        $pengajuanDitolak = PengajuanGedung::where('status', 'ditolak')->count();
 
         // 5 gedung terbaru
         $gedungTerbaru = Gedung::latest()->take(5)->get();
@@ -61,6 +61,7 @@ class HomeController extends Controller
             'totalPengajuan',
             'pengajuanMenunggu',
             'pengajuanDisetujui',
+            'pengajuanDitolak',
             'pengajuanTerbaru'
         ));
     }

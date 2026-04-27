@@ -5,12 +5,12 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Jadwal Semester Ruang Kelas</h1>
+                    <h1><i class="fas fa-file-image"></i> Jadwal Semester Ruang Kelas</h1>
                 </div>
                 <div class="col-sm-6">
                     <a class="btn btn-primary float-right"
                        href="{{ route('jadwal_semester.create') }}">
-                        Tambah Baru
+                        <i class="fas fa-plus"></i> Tambah Jadwal Semester
                     </a>
                 </div>
             </div>
@@ -26,7 +26,7 @@
         <div class="card">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table" id="jadwal-semester-table">
+                    <table class="table" id="jadwalSemester-table">
                         <thead>
                         <tr>
                             <th>Gedung</th>
@@ -34,7 +34,7 @@
                             <th>Tahun Ajaran</th>
                             <th>File Jadwal</th>
                             <th>Keterangan</th>
-                            <th colspan="3">Aksi</th>
+                            <th>Aksi</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -45,9 +45,11 @@
                                 <td>{{ $jadwal->tahun_ajaran }}</td>
                                 <td>
                                     @if($jadwal->file_jadwal)
-                                        <a href="{{ asset($jadwal->file_jadwal) }}" target="_blank" class="btn btn-sm btn-info">Lihat File</a>
+                                        <a href="{{ asset($jadwal->file_jadwal) }}" target="_blank" class="btn btn-sm btn-info">
+                                            <i class="fas fa-file-download"></i> Lihat File
+                                        </a>
                                     @else
-                                        -
+                                        <span class="text-muted">-</span>
                                     @endif
                                 </td>
                                 <td>{{ $jadwal->keterangan }}</td>
@@ -67,9 +69,28 @@
                         </tbody>
                     </table>
                 </div>
-
             </div>
-
         </div>
     </div>
 @endsection
+
+@push('page_scripts')
+<script>
+    $(function () {
+        $('#jadwalSemester-table').DataTable({
+            language: {
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                infoEmpty: "Tidak ada data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords: "Data tidak ditemukan",
+                emptyTable: "Belum ada data jadwal semester",
+                paginate: { first: "Awal", last: "Akhir", next: "›", previous: "‹" }
+            },
+            pageLength: 10,
+            order: [[0, 'asc']],
+        });
+    });
+</script>
+@endpush

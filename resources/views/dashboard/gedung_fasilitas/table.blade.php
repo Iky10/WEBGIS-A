@@ -8,7 +8,7 @@
             <th>Kategori</th>
             <th>Koordinat</th>
             <th>Status</th>
-            <th colspan="3">Action</th>
+            <th>Aksi</th>
         </tr>
         </thead>
         <tbody>
