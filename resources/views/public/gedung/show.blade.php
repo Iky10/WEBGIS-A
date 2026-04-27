@@ -47,10 +47,7 @@
                 </div>
                 <div class="card-body p-0">
                     <table class="table table-sm table-borderless mb-0">
-                        <tr>
-                            <td class="text-muted pl-3" width="45%">Fungsi</td>
-                            <td>{{ $gedung->fungsi ?? '-' }}</td>
-                        </tr>
+
                         <tr class="bg-light">
                             <td class="text-muted pl-3">Status Pemakaian</td>
                             <td>

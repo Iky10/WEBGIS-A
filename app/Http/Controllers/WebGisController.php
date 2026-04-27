@@ -36,9 +36,6 @@ class WebGisController extends Controller
                     'id'           => $gedung->id,
                     'nama_gedung'  => $gedung->nama_gedung,
                     'alamat'       => $gedung->alamat,
-                    'fungsi'       => $gedung->fungsi ?? '-',
-                    'jumlah_lantai'=> $gedung->jumlah_lantai ?? '-',
-                    'tahun_berdiri'=> $gedung->tahun_berdiri ?? '-',
                     'kondisi'      => $gedung->status_dipakai,
                     'foto_utama'   => $gedung->foto_utama
                                         ? asset($gedung->foto_utama)

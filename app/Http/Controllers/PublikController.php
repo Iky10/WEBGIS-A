@@ -42,14 +42,6 @@ class PublikController extends Controller
             });
         }
 
-        if ($request->filled('fungsi')) {
-            $query->where('fungsi', $request->fungsi);
-        }
-
-        if ($request->filled('kondisi')) {
-            $query->where('kondisi', $request->kondisi);
-        }
-
         $gedungs = $query->latest()->paginate(9);
 
         return view('public.gedung.index', compact('gedungs'));

@@ -12,6 +12,9 @@
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     @stack('styles')
 
 <link rel="stylesheet" href="{{ asset('css/layout-public.css') }}">
@@ -28,17 +31,11 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navPublik">
-            <ul class="navbar-nav mx-auto">
+            <ul class="navbar-nav mr-auto ml-lg-4">
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('/') ? 'active' : '' }}"
+                    <a class="nav-link {{ Request::is('/') || Request::is('peta*') ? 'active' : '' }}"
                        href="{{ route('publik.home') }}">
                         <i class="fas fa-home mr-1"></i> Beranda
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ Request::is('peta*') ? 'active' : '' }}"
-                       href="{{ route('publik.peta') }}">
-                        <i class="fas fa-map mr-1"></i> Peta
                     </a>
                 </li>
                 <li class="nav-item">
@@ -47,19 +44,19 @@
                         <i class="fas fa-building mr-1"></i> Daftar Gedung
                     </a>
                 </li>
-            </ul>
-            <ul class="navbar-nav">
                 @auth
-                    {{-- Menu Pengajuan untuk user yang login --}}
                     <li class="nav-item">
-                        <a class="nav-link {{ Request::is('pengajuan-gedung*') ? 'active' : '' }}"
+                        <a class="nav-link {{ Request::is('pengajuan-gedung*') || Request::is('pengajuan_gedungs*') ? 'active' : '' }}"
                            href="{{ route('pengajuan_gedungs.riwayat') }}">
                             <i class="fas fa-file-alt mr-1"></i> Pengajuan Saya
                         </a>
                     </li>
-
+                @endauth
+            </ul>
+            <ul class="navbar-nav align-items-center">
+                @auth
                     @if(Auth::user()->isAdmin())
-                        <li class="nav-item">
+                        <li class="nav-item mr-2">
                             <a class="nav-link btn-admin" href="{{ route('home') }}">
                                 <i class="fas fa-cogs mr-1"></i> Dashboard
                             </a>
@@ -68,8 +65,9 @@
 
                     {{-- Logout --}}
                     <li class="nav-item">
-                        <a class="nav-link text-danger" href="#"
-                           onclick="event.preventDefault(); document.getElementById('logout-form-public').submit();">
+                        <a class="nav-link text-danger font-weight-bold" href="#"
+                           onclick="event.preventDefault(); document.getElementById('logout-form-public').submit();"
+                           style="background: rgba(239, 68, 68, 0.1); border-radius: 6px; padding: 6px 14px !important;">
                             <i class="fas fa-sign-out-alt mr-1"></i> Logout
                         </a>
                         <form id="logout-form-public" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -78,7 +76,7 @@
                     </li>
                 @else
                     <li class="nav-item">
-                        <a class="nav-link btn-admin" href="{{ route('login') }}">
+                        <a class="nav-link btn-admin px-4" href="{{ route('login') }}">
                             <i class="fas fa-sign-in-alt mr-1"></i> Login
                         </a>
                     </li>
@@ -113,6 +111,31 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{{-- SweetAlert2: Global Flash Notification --}}
+@if(session('flash_notification'))
+    @foreach(session('flash_notification', collect())->toArray() as $message)
+        <script>
+            Swal.fire({
+                icon: '{{ $message["level"] === "danger" ? "error" : ($message["level"] === "warning" ? "warning" : "success") }}',
+                title: '{!! addslashes($message["message"]) !!}',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3500,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        </script>
+    @endforeach
+    {{ session()->forget('flash_notification') }}
+@endif
 
 @stack('scripts')
 </body>

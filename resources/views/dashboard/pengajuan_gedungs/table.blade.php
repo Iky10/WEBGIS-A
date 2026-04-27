@@ -20,10 +20,7 @@
                     <br><small class="text-muted">{{ $pengajuan->user->name ?? '-' }}</small>
                 </td>
                 <td>{{ $pengajuan->gedung->nama_gedung ?? '-' }}</td>
-                <td>
-                    {{ $pengajuan->nama_kegiatan }}
-                    <br><small class="text-muted">{{ $pengajuan->jenis_kegiatan }}</small>
-                </td>
+                <td>{{ $pengajuan->nama_kegiatan }}</td>
                 <td>
                     {{ $pengajuan->tanggal_mulai->format('d/m/Y') }}
                     @if($pengajuan->tanggal_mulai != $pengajuan->tanggal_selesai)
@@ -36,7 +33,7 @@
                     @elseif($pengajuan->status === 'ditolak')
                         <span class="badge badge-danger">Ditolak</span>
                     @else
-                        <span class="badge badge-warning">Diproses</span>
+                        <span class="badge badge-warning text-white">Diproses</span>
                     @endif
                 </td>
                 <td style="width: 180px;">
@@ -51,9 +48,9 @@
                                   method="POST" style="display:inline;">
                                 @csrf @method('PATCH')
                                 <input type="hidden" name="status" value="disetujui">
-                                <button type="submit" class="btn btn-success btn-sm"
+                                <button type="button" class="btn btn-success btn-sm"
                                         title="Setujui"
-                                        onclick="return confirm('Setujui pengajuan ini?')">
+                                        onclick="confirmAction(this.closest('form'), 'Setujui Pengajuan?', 'Pengajuan ini akan disetujui.', 'question', 'Ya, setujui!')">
                                     <i class="fas fa-check"></i>
                                 </button>
                             </form>
@@ -61,9 +58,9 @@
                                   method="POST" style="display:inline;">
                                 @csrf @method('PATCH')
                                 <input type="hidden" name="status" value="ditolak">
-                                <button type="submit" class="btn btn-danger btn-sm"
+                                <button type="button" class="btn btn-danger btn-sm"
                                         title="Tolak"
-                                        onclick="return confirm('Tolak pengajuan ini?')">
+                                        onclick="confirmAction(this.closest('form'), 'Tolak Pengajuan?', 'Pengajuan ini akan ditolak.', 'warning', 'Ya, tolak!')">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </form>
@@ -72,9 +69,9 @@
                         <form action="{{ route('pengajuan_gedungs.destroy', $pengajuan->id) }}"
                               method="POST" style="display:inline;">
                             @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm"
+                            <button type="button" class="btn btn-danger btn-sm"
                                     title="Hapus"
-                                    onclick="return confirm('Hapus pengajuan ini?')">
+                                    onclick="confirmDelete(this.closest('form'), 'Hapus pengajuan ini? Data tidak bisa dikembalikan!')">
                                 <i class="far fa-trash-alt"></i>
                             </button>
                         </form>

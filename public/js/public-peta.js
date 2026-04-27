@@ -136,13 +136,15 @@
     function applyFilter() {
         renderMarkers(allData.filter(function (f) {
             var p = f.properties;
-            return (!filterFungsi || p.fungsi === filterFungsi)
-                && (!filterKondisi || p.kondisi === filterKondisi);
+            return (!filterKondisi || p.kondisi === filterKondisi);
         }));
     }
 
     function setupChips(containerId, onSelect) {
-        document.getElementById(containerId).addEventListener('click', function (e) {
+        var container = document.getElementById(containerId);
+        if (!container) return; // Prevent error if element doesn't exist
+        
+        container.addEventListener('click', function (e) {
             var chip = e.target.closest('.chip');
             if (!chip) return;
             this.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('on'); });
@@ -151,14 +153,13 @@
             applyFilter();
         });
     }
-    setupChips('chipsFungsi', function (v) { filterFungsi = v; });
     setupChips('chipsKondisi', function (v) { filterKondisi = v; });
 
     document.getElementById('fpReset').addEventListener('click', function () {
-        filterFungsi = filterKondisi = '';
-        document.querySelectorAll('#chipsFungsi .chip, #chipsKondisi .chip').forEach(function (c) { c.classList.remove('on'); });
-        document.querySelector('#chipsFungsi .chip[data-v=""]').classList.add('on');
-        document.querySelector('#chipsKondisi .chip[data-v=""]').classList.add('on');
+        filterKondisi = '';
+        document.querySelectorAll('#chipsKondisi .chip').forEach(function (c) { c.classList.remove('on'); });
+        var emptyChip = document.querySelector('#chipsKondisi .chip[data-v=""]');
+        if(emptyChip) emptyChip.classList.add('on');
         renderMarkers(allData);
         toast('Filter direset');
     });
