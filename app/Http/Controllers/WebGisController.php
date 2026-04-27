@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Gedung;
+use App\Models\GedungFasilitas;
 use Illuminate\Http\Request;
 
 class WebGisController extends Controller
@@ -43,6 +44,45 @@ class WebGisController extends Controller
                                         ? asset($gedung->foto_utama)
                                         : null,
                     'detail_url'   => route('gedungs.show', $gedung->id),
+                ],
+            ];
+        });
+
+        return response()->json([
+            'type'     => 'FeatureCollection',
+            'features' => $features,
+        ]);
+    }
+
+    /**
+     * API: Ambil semua ruangan/fasilitas dalam format GeoJSON untuk Leaflet.
+     */
+    public function geojsonRuangan()
+    {
+        $ruangans = GedungFasilitas::with('gedung')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get();
+
+        $features = $ruangans->map(function ($ruangan) {
+            return [
+                'type'     => 'Feature',
+                'geometry' => [
+                    'type'        => 'Point',
+                    'coordinates' => [(float) $ruangan->longitude, (float) $ruangan->latitude],
+                ],
+                'properties' => [
+                    'id'              => $ruangan->id,
+                    'nama_fasilitas'  => $ruangan->nama_fasilitas,
+                    'kategori'        => $ruangan->kategori,
+                    'keterangan'      => $ruangan->keterangan,
+                    'nama_gedung'     => optional($ruangan->gedung)->nama_gedung ?? '-',
+                    'gedung_id'       => $ruangan->gedung_id,
+                    'status_dipakai'  => $ruangan->status_dipakai,
+                    'is_aktif'        => $ruangan->status_dipakai === 'Sedang Dipakai',
+                    'foto_ruangan'    => $ruangan->foto_ruangan
+                                            ? asset($ruangan->foto_ruangan)
+                                            : null,
                 ],
             ];
         });
