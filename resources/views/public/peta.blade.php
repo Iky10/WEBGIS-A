@@ -108,6 +108,11 @@
     <div class="z-btn" id="zOut">−</div>
 </div>
 
+<div class="zoom-indicator">
+    <div class="zoom-level-num" id="zoomLevel">18</div>
+    <div class="zoom-mode-badge mode-gedung" id="zoomModeBadge">🏢 Gedung</div>
+</div>
+
 <div id="legend">
     <div class="leg-title">Status Pemakaian Gedung</div>
     <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Sedang Dipakai</div>
@@ -166,40 +171,31 @@
             <p style="margin-top:10px; color:var(--muted); font-size:0.85rem;">Memuat data...</p>
         </div>
         <div id="sbContent" style="display:none;">
-            <div class="sb-img-wrap">
-                <img id="sbImg" src="" alt="Foto Utama">
+            <div class="sb-img-wrap" id="sbMainCarouselWrap">
+                <div id="sbMainSlides" class="sb-main-slides">
+                    <!-- Foto slides inserted here by JS -->
+                </div>
+                <div class="sb-main-nav" id="sbMainNav" style="display:none;">
+                    <button class="sb-main-btn-prev" onclick="sbMainGalleryNav(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <button class="sb-main-btn-next" onclick="sbMainGalleryNav(1)"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="sb-main-counter" id="sbMainCounter" style="display:none;">1 / 1</div>
             </div>
             
             <div class="sb-info">
                 <div id="sbName" class="sb-name">Nama Gedung</div>
                 <div class="sb-addr"><i class="fas fa-map-marker-alt"></i> <span id="sbAddr">Alamat Gedung</span></div>
                 
-                <div class="sb-stats">
+                <!-- <div class="sb-stats">
                     <div class="sb-stat"><span id="sbFungsi" class="sb-stat-v">-</span><span class="sb-stat-k">Fungsi</span></div>
                     <div class="sb-stat"><span id="sbKondisi" class="sb-stat-v">-</span><span class="sb-stat-k">Status</span></div>
                     <div class="sb-stat"><span id="sbLantai" class="sb-stat-v">-</span><span class="sb-stat-k">Lantai</span></div>
                     <div class="sb-stat"><span id="sbTahun" class="sb-stat-v">-</span><span class="sb-stat-k">Tahun</span></div>
-                </div>
+                </div> -->
 
                 <!-- Primary Call to Action Buttons -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin: 16px 0;">
+                <div style="margin: 16px 0;">
                     <button id="sbBtnRoute" class="sb-cta-btn" style="background:var(--success); box-shadow:0 6px 20px rgba(34,197,94,.35);"><i class="fas fa-directions"></i> Rute ke Sini</button>
-                    <button id="sbBtnPhotos" class="sb-cta-btn"><i class="fas fa-images"></i> Lihat Foto</button>
-                </div>
-
-                <!-- Galeri Foto (Expanded inline below button) -->
-                <div id="sbGallery" class="sb-gallery" style="display:none; margin-bottom: 16px;">
-                    <div class="sb-sec-title">Galeri Foto</div>
-                    <div class="sb-gallery-carousel">
-                        <div id="sbGallerySlides" class="sb-gallery-slides">
-                            <!-- Foto slides inserted here by JS -->
-                        </div>
-                        <div class="sb-gallery-nav" id="sbGalleryNav" style="display:none;">
-                            <button class="rp-carousel-btn" onclick="sbGalleryNav(-1)"><i class="fas fa-chevron-left"></i></button>
-                            <span class="rp-carousel-counter" id="sbGalleryCounter">1 / 1</span>
-                            <button class="rp-carousel-btn" onclick="sbGalleryNav(1)"><i class="fas fa-chevron-right"></i></button>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="sb-section">
