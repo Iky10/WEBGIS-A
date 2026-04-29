@@ -64,6 +64,30 @@
     </div>
 </div>
 
+<!-- Jam Operasional -->
+<div class="form-group col-sm-12">
+    <label><strong>Jam Operasional Gedung:</strong></label>
+    <small class="text-muted d-block mb-2">
+        Atur jam buka dan tutup gedung. Kosongkan jika gedung buka 24 jam.
+    </small>
+    <div class="row">
+        <div class="col-sm-6">
+            {!! Form::label('jam_buka', 'Jam Buka:') !!}
+            {!! Form::time('jam_buka', isset($gedung) ? $gedung->jam_buka_formatted : null, [
+                'class' => 'form-control',
+                'placeholder' => '07:00'
+            ]) !!}
+        </div>
+        <div class="col-sm-6">
+            {!! Form::label('jam_tutup', 'Jam Tutup:') !!}
+            {!! Form::time('jam_tutup', isset($gedung) ? $gedung->jam_tutup_formatted : null, [
+                'class' => 'form-control',
+                'placeholder' => '17:00'
+            ]) !!}
+        </div>
+    </div>
+</div>
+
 <!-- Bisa Diajukan Toggle -->
 <div class="form-group col-sm-12">
     <div class="custom-control custom-switch">

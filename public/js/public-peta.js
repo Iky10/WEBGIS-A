@@ -39,10 +39,14 @@
 
     /* ── HELPERS ──────────────────────────────── */
     function getColor(k) {
-        return k === 'Sedang Dipakai' ? '#22c55e' : k === 'Kosong' ? '#6c757d' : '#475569';
+        if (k === 'Sedang Dipakai') return '#3b82f6';
+        if (k === 'Tutup') return '#6b7280';
+        return '#22c55e'; // Kosong / Terbuka
     }
     function getBadgeClass(k) {
-        return k === 'Sedang Dipakai' ? 'badge-success' : k === 'Kosong' ? 'badge-secondary' : '';
+        if (k === 'Sedang Dipakai') return 'badge-primary';
+        if (k === 'Tutup') return 'badge-secondary';
+        return 'badge-success'; // Kosong / Terbuka
     }
 
     /* ── MARKER ICON ──────────────────────────── */
@@ -478,13 +482,16 @@
     };
 
     // Buat icon marker ruangan (lebih kecil dari gedung)
-    function makeRuanganIcon(kategori) {
-        var c = kategoriColors[kategori] || '#94a3b8';
+    // status: 'Sedang Dipakai', 'Kosong', 'Tutup'
+    function makeRuanganIcon(kategori, status) {
+        var katColor = kategoriColors[kategori] || '#94a3b8';
+        // Warna marker utama berdasarkan status
+        var c = status === 'Sedang Dipakai' ? '#3b82f6' : status === 'Tutup' ? '#6b7280' : '#22c55e';
         var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">'
             + '<defs><filter id="rds"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="rgba(0,0,0,.4)"/></filter></defs>'
             + '<path filter="url(#rds)" d="M11 1C6.03 1 2 5.03 2 10c0 6.5 9 19 9 19s9-12.5 9-19C20 5.03 15.97 1 11 1z" fill="' + c + '" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/>'
             + '<circle cx="11" cy="10" r="4" fill="rgba(255,255,255,.92)"/>'
-            + '<circle cx="11" cy="10" r="2" fill="' + c + '"/>'
+            + '<circle cx="11" cy="10" r="2" fill="' + katColor + '"/>'
             + '</svg>';
         return L.divIcon({ html: svg, className: '', iconSize: [22, 30], iconAnchor: [11, 30], popupAnchor: [0, -32] });
     }
@@ -493,8 +500,8 @@
     function buildRuanganPopup(p, lat, lng) {
         var c = kategoriColors[p.kategori] || '#94a3b8';
         var emoji = kategoriEmoji[p.kategori] || '📍';
-        var statusColor = p.status_dipakai === 'Sedang Dipakai' ? '#22c55e' : '#6c757d';
         var statusText = p.status_dipakai || 'Kosong';
+        var statusColor = statusText === 'Sedang Dipakai' ? '#3b82f6' : statusText === 'Tutup' ? '#6b7280' : '#22c55e';
 
         var imgHtml = p.foto_ruangan
             ? '<img class="rp-img" src="' + p.foto_ruangan + '" alt="' + p.nama_fasilitas + '">'
@@ -867,7 +874,7 @@
             var lng = f.geometry.coordinates[0];
             var p = f.properties;
 
-            var m = L.marker([lat, lng], { icon: makeRuanganIcon(p.kategori), title: p.nama_fasilitas });
+            var m = L.marker([lat, lng], { icon: makeRuanganIcon(p.kategori, p.status_dipakai), title: p.nama_fasilitas });
 
             m.bindPopup(buildRuanganPopup(p, lat, lng), { maxWidth: 280, closeButton: true });
 
@@ -1404,10 +1411,10 @@
     document.getElementById('sbBtnPhotos').addEventListener('click', function () {
         if (sbGallery.style.display === 'none') {
             sbGallery.style.display = 'block';
-            this.innerHTML = '<i class="fas fa-chevron-up"></i> Sembunyikan Foto';
+            this.innerHTML = '<i class="fas fa-chevron-up"></i> Tutup';
         } else {
             sbGallery.style.display = 'none';
-            this.innerHTML = '<i class="fas fa-images"></i> Lihat Foto';
+            this.innerHTML = '<i class="fas fa-images"></i> Foto';
         }
     });
 
@@ -1416,7 +1423,7 @@
         sbLoading.style.display = 'block';
         sbContent.style.display = 'none';
         sbGallery.style.display = 'none';
-        document.getElementById('sbBtnPhotos').innerHTML = '<i class="fas fa-images"></i> Lihat Foto';
+        document.getElementById('sbBtnPhotos').innerHTML = '<i class="fas fa-images"></i> Foto';
 
         // Opsi B: Tampilkan ruangan untuk gedung yang diklik
         if (window.showRuanganForGedung) {
@@ -1449,11 +1456,29 @@
                 document.getElementById('sbName').textContent = p.nama_gedung;
                 document.getElementById('sbAddr').textContent = p.alamat || '-';
 
-                // Update pengajuan button href with gedung_id
+                // Jam Operasional
+                var jamOpsEl = document.getElementById('sbJamOps');
+                var jamOpsText = document.getElementById('sbJamOpsText');
+                if (p.jam_buka && p.jam_tutup) {
+                    var buka = p.jam_buka.substring(0, 5);
+                    var tutup = p.jam_tutup.substring(0, 5);
+                    jamOpsText.textContent = buka + ' - ' + tutup + ' WIB';
+                    jamOpsEl.style.display = 'flex';
+                } else {
+                    jamOpsText.textContent = 'Buka 24 Jam';
+                    jamOpsEl.style.display = 'flex';
+                }
+
+                // Update pengajuan button: hanya tampil jika gedung bisa diajukan
                 var pengajuanBtn = document.getElementById('sbBtnPengajuan');
                 if (pengajuanBtn) {
-                    var baseUrl = pengajuanBtn.getAttribute('href').split('?')[0];
-                    pengajuanBtn.setAttribute('href', baseUrl + '?gedung_id=' + p.id);
+                    if (data.bisa_diajukan) {
+                        var baseUrl = pengajuanBtn.getAttribute('href').split('?')[0];
+                        pengajuanBtn.setAttribute('href', baseUrl + '?gedung_id=' + p.id);
+                        pengajuanBtn.style.display = 'flex';
+                    } else {
+                        pengajuanBtn.style.display = 'none';
+                    }
                 }
 
                 // Deskripsi
@@ -1480,6 +1505,15 @@
                     galleryNav.style.display = 'none';
                 }
 
+                // Update action bar grid columns based on visible buttons
+                var actionBar = document.querySelector('.sb-action-bar');
+                if (actionBar) {
+                    var visibleBtns = actionBar.querySelectorAll('.sb-action-btn');
+                    var visibleCount = 0;
+                    visibleBtns.forEach(function(btn) { if (btn.style.display !== 'none') visibleCount++; });
+                    actionBar.style.gridTemplateColumns = 'repeat(' + visibleCount + ', 1fr)';
+                }
+
                 // Fasilitas
                 var fasEl = document.getElementById('sbFasilitas');
                 if (data.fasilitas && data.fasilitas.length > 0) {
@@ -1487,9 +1521,10 @@
                     var totalFas = data.fasilitas.length;
                     var fasHtml = '<div id="sbFasilitasList" style="display:flex; flex-direction:column; gap:10px;">';
                     data.fasilitas.forEach(function (f, idx) {
-                        var statusColor = f.is_aktif ? 'var(--success)' : 'var(--muted)';
-                        var statusText = f.is_aktif ? 'Sedang Dipakai' : 'Kosong';
-                        var pulseClass = f.is_aktif ? 'pulse-mini' : '';
+                        var statusText = f.status || 'Kosong';
+                        var statusColor = statusText === 'Sedang Dipakai' ? '#3b82f6' : statusText === 'Tutup' ? '#6b7280' : '#22c55e';
+                        var pulseClass = statusText === 'Sedang Dipakai' ? 'pulse-mini' : '';
+                        var glowColor = statusText === 'Sedang Dipakai' ? 'rgba(59,130,246,0.4)' : statusText === 'Tutup' ? 'rgba(107,114,128,0.2)' : 'rgba(34,197,94,0.4)';
                         var hiddenStyle = idx >= maxVisible ? ' style="display:none;"' : '';
 
                         fasHtml += '<div class="sb-fas-item"' + hiddenStyle + '>'
@@ -1499,7 +1534,7 @@
                             + '</div>'
                             + (f.keterangan ? '<div style="font-size:0.75rem; color:var(--muted); margin-bottom:8px; line-height:1.4;">' + f.keterangan + '</div>' : '')
                             + '<div style="display:flex; align-items:center; gap:8px;">'
-                            + '<div class="status-dot ' + pulseClass + '" style="width:7px; height:7px; border-radius:50%; background:' + statusColor + '; box-shadow:0 0 10px ' + (f.is_aktif ? 'rgba(34,197,94,0.4)' : 'transparent') + '"></div>'
+                            + '<div class="status-dot ' + pulseClass + '" style="width:7px; height:7px; border-radius:50%; background:' + statusColor + '; box-shadow:0 0 10px ' + glowColor + '"></div>'
                             + '<span style="font-size:0.7rem; font-weight:600; color:' + statusColor + '; text-transform:uppercase; letter-spacing:0.5px;">' + statusText + '</span>'
                             + '</div>'
                             + '</div>';
