@@ -33,14 +33,17 @@ class WebGisController extends Controller
                     'coordinates' => [(float) $gedung->y, (float) $gedung->x], // [lng, lat]
                 ],
                 'properties' => [
-                    'id'           => $gedung->id,
-                    'nama_gedung'  => $gedung->nama_gedung,
-                    'alamat'       => $gedung->alamat,
-                    'kondisi'      => $gedung->status_dipakai,
-                    'foto_utama'   => $gedung->foto_utama
-                                        ? asset($gedung->foto_utama)
-                                        : null,
-                    'detail_url'   => route('publik.gedung.detail', $gedung->id),
+                    'id'              => $gedung->id,
+                    'nama_gedung'     => $gedung->nama_gedung,
+                    'alamat'          => $gedung->alamat,
+                    'kondisi'         => $gedung->status_dipakai,
+                    'bisa_diajukan'   => (bool) $gedung->bisa_diajukan,
+                    'jam_buka'        => $gedung->jam_buka_formatted,
+                    'jam_tutup'       => $gedung->jam_tutup_formatted,
+                    'foto_utama'      => $gedung->foto_utama
+                                            ? asset($gedung->foto_utama)
+                                            : null,
+                    'detail_url'      => route('publik.gedung.detail', $gedung->id),
                 ],
             ];
         });

@@ -37,6 +37,19 @@ class GedungFasilitas extends Model
 
     public function getStatusDipakaiAttribute()
     {
+        // Cek jam operasional gedung induk terlebih dahulu
+        $gedung = $this->gedung;
+        if ($gedung && $gedung->jam_buka && $gedung->jam_tutup) {
+            $now = \Carbon\Carbon::now();
+            $jamBuka = \Carbon\Carbon::createFromFormat('H:i:s', $gedung->jam_buka);
+            $jamTutup = \Carbon\Carbon::createFromFormat('H:i:s', $gedung->jam_tutup);
+
+            if ($now->lt($jamBuka) || $now->gt($jamTutup)) {
+                return 'Tutup';
+            }
+        }
+
+        // Jika gedung buka, cek jadwal ruangan
         $hariMap = [
             'Sunday' => 'Minggu',
             'Monday' => 'Senin',

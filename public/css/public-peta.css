@@ -887,6 +887,14 @@ html, body {
 .sb-stat-v { display:block; font-size:.95rem; font-weight:800; color:var(--text); }
 .sb-stat-k { font-size:.7rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
 
+.sb-jam-ops {
+    display:flex; align-items:center; gap:6px;
+    font-size:.78rem; color:var(--muted); font-weight:600;
+    background:rgba(255,255,255,.05); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:8px 12px; margin-bottom:18px;
+}
+.sb-jam-ops i { color:#3b82f6; font-size:.75rem; }
+
 .sb-section { margin-bottom:22px; }
 .sb-sec-title { 
     font-size:.85rem; font-weight:800; color:var(--text); margin-bottom:8px; 
@@ -902,6 +910,109 @@ html, body {
     display:flex; align-items:center; justify-content:center; gap:8px;
 }
 .sb-cta-btn:hover { background:#2563eb; transform:translateY(-2px); box-shadow:0 8px 25px var(--accent-glow); }
+
+/* ── Action Bar (Plan A: Dual Equal Bar) ── */
+.sb-action-bar {
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+    margin-bottom:16px;
+}
+.sb-action-btn {
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:11px 8px;
+    border:none;
+    border-radius:10px;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:.78rem;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .25s cubic-bezier(.4,0,.2,1);
+    text-decoration:none;
+    color:#fff;
+    letter-spacing:.2px;
+}
+.sb-action-btn i { font-size:.82rem; }
+
+/* Rute — Hijau */
+.sb-action-rute {
+    background:linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow:0 4px 14px rgba(34,197,94,.35);
+}
+.sb-action-rute:hover {
+    background:linear-gradient(135deg, #16a34a, #15803d);
+    transform:translateY(-2px);
+    box-shadow:0 8px 22px rgba(34,197,94,.45);
+}
+
+/* Foto — Slate */
+.sb-action-foto {
+    background:linear-gradient(135deg, #475569, #334155);
+    box-shadow:0 4px 14px rgba(71,85,105,.3);
+}
+.sb-action-foto:hover {
+    background:linear-gradient(135deg, #334155, #1e293b);
+    transform:translateY(-2px);
+    box-shadow:0 8px 22px rgba(71,85,105,.4);
+}
+
+/* Ajukan — Biru / Indigo */
+.sb-action-ajukan {
+    background:linear-gradient(135deg, #3b82f6, #6366f1);
+    box-shadow:0 4px 14px rgba(59,130,246,.35);
+}
+.sb-action-ajukan:hover {
+    background:linear-gradient(135deg, #2563eb, #4f46e5);
+    transform:translateY(-2px);
+    box-shadow:0 8px 22px rgba(99,102,241,.45);
+    color:#fff;
+}
+
+/* Tooltip on hover */
+.sb-action-btn[data-tooltip]::after {
+    content:attr(data-tooltip);
+    position:absolute;
+    bottom:calc(100% + 8px);
+    left:50%;
+    transform:translateX(-50%) translateY(4px);
+    background:rgba(15,23,42,.95);
+    color:#e2e8f0;
+    font-size:.7rem;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:8px;
+    white-space:nowrap;
+    pointer-events:none;
+    opacity:0;
+    transition:all .2s ease;
+    border:1px solid rgba(255,255,255,.1);
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    z-index:10;
+}
+.sb-action-btn[data-tooltip]::before {
+    content:'';
+    position:absolute;
+    bottom:calc(100% + 2px);
+    left:50%;
+    transform:translateX(-50%);
+    border:5px solid transparent;
+    border-top-color:rgba(15,23,42,.95);
+    pointer-events:none;
+    opacity:0;
+    transition:all .2s ease;
+    z-index:10;
+}
+.sb-action-btn[data-tooltip]:hover::after {
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+}
+.sb-action-btn[data-tooltip]:hover::before {
+    opacity:1;
+}
 
 .sb-gallery { margin-top:24px; border-top:1px dashed var(--border); padding-top:20px;}
 .sb-gallery-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }

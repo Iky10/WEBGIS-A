@@ -42,6 +42,8 @@ class Gedung extends Model
         'y',
         'foto_utama',
         'bisa_diajukan',
+        'jam_buka',
+        'jam_tutup',
     ];
 
     /**
@@ -57,6 +59,22 @@ class Gedung extends Model
         'y' => 'decimal:8',
         'bisa_diajukan' => 'boolean',
     ];
+
+    /**
+     * Accessor: format jam_buka untuk form input (HH:MM)
+     */
+    public function getJamBukaFormattedAttribute()
+    {
+        return $this->jam_buka ? \Carbon\Carbon::parse($this->jam_buka)->format('H:i') : null;
+    }
+
+    /**
+     * Accessor: format jam_tutup untuk form input (HH:MM)
+     */
+    public function getJamTutupFormattedAttribute()
+    {
+        return $this->jam_tutup ? \Carbon\Carbon::parse($this->jam_tutup)->format('H:i') : null;
+    }
 
     /**
      * Scope: hanya gedung yang bisa diajukan penggunaan.
@@ -75,7 +93,9 @@ class Gedung extends Model
         'nama_gedung' => 'required',
         'alamat' => 'required',
         'x' => 'required',
-        'y' => 'required'
+        'y' => 'required',
+        'jam_buka' => 'nullable|date_format:H:i',
+        'jam_tutup' => 'nullable|date_format:H:i|after:jam_buka',
     ];
 
     public function fasilitas()
@@ -90,6 +110,15 @@ class Gedung extends Model
 
     public function getStatusDipakaiAttribute()
     {
+        $waktuSekarang = date('H:i:s');
+
+        // 0. Cek jam operasional — jika di luar jam buka, status = Tutup
+        if ($this->jam_buka && $this->jam_tutup) {
+            if ($waktuSekarang < $this->jam_buka || $waktuSekarang > $this->jam_tutup) {
+                return 'Tutup';
+            }
+        }
+
         $hariMap = [
             'Sunday' => 'Minggu',
             'Monday' => 'Senin',
@@ -101,7 +130,6 @@ class Gedung extends Model
         ];
         
         $hariIni = $hariMap[date('l')];
-        $waktuSekarang = date('H:i:s');
         $tanggalHariIni = now()->toDateString();
 
         // 1. Cek jadwal ruangan reguler (semester)

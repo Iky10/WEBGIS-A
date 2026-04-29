@@ -97,7 +97,8 @@
         <div class="fp-chips" id="chipsKondisi">
             <div class="chip on" data-v="">Semua</div>
             <div class="chip" data-v="Sedang Dipakai">Sedang Dipakai</div>
-            <div class="chip" data-v="Kosong">Kosong</div>
+            <div class="chip" data-v="Kosong">Terbuka</div>
+            <div class="chip" data-v="Tutup">Tutup</div>
         </div>
 
         <div class="fp-sep"></div>
@@ -123,9 +124,9 @@
 
 <div id="legend">
     <div class="leg-title">Status Pemakaian Gedung</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Sedang Dipakai</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#6c757d;box-shadow:0 0 5px #6c757d;"></div>Kosong</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#475569;"></div>Tidak diketahui</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></div>Sedang Dipakai</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Terbuka</div>
+    <div class="leg-row"><div class="leg-dot" style="background:#6b7280;"></div>Tutup</div>
     {{-- Kategori Ruangan disembunyikan sementara --}}
 </div>
 
@@ -187,6 +188,10 @@
                     <div class="sb-stat"><span id="sbTahun" class="sb-stat-v">-</span><span class="sb-stat-k">Tahun</span></div>
                 </div>
 
+                <div id="sbJamOps" class="sb-jam-ops" style="display:none;">
+                    <i class="fas fa-clock"></i> <span id="sbJamOpsText">-</span>
+                </div>
+
                 <div class="sb-section">
                     <div class="sb-sec-title">Deskripsi</div>
                     <div id="sbDesc" class="sb-sec-text">-</div>
@@ -224,15 +229,17 @@
                     </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
-                    <button id="sbBtnRoute" class="sb-cta-btn" style="background:var(--success); box-shadow:0 6px 20px rgba(34,197,94,.35);"><i class="fas fa-directions"></i> Rute ke Sini</button>
-                    <button id="sbBtnPhotos" class="sb-cta-btn"><i class="fas fa-images"></i> Lihat Foto</button>
-                </div>
-
-                <div style="margin-bottom:16px;">
+                <div class="sb-action-bar">
+                    <button id="sbBtnRoute" class="sb-action-btn sb-action-rute">
+                        <i class="fas fa-diamond-turn-right"></i> Rute
+                    </button>
+                    <button id="sbBtnPhotos" class="sb-action-btn sb-action-foto">
+                        <i class="fas fa-images"></i> Foto
+                    </button>
                     <a id="sbBtnPengajuan" href="{{ route('pengajuan_gedungs.create') }}"
-                       class="sb-cta-btn" style="display:block; text-align:center; text-decoration:none; padding:10px; background:var(--accent); color:#fff; border-radius:8px; font-weight:700; font-size:0.82rem;">
-                        <i class="fas fa-file-alt"></i> Ajukan Penggunaan Gedung
+                       class="sb-action-btn sb-action-ajukan"
+                       data-tooltip="Ajukan Penggunaan Gedung">
+                        <i class="fas fa-file-pen"></i> Ajukan
                     </a>
                 </div>
 

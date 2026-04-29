@@ -25,9 +25,24 @@
     {!! Form::label('kondisi', 'Status Pemakaian:') !!}
     <p>
         @if($gedung->status_dipakai == 'Sedang Dipakai')
-            <span class="badge badge-success">Sedang Dipakai</span>
+            <span class="badge badge-primary">Sedang Dipakai</span>
+        @elseif($gedung->status_dipakai == 'Tutup')
+            <span class="badge badge-secondary">Tutup</span>
         @else
-            <span class="badge badge-secondary">Kosong</span>
+            <span class="badge badge-success">Terbuka</span>
+        @endif
+    </p>
+</div>
+
+<!-- Jam Operasional -->
+<div class="col-sm-12">
+    {!! Form::label('jam_operasional', 'Jam Operasional:') !!}
+    <p>
+        @if($gedung->jam_buka && $gedung->jam_tutup)
+            <i class="fas fa-clock text-info"></i>
+            {{ $gedung->jam_buka_formatted }} - {{ $gedung->jam_tutup_formatted }} WIB
+        @else
+            <span class="text-muted">Buka 24 Jam</span>
         @endif
     </p>
 </div>
