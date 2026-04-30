@@ -4,6 +4,7 @@
             <th>Nama Gedung</th>
             <th>Alamat</th>
             <th>Deskripsi</th>
+            <th>Status Pengajuan</th>
             <th>X</th>
             <th>Y</th>
             <th>Aksi</th>
@@ -15,6 +16,13 @@
                 <td>{{ $gedung->nama_gedung }}</td>
                 <td>{{ $gedung->alamat }}</td>
                 <td>{{ $gedung->deskripsi }}</td>
+                <td>
+                    @if($gedung->bisa_diajukan)
+                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Bisa Diajukan</span>
+                    @else
+                        <span class="badge badge-secondary"><i class="fas fa-ban mr-1"></i>Tidak Bisa</span>
+                    @endif
+                </td>
                 <td>{{ $gedung->x }}</td>
                 <td>{{ $gedung->y }}</td>
                 <td width="120">
