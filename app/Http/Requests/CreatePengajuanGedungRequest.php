@@ -45,6 +45,16 @@ class CreatePengajuanGedungRequest extends FormRequest
             $jamMulai      = $this->input('jam_mulai');
             $jamSelesai    = $this->input('jam_selesai');
 
+            // Cek apakah gedung bisa diajukan
+            $gedung = \App\Models\Gedung::find($gedungId);
+            if ($gedung && !$gedung->bisa_diajukan) {
+                $validator->errors()->add(
+                    'gedung_id',
+                    'Gedung ini tidak tersedia untuk pengajuan penggunaan.'
+                );
+                return;
+            }
+
             // Cek apakah ada pengajuan yang overlap pada gedung yang sama
             // Hanya cek terhadap pengajuan berstatus 'diproses' atau 'disetujui'
             $overlap = PengajuanGedung::where('gedung_id', $gedungId)

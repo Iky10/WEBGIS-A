@@ -100,7 +100,7 @@
             pageLength: 10,
             order: [[0, 'asc']],
             columnDefs: [
-                { orderable: false, targets: [5] }
+                { orderable: false, targets: [6] }
             ],
             initComplete: function() {
                 var $lengthMenu = $('.dataTables_length');
