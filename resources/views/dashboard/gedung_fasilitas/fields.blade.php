@@ -15,6 +15,7 @@
     {!! Form::label('kategori', 'Kategori:') !!}
     {!! Form::select('kategori', [
         'Ruang Kelas' => 'Ruang Kelas',
+        'Laboratorium' => 'Laboratorium',
         'Post Penjagaan' => 'Post Penjagaan',
         'Ruang Kuliah Umum' => 'Ruang Kuliah Umum',
         'Perpustakaan' => 'Perpustakaan',
