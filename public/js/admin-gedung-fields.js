@@ -16,24 +16,24 @@ document.addEventListener('DOMContentLoaded', function() {
     let lngVal = parseFloat(inputLng.value);
 
     const hasCoords = !isNaN(latVal) && !isNaN(lngVal);
-    const defaultLat = hasCoords ? latVal : -0.53597801;
-    const defaultLng = hasCoords ? lngVal : 117.12345243;
-    const initialZoom = hasCoords ? 18 : 18;
+    const defaultLat = hasCoords ? latVal : -0.53604774;
+    const defaultLng = hasCoords ? lngVal : 117.12357581;
+    const initialZoom = hasCoords ? 18 : 19;
 
     const map = L.map('map-picker').setView([defaultLat, defaultLng], initialZoom);
 
-    // Layer Satelit Hybrid (Esri) - Lebih presisi untuk gedung
-    const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri'
+    // Layer Satelit (Google)
+    const sat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        attribution: '© Google', subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], maxZoom: 21
     }).addTo(map);
 
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
+    const light = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        attribution: '© Google', subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], maxZoom: 21
     });
 
     L.control.layers({
-        "Satelit Hybrid": satelit,
-        "Peta Jalan": osm
+        "Satelit (Google)": sat,
+        "Peta (Google)": light
     }).addTo(map);
 
     let marker = null;

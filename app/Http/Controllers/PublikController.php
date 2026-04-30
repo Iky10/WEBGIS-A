@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Gedung;
 use App\Models\GambarGedung;
+use App\Models\GedungFasilitas;
 use App\Models\JadwalRuangan;
 use App\Models\JadwalSemester;
 use Carbon\Carbon;
@@ -112,6 +113,9 @@ class PublikController extends Controller
                 'nama_fasilitas' => $f->nama_fasilitas,
                 'kategori' => $f->kategori,
                 'keterangan' => $f->keterangan,
+                'latitude' => $f->latitude,
+                'longitude' => $f->longitude,
+                'foto_ruangan' => $f->foto_ruangan ? asset($f->foto_ruangan) : null,
                 'status' => $f->status_dipakai, // 'Sedang Dipakai', 'Kosong', atau 'Tutup'
             ];
         });
