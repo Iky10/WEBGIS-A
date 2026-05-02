@@ -214,22 +214,17 @@
                         <i class="fas fa-calendar-alt" style="color:var(--accent);"></i> Jadwal Semester
                     </div>
                     
-                    <!-- Toggle Ganjil / Genap -->
-                    <div class="js-toggle-container">
-                        <button class="js-toggle-btn active" id="btnJadwalGanjil" onclick="toggleJadwalSemester('ganjil')">Semester Ganjil</button>
-                        <button class="js-toggle-btn" id="btnJadwalGenap" onclick="toggleJadwalSemester('genap')">Semester Genap</button>
+                    <!-- Info Semester Aktif -->
+                    <div id="sbJadwalAktifBadge" style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); color: var(--success); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px;">
+                        <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success);"></div>
+                        <span id="sbJadwalAktifText">Semester Aktif</span>
                     </div>
 
                     <!-- Tabs per Semester -->
                     <div id="sbJadwalTabs" class="rp-semester-tabs" style="margin-top:10px;">
                     </div>
 
-                    <!-- Dropdown Tahun Ajaran -->
-                    <div id="sbJadwalDropdownWrap" style="margin-top:10px; display:none;">
-                        <label style="font-size:0.75rem; color:var(--muted); font-weight:600; margin-bottom:4px; display:block;">Tahun Ajaran:</label>
-                        <select id="sbJadwalDropdown" class="sb-jadwal-dropdown" onchange="onJadwalDropdownChange()">
-                        </select>
-                    </div>
+                    <!-- Dropdown Tahun Ajaran Dihapus -->
                     
                     <!-- Viewer (single preview) -->
                     <div id="sbJadwalViewer" style="margin-top:12px;">

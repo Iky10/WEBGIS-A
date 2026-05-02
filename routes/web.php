@@ -38,11 +38,16 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('jadwal_ruangans', App\Http\Controllers\JadwalRuanganController::class);
     Route::resource('jadwal_semester', App\Http\Controllers\JadwalSemesterController::class);
     Route::get('/webgis', [App\Http\Controllers\WebGisController::class, 'index'])->name('webgis.index');
+    
+    // Semester Aktif Settings
+    Route::get('/semester-aktif', [App\Http\Controllers\SemesterAktifController::class, 'index'])->name('semester_aktif.index');
+    Route::post('/semester-aktif', [App\Http\Controllers\SemesterAktifController::class, 'update'])->name('semester_aktif.update');
 
 });
 
 // API Routes for public/ajax
 Route::get('/api/gedung/{id}/jadwal-semester', [App\Http\Controllers\PublikController::class, 'apiJadwalSemester']);
+Route::get('/api/semester-aktif', [App\Http\Controllers\SemesterAktifController::class, 'apiGetSemesterAktif']);
 
 // YOGMA HADIR
 // Ini Di Origin Main

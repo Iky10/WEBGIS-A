@@ -703,49 +703,46 @@
 
         var gId = data.gedung.id;
 
-        // Fetch jadwal semester untuk gedung
-        fetch('/api/gedung/' + gId + '/jadwal-semester')
-            .then(res => res.json())
-            .then(res => {
+        // Fetch jadwal semester untuk gedung dan setting aktif
+        Promise.all([
+            fetch('/api/gedung/' + gId + '/jadwal-semester').then(res => res.json()),
+            fetch('/api/semester-aktif').then(res => res.json())
+        ])
+            .then(([resJadwal, resSetting]) => {
                 var sbJadwal = document.getElementById('sbJadwalSemester');
-                if (res.success && res.data.length > 0) {
-                    currentJadwalGedung = res.data;
+                var sbJadwalAktifText = document.getElementById('sbJadwalAktifText');
+                
+                if (resJadwal.success && resJadwal.data.length > 0) {
+                    currentJadwalGedung = resJadwal.data;
                     sbJadwal.style.display = 'block';
 
-                    // Auto-detect Ganjil/Genap based on current month
-                    var currentMonth = new Date().getMonth() + 1; // 1-12
-                    // Aug(8) - Jan(1) is Ganjil. Feb(2) - Jul(7) is Genap.
-                    var isGanjil = currentMonth >= 8 || currentMonth === 1;
+                    var activeType = resSetting.semester_aktif || 'genap'; // ganjil / genap
+                    var taAktif = resSetting.tahun_ajaran_aktif || '-';
+                    
+                    // Set badge text
+                    var labelSemester = activeType === 'ganjil' ? 'Ganjil' : 'Genap';
+                    if (sbJadwalAktifText) {
+                        sbJadwalAktifText.textContent = 'Semester ' + labelSemester + ' (' + taAktif + ') Aktif';
+                    }
 
-                    toggleJadwalSemester(isGanjil ? 'ganjil' : 'genap');
+                    toggleJadwalSemester(activeType);
                 } else {
                     currentJadwalGedung = [];
                     sbJadwal.style.display = 'none';
                 }
             })
             .catch(err => {
+                console.error(err);
                 document.getElementById('sbJadwalSemester').style.display = 'none';
             });
     }
 
     // Toggle Jadwal Ganjil / Genap
     window.toggleJadwalSemester = function (type) {
-        var btnGanjil = document.getElementById('btnJadwalGanjil');
-        var btnGenap = document.getElementById('btnJadwalGenap');
         var ganjilSemesters = [1, 3, 5, 7];
         var genapSemesters = [2, 4, 6, 8];
 
-        btnGanjil.classList.remove('active');
-        btnGenap.classList.remove('active');
-
-        var activeSemesters = [];
-        if (type === 'ganjil') {
-            btnGanjil.classList.add('active');
-            activeSemesters = ganjilSemesters;
-        } else {
-            btnGenap.classList.add('active');
-            activeSemesters = genapSemesters;
-        }
+        var activeSemesters = type === 'ganjil' ? ganjilSemesters : genapSemesters;
 
         // Filter jadwal yang sesuai tipe ganjil/genap
         var filteredJadwal = currentJadwalGedung.filter(function (j) {
@@ -757,12 +754,10 @@
 
     function renderSidebarJadwal(jadwals, type) {
         var tabsContainer = document.getElementById('sbJadwalTabs');
-        var dropdownWrap = document.getElementById('sbJadwalDropdownWrap');
         var viewer = document.getElementById('sbJadwalViewer');
 
         if (!jadwals || jadwals.length === 0) {
             tabsContainer.innerHTML = '';
-            dropdownWrap.style.display = 'none';
             viewer.innerHTML = '<div style="text-align:center; padding:30px 15px; color:#64748b; background:rgba(255,255,255,.02); border:1px dashed var(--border); border-radius:8px;">'
                 + '<i class="fas fa-calendar-times" style="font-size:24px; margin-bottom:10px; display:block;"></i>'
                 + 'Belum ada jadwal semester ' + type + '.'
@@ -808,24 +803,12 @@
 
     // Populate dropdown for a specific semester
     function populateJadwalDropdown(semNum) {
-        var dropdownWrap = document.getElementById('sbJadwalDropdownWrap');
-        var dropdown = document.getElementById('sbJadwalDropdown');
         var jadwals = window._currentSemMap[semNum] || [];
 
         if (jadwals.length === 0) {
-            dropdownWrap.style.display = 'none';
             document.getElementById('sbJadwalViewer').innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted); font-size:0.8rem;">Tidak ada jadwal untuk semester ini.</div>';
             return;
         }
-
-        dropdownWrap.style.display = 'block';
-        var options = '';
-        jadwals.forEach(function (j, idx) {
-            var label = 'TA ' + (j.tahun_ajaran || 'Tidak diketahui');
-            if (idx === 0) label += ' (Terbaru)';
-            options += '<option value="' + j.id + '">' + label + '</option>';
-        });
-        dropdown.innerHTML = options;
 
         // Auto-render the first (newest) jadwal
         renderJadwalViewer(jadwals[0]);
@@ -869,19 +852,7 @@
         populateJadwalDropdown(semNum);
     };
 
-    // Dropdown change
-    window.onJadwalDropdownChange = function () {
-        var dropdown = document.getElementById('sbJadwalDropdown');
-        var selectedId = parseInt(dropdown.value);
-        // Find the jadwal from the flat list
-        var found = null;
-        Object.keys(window._currentSemMap).forEach(function (sem) {
-            window._currentSemMap[sem].forEach(function (j) {
-                if (j.id === selectedId) found = j;
-            });
-        });
-        if (found) renderJadwalViewer(found);
-    };
+    // Dropdown change dihapus karena sudah tidak digunakan
 
     // Lightbox global
     window.openLightbox = function (src) {
@@ -909,6 +880,7 @@
             var p = f.properties;
 
             var m = L.marker([lat, lng], { icon: makeRuanganIcon(p.kategori), title: p.nama_fasilitas });
+            m.ruanganId = p.id;
 
             m.bindPopup(buildRuanganPopup(p, lat, lng), { maxWidth: 280, closeButton: true });
 
@@ -1513,15 +1485,22 @@
                         var pulseClass = f.is_aktif ? 'pulse-mini' : '';
                         var hiddenStyle = idx >= maxVisible ? ' style="display:none;"' : '';
 
+                        var btnLokasi = (f.latitude && f.longitude) 
+                            ? '<button onclick="zoomToRuangan(' + f.id + ', ' + f.latitude + ', ' + f.longitude + ')" style="background:#3b82f6; border:1px solid #3b82f6; color:#ffffff; padding:4px 12px; border-radius:100px; font-size:0.65rem; font-weight:700; cursor:pointer; transition:all 0.2s; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-search-location" style="margin-right:4px;"></i> Lihat Detail</button>'
+                            : '';
+
                         fasHtml += '<div class="sb-fas-item"' + hiddenStyle + '>'
                             + '<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:4px;">'
                             + '<strong style="font-size:0.9rem; color:var(--text);">' + f.nama_fasilitas + '</strong>'
                             + (f.kategori ? '<span style="font-size:0.65rem; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border:1px solid var(--accent-dim); padding:2px 8px; border-radius:100px; background:var(--accent-dim);">' + f.kategori + '</span>' : '')
                             + '</div>'
                             + (f.keterangan ? '<div style="font-size:0.75rem; color:var(--muted); margin-bottom:8px; line-height:1.4;">' + f.keterangan + '</div>' : '')
+                            + '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">'
                             + '<div style="display:flex; align-items:center; gap:8px;">'
                             + '<div class="status-dot ' + pulseClass + '" style="width:7px; height:7px; border-radius:50%; background:' + statusColor + '; box-shadow:0 0 10px ' + (f.is_aktif ? 'rgba(34,197,94,0.4)' : 'transparent') + '"></div>'
                             + '<span style="font-size:0.7rem; font-weight:600; color:' + statusColor + '; text-transform:uppercase; letter-spacing:0.5px;">' + statusText + '</span>'
+                            + '</div>'
+                            + btnLokasi
                             + '</div>'
                             + '</div>';
                     });
@@ -1548,4 +1527,34 @@
                 toast('Gagal mengambil data gedung');
             });
     }
+    window.zoomToRuangan = function (id, lat, lng) {
+        if (!lat || !lng) {
+            toast('Koordinat ruangan tidak tersedia');
+            return;
+        }
+        
+        map.flyTo([lat, lng], 21, { duration: 1.5 });
+        
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.remove('show');
+        }
+        
+        setTimeout(function() {
+            var found = false;
+            ruanganMarkerGroup.eachLayer(function(m) {
+                if (m.ruanganId === id) {
+                    m.openPopup();
+                    found = true;
+                }
+            });
+            
+            if(!found) {
+                setTimeout(function() {
+                    ruanganMarkerGroup.eachLayer(function(m) {
+                        if (m.ruanganId === id) m.openPopup();
+                    });
+                }, 500);
+            }
+        }, 1600);
+    };
 })();

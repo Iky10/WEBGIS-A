@@ -52,6 +52,15 @@
     </a>
 </li>
 
+{{-- Pengaturan Semester Aktif --}}
+<li class="nav-item">
+    <a href="{{ route('semester_aktif.index') }}"
+       class="nav-link {{ Request::is('semester-aktif*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-cog"></i>
+        <p>Pengaturan Global</p>
+    </a>
+</li>
+
 {{-- Kembali ke Publik --}}
 <li class="nav-item">
     <a href="{{ route('publik.home') }}"
