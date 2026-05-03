@@ -55,6 +55,46 @@
         .page-content { min-height: calc(100vh - 130px); padding-top: 20px; }
 
         /* ════════════════════════════════════════
+           NAVBAR 3-ZONE LAYOUT (mobile-first like AdminLTE)
+           Mobile: [☰] [Brand] ............ [👤Avatar]
+           Desktop: [Brand] [Nav links] ... [Dashboard][👤Name▼]
+        ════════════════════════════════════════ */
+        .navbar-public .navbar-toggler {
+            border-color: rgba(255,255,255,0.4);
+            padding: 4px 10px;
+        }
+        .navbar-public .user-zone {
+            flex-direction: row;
+            margin-left: auto;
+        }
+        /* Mobile: brand text bisa terclip kalau panjang, kasih ellipsis */
+        @media (max-width: 991.98px) {
+            .navbar-public .navbar {
+                flex-wrap: nowrap; /* prevent wrap zone-zone di 1 baris */
+            }
+            .navbar-public .navbar-brand {
+                font-size: 1.05rem;
+                max-width: 50vw;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                margin-right: 8px !important;
+            }
+            .navbar-public .navbar-brand .brand-text {
+                /* Optional: di mobile super sempit, hide text dan show icon only */
+            }
+            @media (max-width: 380px) {
+                .navbar-public .navbar-brand .brand-text {
+                    display: none;
+                }
+                .navbar-public .navbar-brand i {
+                    margin-right: 0 !important;
+                    font-size: 1.4rem;
+                }
+            }
+        }
+
+        /* ════════════════════════════════════════
            USER DROPDOWN MENU (AdminLTE-style)
            Desktop: dropdown overlay; Mobile: inline expanded
            Avatar inisial colored (consistent per user via name hash)
@@ -258,77 +298,34 @@
         }
 
         /* ════════════════════════════════════════
-           MOBILE: Inline Expanded Dropdown
+           MOBILE: User dropdown standalone (di luar hamburger drawer)
+           Trigger = avatar bulat saja (no text), tap → dropdown overlay
         ════════════════════════════════════════ */
         @media (max-width: 991.98px) {
-            /* Hide dropdown trigger button */
-            .navbar-public .user-dropdown-toggle {
-                display: none !important;
+            /* Trigger compact: avatar saja, hide nama text */
+            .navbar-public .user-dropdown .user-dropdown-toggle {
+                padding: 2px 6px !important;
+                gap: 0;
+            }
+            .navbar-public .user-dropdown .user-dropdown-name {
+                display: none; /* hide nama di mobile, hemat space */
+            }
+            .navbar-public .user-dropdown-toggle::after {
+                display: none; /* hide caret di mobile */
+            }
+            .user-avatar-mini {
+                width: 36px; height: 36px;
+                font-size: 0.85rem;
             }
 
-            /* Force dropdown menu always visible inline */
+            /* Dropdown menu posisi optimal di mobile (right edge dengan margin) */
             .navbar-public .user-dropdown-menu {
-                position: static !important;
-                display: block !important;
-                float: none !important;
-                width: 100%;
-                max-width: 100%;
-                margin-top: 16px !important; /* spacing visual lebih jelas dari nav links */
-                border-radius: 10px !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-                background: rgba(0,0,0,0.18);
-                border: 1px solid rgba(255,255,255,0.08);
-            }
-
-            /* Header in mobile: lighter (already inside drawer) */
-            .user-dropdown-header {
-                background: linear-gradient(135deg, rgba(26,60,94,0.6), rgba(45,106,159,0.4));
-                padding: 22px 16px 16px;
-            }
-            .user-avatar-big {
-                width: 64px; height: 64px;
-                font-size: 1.4rem;
-            }
-            .user-info-name { font-size: 1rem; }
-
-            /* Admin link in mobile drawer: white text */
-            .navbar-public .user-dropdown-menu .dropdown-item.user-dropdown-link {
-                color: rgba(255,255,255,0.85) !important;
-                padding: 12px 16px;
-            }
-            .navbar-public .user-dropdown-menu .dropdown-item.user-dropdown-link:hover {
-                background: rgba(255,255,255,0.08) !important;
-                color: #fff !important;
-            }
-            .navbar-public .user-dropdown-menu .dropdown-divider {
-                border-color: rgba(255,255,255,0.08);
-            }
-
-            /* Footer in mobile: subtle dark style */
-            .user-dropdown-footer {
-                background: rgba(0,0,0,0.2);
-                border-top: 1px solid rgba(255,255,255,0.08);
-            }
-            .user-footer-btn {
-                color: rgba(255,255,255,0.85);
-            }
-            .user-footer-btn:not(:last-child) {
-                border-right: 1px solid rgba(255,255,255,0.08);
-            }
-            .user-footer-btn:hover {
-                background: rgba(255,255,255,0.06);
-                color: #fff;
-            }
-            .user-footer-btn-logout {
-                color: #ff7878;
-            }
-            .user-footer-btn-logout:hover {
-                background: rgba(231,76,60,0.18);
-                color: #ff9090;
-            }
-            .badge-coming-soon {
-                background: rgba(255,255,255,0.18);
-                color: rgba(255,255,255,0.85);
+                min-width: 280px;
+                max-width: calc(100vw - 24px);
+                margin-top: 12px !important;
+                margin-right: 0 !important;
+                right: 12px !important;
+                left: auto !important;
             }
         }
 
