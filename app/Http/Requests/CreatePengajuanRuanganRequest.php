@@ -40,6 +40,17 @@ class CreatePengajuanRuanganRequest extends FormRequest
 
             // Cek apakah ruangan (dan gedung induk) bisa diajukan
             $ruangan = GedungFasilitas::with('gedung')->find($ruanganId);
+
+            // Cek 1: ruangan aktif (tidak sedang perbaikan / nonaktif)
+            if ($ruangan && !$ruangan->is_aktif) {
+                $validator->errors()->add(
+                    'gedung_fasilitas_id',
+                    'Ruangan ini sedang tidak aktif (mungkin dalam perbaikan). Silakan pilih ruangan lain.'
+                );
+                return;
+            }
+
+            // Cek 2: gedung induk dibuka untuk pengajuan
             if ($ruangan && $ruangan->gedung && !$ruangan->gedung->bisa_diajukan) {
                 $validator->errors()->add(
                     'gedung_fasilitas_id',
@@ -60,16 +71,17 @@ class CreatePengajuanRuanganRequest extends FormRequest
                 }
             }
 
-            // Throttle: max 5 pengajuan per user dalam 1 jam terakhir (cegah spam)
+            // Throttle: max 10 pengajuan per user dalam 1 jam terakhir (cegah spam).
+            // Dinaikkan dari 5 ke 10 supaya user yang book event multi-hari / multi-slot tidak kebablasan.
             if (Auth::check()) {
-                $jumlahPengajuan = PengajuanRuangan::where('user_id', Auth::id())
+                $jumlahPengajuan = PengajuanRuangan::milikUser(Auth::id())
                     ->where('created_at', '>=', now()->subHour())
                     ->count();
 
-                if ($jumlahPengajuan >= 5) {
+                if ($jumlahPengajuan >= 10) {
                     $validator->errors()->add(
                         'gedung_fasilitas_id',
-                        'Anda sudah membuat 5 pengajuan dalam 1 jam terakhir. Silakan tunggu sebelum mengajukan lagi.'
+                        'Anda sudah membuat 10 pengajuan dalam 1 jam terakhir. Silakan tunggu sebelum mengajukan lagi.'
                     );
                     return;
                 }
@@ -78,7 +90,10 @@ class CreatePengajuanRuanganRequest extends FormRequest
             // Cek bentrok pengajuan pada RUANGAN yang sama (granular — bukan level gedung)
             // Hanya cek terhadap pengajuan berstatus 'diproses' atau 'disetujui'
             $overlap = PengajuanRuangan::where('gedung_fasilitas_id', $ruanganId)
-                ->whereIn('status', ['diproses', 'disetujui'])
+                ->whereIn('status', [
+                    PengajuanRuangan::STATUS_DIPROSES,
+                    PengajuanRuangan::STATUS_DISETUJUI,
+                ])
                 ->where(function ($q) use ($tanggalMulai, $tanggalSelesai) {
                     // Overlap tanggal: rentang tanggal baru bersinggungan dengan yang ada
                     $q->where('tanggal_mulai', '<=', $tanggalSelesai)

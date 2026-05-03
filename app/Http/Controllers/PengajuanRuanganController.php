@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Repositories\PengajuanRuanganRepository;
 use App\Http\Requests\CreatePengajuanRuanganRequest;
+use App\Http\Requests\UpdateStatusPengajuanRuanganRequest;
+use App\Http\Requests\BulkDeletePengajuanRuanganRequest;
+use App\Http\Requests\CekKetersediaanRequest;
 use App\Models\PengajuanRuangan;
 use App\Models\Gedung;
 use App\Models\GedungFasilitas;
@@ -95,7 +98,7 @@ class PengajuanRuanganController extends AppBaseController
         $input = $request->validated();
         $input['user_id']        = Auth::id();
         $input['kode_pengajuan'] = PengajuanRuangan::generateKode();
-        $input['status']         = 'diproses';
+        $input['status']         = PengajuanRuangan::STATUS_DIPROSES;
 
         $pengajuan = $this->pengajuanRuanganRepository->create($input);
         $pengajuan->load('ruangan.gedung');
@@ -150,31 +153,30 @@ class PengajuanRuanganController extends AppBaseController
     /**
      * Admin: Update status pengajuan (disetujui/ditolak).
      * Dilindungi oleh middleware 'admin' di routes/web.php.
+     *
+     * Guard: hanya pengajuan berstatus 'diproses' yang boleh diubah —
+     * mencegah admin bolak-balik update (disetujui → ditolak → disetujui)
+     * yang bikin audit trail tidak jelas.
      */
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(UpdateStatusPengajuanRuanganRequest $request, $id)
     {
-        $validated = $request->validate([
-            'status'        => 'required|in:disetujui,ditolak',
-            'catatan_admin' => 'required_if:status,ditolak|nullable|string|max:1000',
-        ], [
-            'catatan_admin.required_if' => 'Catatan wajib diisi saat menolak pengajuan (sebagai alasan untuk pemohon).',
-        ]);
+        $validated = $request->validated();
 
         $pengajuan = PengajuanRuangan::with('ruangan.gedung')->findOrFail($id);
+
+        // Guard: cegah update status dari final state
+        if ($pengajuan->status !== PengajuanRuangan::STATUS_DIPROSES) {
+            Flash::error("Pengajuan {$pengajuan->kode_pengajuan} sudah {$pengajuan->status}, tidak bisa diubah lagi.");
+            return redirect(route('pengajuan_ruangans.index'));
+        }
+
         $pengajuan->update(array_merge($validated, [
             'approved_by' => Auth::id(),
             'approved_at' => now(),
         ]));
 
         // Flush cache status — penting agar perubahan status pengajuan langsung tercermin di peta.
-        // Flush baik ruangan maupun gedung induknya (karena status gedung derived dari ruangan).
-        if ($pengajuan->ruangan) {
-            $pengajuan->ruangan->flushStatusCache();
-
-            if ($pengajuan->ruangan->gedung) {
-                $pengajuan->ruangan->gedung->flushStatusCache();
-            }
-        }
+        $this->flushStatusCacheForPengajuan($pengajuan);
 
         Log::info("Pengajuan {$pengajuan->kode_pengajuan} status diupdate menjadi: {$validated['status']} oleh admin: " . Auth::user()->name);
 
@@ -190,8 +192,7 @@ class PengajuanRuanganController extends AppBaseController
             Log::info("Email notifikasi dilewati (MAIL_MAILER=log). Pengajuan: {$pengajuan->kode_pengajuan}");
         }
 
-        $statusLabel = $validated['status'] === 'disetujui' ? 'disetujui' : 'ditolak';
-        Flash::success("Pengajuan {$pengajuan->kode_pengajuan} telah {$statusLabel}.");
+        Flash::success("Pengajuan {$pengajuan->kode_pengajuan} telah {$validated['status']}.");
 
         return redirect(route('pengajuan_ruangans.index'));
     }
@@ -202,7 +203,7 @@ class PengajuanRuanganController extends AppBaseController
     public function riwayat()
     {
         $pengajuanRuangans = PengajuanRuangan::with('ruangan.gedung')
-            ->where('user_id', Auth::id())
+            ->milikUser(Auth::id())
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -217,15 +218,21 @@ class PengajuanRuanganController extends AppBaseController
     /**
      * Admin: Hapus pengajuan.
      * Dilindungi oleh middleware 'admin' di routes/web.php.
+     *
+     * Flush cache status ruangan + gedung sebelum delete — agar perubahan
+     * langsung tercermin di peta (tanpa tunggu cache expire 60 detik).
      */
     public function destroy($id)
     {
-        $pengajuanRuangan = $this->pengajuanRuanganRepository->find($id);
+        $pengajuanRuangan = PengajuanRuangan::with('ruangan.gedung')->find($id);
 
         if (empty($pengajuanRuangan)) {
             Flash::error('Pengajuan tidak ditemukan.');
             return redirect(route('pengajuan_ruangans.index'));
         }
+
+        // Flush cache sebelum delete (agar status peta langsung update)
+        $this->flushStatusCacheForPengajuan($pengajuanRuangan);
 
         $this->pengajuanRuanganRepository->delete($id);
 
@@ -236,21 +243,42 @@ class PengajuanRuanganController extends AppBaseController
 
     /**
      * Admin: Hapus pengajuan secara massal (AJAX).
+     *
+     * Flush cache status untuk setiap ruangan yang terdampak — agar perubahan
+     * langsung tercermin di peta tanpa tunggu cache expire.
      */
-    public function bulkDelete(Request $request)
+    public function bulkDelete(BulkDeletePengajuanRuanganRequest $request)
     {
-        $request->validate([
-            'ids'   => 'required|array',
-            'ids.*' => 'integer|exists:pengajuan_ruangans,id',
-        ]);
+        $ids = $request->validated()['ids'];
 
-        $count = PengajuanRuangan::whereIn('id', $request->ids)->count();
-        PengajuanRuangan::whereIn('id', $request->ids)->delete();
+        // Load dulu untuk flush cache per ruangan terdampak
+        $pengajuans = PengajuanRuangan::with('ruangan.gedung')->whereIn('id', $ids)->get();
+        foreach ($pengajuans as $p) {
+            $this->flushStatusCacheForPengajuan($p);
+        }
+
+        $count = $pengajuans->count();
+        PengajuanRuangan::whereIn('id', $ids)->delete();
 
         return response()->json([
             'success' => true,
             'message' => $count . ' pengajuan berhasil dihapus.',
         ]);
+    }
+
+    /**
+     * Helper: flush cache status ruangan + gedung induk dari sebuah pengajuan.
+     * Dipakai di updateStatus, destroy, dan bulkDelete.
+     */
+    protected function flushStatusCacheForPengajuan(PengajuanRuangan $pengajuan): void
+    {
+        if ($pengajuan->ruangan) {
+            $pengajuan->ruangan->flushStatusCache();
+
+            if ($pengajuan->ruangan->gedung) {
+                $pengajuan->ruangan->gedung->flushStatusCache();
+            }
+        }
     }
 
     /**
@@ -260,25 +288,22 @@ class PengajuanRuanganController extends AppBaseController
      * Response:
      *   { available: true/false, conflicts: [...] }
      */
-    public function cekKetersediaan(Request $request)
+    public function cekKetersediaan(CekKetersediaanRequest $request)
     {
-        $request->validate([
-            'gedung_fasilitas_id' => 'required|exists:gedung_fasilitas,id',
-            'tanggal_mulai'       => 'required|date',
-            'tanggal_selesai'     => 'required|date|after_or_equal:tanggal_mulai',
-            'jam_mulai'           => 'required',
-            'jam_selesai'         => 'required',
-        ]);
+        $data = $request->validated();
 
-        $ruanganId      = $request->input('gedung_fasilitas_id');
-        $tanggalMulai   = $request->input('tanggal_mulai');
-        $tanggalSelesai = $request->input('tanggal_selesai');
-        $jamMulai       = $request->input('jam_mulai');
-        $jamSelesai     = $request->input('jam_selesai');
+        $ruanganId      = $data['gedung_fasilitas_id'];
+        $tanggalMulai   = $data['tanggal_mulai'];
+        $tanggalSelesai = $data['tanggal_selesai'];
+        $jamMulai       = $data['jam_mulai'];
+        $jamSelesai     = $data['jam_selesai'];
 
         $conflicts = PengajuanRuangan::with('ruangan')
             ->where('gedung_fasilitas_id', $ruanganId)
-            ->whereIn('status', ['diproses', 'disetujui'])
+            ->whereIn('status', [
+                PengajuanRuangan::STATUS_DIPROSES,
+                PengajuanRuangan::STATUS_DISETUJUI,
+            ])
             ->where(function ($q) use ($tanggalMulai, $tanggalSelesai) {
                 $q->where('tanggal_mulai', '<=', $tanggalSelesai)
                   ->where('tanggal_selesai', '>=', $tanggalMulai);
