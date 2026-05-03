@@ -264,39 +264,6 @@
             });
         });
 
-        // Toggle Status AJAX (is_aktif)
-        $(document).on('change', '.toggle-status', function() {
-            var id = $(this).data('id');
-            var isChecked = $(this).prop('checked');
-            var labelSpan = $('.status-label-' + id);
-            
-            // Revert state visually first while loading
-            $(this).prop('checked', !isChecked);
-            $(this).prop('disabled', true);
-
-            $.ajax({
-                url: '{{ url("gedung_fasilitas") }}/' + id + '/toggle-status',
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(response) {
-                    $('.toggle-status[data-id="'+id+'"]').prop('disabled', false);
-                    if (response.success) {
-                        $('.toggle-status[data-id="'+id+'"]').prop('checked', response.is_aktif);
-                        labelSpan.text(response.is_aktif ? 'Aktif' : 'Tidak Aktif');
-                        toastr.success(response.message);
-                    } else {
-                        toastr.error(response.message);
-                    }
-                },
-                error: function() {
-                    $('.toggle-status[data-id="'+id+'"]').prop('disabled', false);
-                    toastr.error('Terjadi kesalahan pada server.');
-                }
-            });
-        });
-
         // Toggle Bisa Diajukan AJAX
         $(document).on('change', '.toggle-bisa-diajukan', function() {
             var id = $(this).data('id');

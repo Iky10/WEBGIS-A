@@ -41,16 +41,7 @@ class CreatePengajuanRuanganRequest extends FormRequest
             // Cek apakah ruangan (dan gedung induk) bisa diajukan
             $ruangan = GedungFasilitas::with('gedung')->find($ruanganId);
 
-            // Cek 1: ruangan aktif (tidak sedang perbaikan / nonaktif)
-            if ($ruangan && !$ruangan->is_aktif) {
-                $validator->errors()->add(
-                    'gedung_fasilitas_id',
-                    'Ruangan ini sedang tidak aktif (mungkin dalam perbaikan). Silakan pilih ruangan lain.'
-                );
-                return;
-            }
-
-            // Cek 2: ruangan ini boleh diajukan (admin sudah opt-in via toggle bisa_diajukan).
+            // Cek 1: ruangan ini boleh diajukan (admin sudah opt-in via toggle bisa_diajukan).
             // Defense-in-depth: form sudah filter, tapi cek server-side cegah direct API call.
             if ($ruangan && !$ruangan->bisa_diajukan) {
                 $validator->errors()->add(
@@ -60,7 +51,7 @@ class CreatePengajuanRuanganRequest extends FormRequest
                 return;
             }
 
-            // Cek 3: gedung induk dibuka untuk pengajuan (level gedung)
+            // Cek 2: gedung induk dibuka untuk pengajuan (level gedung)
             if ($ruangan && $ruangan->gedung && !$ruangan->gedung->bisa_diajukan) {
                 $validator->errors()->add(
                     'gedung_fasilitas_id',

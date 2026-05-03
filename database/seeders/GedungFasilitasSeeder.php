@@ -30,7 +30,6 @@ class GedungFasilitasSeeder extends Seeder
                     'latitude'      => -0.53540327,
                     'longitude'     => 117.12416594,
                     'foto_ruangan'  => null,
-                    'is_aktif'      => true,
                     'bisa_diajukan' => false, // Kelas reguler tidak bisa diajukan (sudah dipakai jadwal semester)
                 ]
             );
@@ -48,7 +47,6 @@ class GedungFasilitasSeeder extends Seeder
                     'latitude'      => -0.53526464,
                     'longitude'     => 117.12329830,
                     'foto_ruangan'  => null,
-                    'is_aktif'      => true,
                     'bisa_diajukan' => false, // Pos satpam bukan ruangan pengajuan
                 ]
             );
@@ -69,7 +67,6 @@ class GedungFasilitasSeeder extends Seeder
                     'latitude'      => -0.53548000,
                     'longitude'     => 117.12420000,
                     'foto_ruangan'  => null,
-                    'is_aktif'      => true,
                     'bisa_diajukan' => true, // Auditorium boleh diajukan untuk kegiatan ad-hoc
                 ]
             );

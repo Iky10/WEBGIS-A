@@ -69,12 +69,8 @@ class PengajuanRuanganController extends AppBaseController
      * User: Tampilkan form pengajuan ruangan (wajib login).
      *
      * Pendekatan flat 2-step:
-     *   Step 1: Pilih Ruangan (semua ruangan yang bisa_diajukan + aktif, flat list)
+     *   Step 1: Pilih Ruangan (semua ruangan dengan bisa_diajukan=true)
      *   Step 2: Detail Kegiatan
-     *
-     * Filter ganda:
-     *   - is_aktif=true        → ruangan operasional (tidak sedang perbaikan)
-     *   - bisa_diajukan=true   → admin sudah opt-in untuk diajukan user
      */
     public function create(Request $request)
     {
@@ -84,10 +80,9 @@ class PengajuanRuanganController extends AppBaseController
             return redirect(route('pengajuan_ruangans.index'));
         }
 
-        // Flat list ruangan yang bisa diajukan + masih aktif operasional.
+        // Flat list ruangan yang bisa diajukan oleh user.
         // Eager-load gedung supaya sub-info (nama gedung, jam buka/tutup) tersedia di view.
         $ruangans = GedungFasilitas::bisaDiajukan()
-            ->aktif()
             ->with('gedung')
             ->orderBy('nama_fasilitas')
             ->get();

@@ -61,8 +61,7 @@ class GedungFasilitasController extends AppBaseController
         ]);
 
         $input = $request->except(['foto_ruangan']);
-        // Handle checkbox fields (hidden field trick: value=0 hidden + value=1 checkbox)
-        $input['is_aktif'] = $request->boolean('is_aktif');
+        // Handle checkbox field (hidden field trick: value=0 hidden + value=1 checkbox)
         $input['bisa_diajukan'] = $request->boolean('bisa_diajukan');
 
         // Upload foto ruangan jika ada
@@ -143,7 +142,6 @@ class GedungFasilitasController extends AppBaseController
         }
 
         $input = $request->except(['foto_ruangan']);
-        $input['is_aktif'] = $request->boolean('is_aktif');
         $input['bisa_diajukan'] = $request->boolean('bisa_diajukan');
 
         // Upload foto ruangan jika ada file baru
@@ -188,29 +186,6 @@ class GedungFasilitasController extends AppBaseController
         Flash::success('Fasilitas / Ruangan berhasil dihapus.');
 
         return redirect(route('gedung_fasilitas.index'));
-    }
-
-    /**
-     * Toggle the status of the specified GedungFasilitas (is_aktif).
-     * Flag 'is_aktif' = ruangan operasional / tidak (misal sedang perbaikan).
-     */
-    public function toggleStatus($id)
-    {
-        $gedungFasilitas = $this->gedungFasilitasRepository->find($id);
-
-        if (empty($gedungFasilitas)) {
-            return response()->json(['success' => false, 'message' => 'Fasilitas tidak ditemukan'], 404);
-        }
-
-        $gedungFasilitas->is_aktif = !$gedungFasilitas->is_aktif;
-        $gedungFasilitas->save();
-
-        $statusText = $gedungFasilitas->is_aktif ? 'Aktif' : 'Tidak Aktif';
-        return response()->json([
-            'success' => true,
-            'message' => 'Status berhasil diubah menjadi ' . $statusText,
-            'is_aktif' => $gedungFasilitas->is_aktif
-        ]);
     }
 
     /**
