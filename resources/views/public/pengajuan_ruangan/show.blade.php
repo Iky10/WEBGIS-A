@@ -51,9 +51,20 @@
         padding: 6px 16px;
         border-radius: 20px;
     }
-    .badge-diproses  { background: #f39c12; color: #fff; }
-    .badge-disetujui { background: #27ae60; color: #fff; }
-    .badge-ditolak   { background: #e74c3c; color: #fff; }
+    .badge-diproses   { background: #f39c12; color: #fff; }
+    .badge-disetujui  { background: #27ae60; color: #fff; }
+    .badge-ditolak    { background: #e74c3c; color: #fff; }
+    .badge-dibatalkan { background: #95a5a6; color: #fff; }
+
+    .btn-batal-detail {
+        background: #e74c3c; color: #fff;
+        border: none; border-radius: 8px;
+        padding: 10px 24px; font-weight: 600;
+        transition: background .2s;
+    }
+    .btn-batal-detail:hover {
+        background: #c0392b; color: #fff;
+    }
 
     .alert-catatan {
         border-radius: 8px;
@@ -112,6 +123,8 @@
                     <span class="badge badge-status badge-disetujui"><i class="fas fa-check mr-1"></i>Disetujui</span>
                 @elseif($pengajuanRuangan->status === 'ditolak')
                     <span class="badge badge-status badge-ditolak"><i class="fas fa-times mr-1"></i>Ditolak</span>
+                @elseif($pengajuanRuangan->status === 'dibatalkan')
+                    <span class="badge badge-status badge-dibatalkan"><i class="fas fa-ban mr-1"></i>Dibatalkan</span>
                 @else
                     <span class="badge badge-status badge-diproses"><i class="fas fa-clock mr-1"></i>Diproses</span>
                 @endif
@@ -188,7 +201,47 @@
                         </small>
                     </div>
                 @endif
+
+                {{-- Tombol batalkan: hanya untuk pemilik & status 'diproses' --}}
+                @if($pengajuanRuangan->canBeCanceledBy(auth()->user()))
+                    <div class="mt-4 pt-3 border-top text-right">
+                        <form action="{{ route('pengajuan_ruangans.cancel', $pengajuanRuangan->id) }}"
+                              method="POST" id="form-batal-detail" class="d-inline">
+                            @csrf @method('PATCH')
+                            <button type="button" id="btn-batal-detail" class="btn-batal-detail">
+                                <i class="fas fa-times mr-1"></i> Batalkan Pengajuan
+                            </button>
+                        </form>
+                        <p class="text-muted mt-2 mb-0" style="font-size:.85rem;">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Anda masih bisa membatalkan pengajuan ini selama admin belum memutuskan.
+                        </p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
 @endsection
+
+@push('scripts')
+@if($pengajuanRuangan->canBeCanceledBy(auth()->user()))
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('btn-batal-detail').addEventListener('click', function () {
+        Swal.fire({
+            title: 'Batalkan Pengajuan?',
+            html: 'Pengajuan <strong>{{ $pengajuanRuangan->kode_pengajuan }}</strong> akan dibatalkan.<br>Tindakan ini tidak bisa dikembalikan.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74c3c',
+            cancelButtonColor: '#7f8c8d',
+            confirmButtonText: 'Ya, batalkan',
+            cancelButtonText: 'Tidak',
+            reverseButtons: true
+        }).then(function (result) {
+            if (result.isConfirmed) document.getElementById('form-batal-detail').submit();
+        });
+    });
+</script>
+@endif
+@endpush

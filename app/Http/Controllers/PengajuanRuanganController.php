@@ -216,6 +216,43 @@ class PengajuanRuanganController extends AppBaseController
     }
 
     /**
+     * User: Batalkan pengajuan miliknya sendiri.
+     *
+     * Guard:
+     *   - Hanya pemilik pengajuan (user_id = auth id)
+     *   - Hanya status 'diproses' (belum diputuskan admin)
+     *
+     * Tidak mempengaruhi cache status ruangan realtime karena status 'diproses'
+     * tidak membuat ruangan "Sedang Dipakai" — tapi tetap flush untuk konsistensi.
+     */
+    public function cancel($id)
+    {
+        $pengajuan = PengajuanRuangan::with('ruangan.gedung')->find($id);
+
+        if (empty($pengajuan)) {
+            Flash::error('Pengajuan tidak ditemukan.');
+            return redirect(route('pengajuan_ruangans.riwayat'));
+        }
+
+        if (!$pengajuan->canBeCanceledBy(Auth::user())) {
+            Flash::error('Anda tidak dapat membatalkan pengajuan ini.');
+            return redirect(route('pengajuan_ruangans.riwayat'));
+        }
+
+        $pengajuan->update([
+            'status' => PengajuanRuangan::STATUS_DIBATALKAN,
+        ]);
+
+        $this->flushStatusCacheForPengajuan($pengajuan);
+
+        Log::info("Pengajuan {$pengajuan->kode_pengajuan} dibatalkan oleh user: " . Auth::user()->name);
+
+        Flash::success("Pengajuan {$pengajuan->kode_pengajuan} berhasil dibatalkan.");
+
+        return redirect(route('pengajuan_ruangans.riwayat'));
+    }
+
+    /**
      * Admin: Hapus pengajuan.
      * Dilindungi oleh middleware 'admin' di routes/web.php.
      *

@@ -51,6 +51,7 @@
                                     <option value="">Semua Status</option>
                                     <option value="Diproses">Diproses</option>
                                     <option value="Disetujui">Disetujui</option>
+                                    <option value="Dibatalkan">Dibatalkan</option>
                                     <option value="Ditolak">Ditolak</option>
                                 </select>
                             </div>

@@ -54,6 +54,8 @@
                         <span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i>Disetujui</span>
                     @elseif($pengajuan->status === 'ditolak')
                         <span class="badge badge-danger"><i class="fas fa-times-circle mr-1"></i>Ditolak</span>
+                    @elseif($pengajuan->status === 'dibatalkan')
+                        <span class="badge badge-secondary"><i class="fas fa-ban mr-1"></i>Dibatalkan</span>
                     @else
                         <span class="badge badge-warning text-white"><i class="fas fa-clock mr-1"></i>Diproses</span>
                     @endif
