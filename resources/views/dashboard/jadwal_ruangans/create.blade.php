@@ -22,7 +22,7 @@
             <div class="card-body">
 
                 <div class="row">
-                    @include('dashboard.jadwal_ruangans.fields')
+                    @include('dashboard.jadwal_ruangans.create_fields')
                 </div>
 
             </div>
