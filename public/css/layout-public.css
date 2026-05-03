@@ -53,3 +53,39 @@
 
         /* Content */
         .page-content { min-height: calc(100vh - 130px); padding-top: 20px; }
+
+        /* ══ MOBILE LAYOUT (≤ 767.98px) ══
+         * Polish global untuk semua halaman public di mobile.
+         * Specific page styling di-handle masing-masing CSS file.
+         */
+        @media (max-width: 767.98px) {
+            .navbar-public {
+                padding: 6px 0;
+            }
+            .navbar-public .navbar-brand {
+                font-size: 1.05rem;
+            }
+            .navbar-public .nav-link {
+                padding: 10px 14px !important; /* lebih besar untuk thumb tap */
+            }
+            .navbar-public .btn-admin {
+                margin-top: 6px;
+                padding: 8px 18px !important;
+                display: inline-block;
+            }
+
+            .page-content {
+                padding-top: 12px;
+                min-height: calc(100vh - 100px);
+            }
+
+            .footer-public {
+                padding: 16px 0;
+                margin-top: 24px;
+                font-size: .8rem;
+                text-align: center;
+            }
+            .footer-public .text-md-right {
+                margin-top: 12px;
+            }
+        }
