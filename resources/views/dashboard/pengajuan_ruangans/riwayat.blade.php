@@ -31,7 +31,8 @@
                 </div>
             </div>
 
-            <div class="card-body p-0">
+            {{-- Desktop: Table (≥ md) --}}
+            <div class="card-body p-0 d-none d-md-block">
                 <table class="table table-hover" id="riwayatPengajuan-table">
                     <thead>
                         <tr>
@@ -82,6 +83,66 @@
                     @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Mobile: Card List (< md) --}}
+            <div class="d-block d-md-none mobile-card-list riwayat-mobile-list">
+                @forelse($pengajuanRuangans as $pengajuan)
+                    <div class="mobile-card"
+                         data-search="{{ strtolower($pengajuan->kode_pengajuan.' '.$pengajuan->nama_kegiatan.' '.($pengajuan->ruangan->nama_fasilitas ?? '').' '.($pengajuan->ruangan->gedung->nama_gedung ?? '')) }}">
+                        <div class="mobile-card-header">
+                            <div class="mobile-card-title">
+                                <strong>{{ $pengajuan->kode_pengajuan }}</strong>
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-tag"></i> {{ Str::limit($pengajuan->nama_kegiatan, 40) }}
+                                </small>
+                            </div>
+                            @if($pengajuan->status === 'disetujui')
+                                <span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i>Disetujui</span>
+                            @elseif($pengajuan->status === 'ditolak')
+                                <span class="badge badge-danger"><i class="fas fa-times-circle mr-1"></i>Ditolak</span>
+                            @elseif($pengajuan->status === 'dibatalkan')
+                                <span class="badge badge-secondary"><i class="fas fa-ban mr-1"></i>Dibatalkan</span>
+                            @else
+                                <span class="badge badge-warning text-white"><i class="fas fa-clock mr-1"></i>Diproses</span>
+                            @endif
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-card-row">
+                                <i class="fas fa-door-open text-primary"></i>
+                                <span>
+                                    <strong>{{ $pengajuan->ruangan->nama_fasilitas ?? '-' }}</strong>
+                                    <small class="text-muted d-block">{{ $pengajuan->ruangan->gedung->nama_gedung ?? '-' }}</small>
+                                </span>
+                            </div>
+                            <div class="mobile-card-row">
+                                <i class="far fa-calendar text-muted"></i>
+                                <span>
+                                    {{ $pengajuan->tanggal_mulai->format('d/m/Y') }}
+                                    <small class="text-muted d-block">
+                                        <i class="far fa-clock"></i>
+                                        {{ \Carbon\Carbon::parse($pengajuan->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($pengajuan->jam_selesai)->format('H:i') }}
+                                    </small>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mobile-card-actions">
+                            <a href="{{ route('pengajuan_ruangans.show', $pengajuan->id) }}"
+                               class="btn btn-outline-secondary btn-sm flex-grow-1">
+                                <i class="far fa-eye mr-1"></i> Lihat Detail
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <div class="mobile-card-empty">
+                        <i class="fas fa-file-alt fa-3x text-muted mb-3" style="opacity:0.4;"></i>
+                        <h6 class="text-muted">Belum ada riwayat pengajuan</h6>
+                        <p class="text-muted small mb-2">Buat pengajuan baru untuk memulai.</p>
+                        <a href="{{ route('pengajuan_ruangans.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus mr-1"></i> Buat Pengajuan
+                        </a>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -144,8 +205,33 @@
             }
         });
 
+        function filterMobileCards() {
+            var search = ($('#custom-search-input').val() || '').toLowerCase().trim();
+            var $cards = $('.riwayat-mobile-list .mobile-card');
+            var shown = 0;
+            $cards.each(function() {
+                var visible = !search || (($(this).data('search') || '').indexOf(search) !== -1);
+                $(this).toggle(visible);
+                if (visible) shown++;
+            });
+            var $empty = $('.riwayat-mobile-list .mobile-card-empty-filter');
+            if (shown === 0 && $cards.length > 0) {
+                if ($empty.length === 0) {
+                    $('.riwayat-mobile-list').append(
+                        '<div class="mobile-card-empty mobile-card-empty-filter">' +
+                        '<i class="fas fa-search fa-2x text-muted mb-2" style="opacity:0.4;"></i>' +
+                        '<h6 class="text-muted">Tidak ada hasil yang cocok</h6>' +
+                        '</div>'
+                    );
+                }
+            } else {
+                $empty.remove();
+            }
+        }
+
         $('#custom-search-input').on('keyup', function() {
             table.search(this.value).draw();
+            filterMobileCards();
         });
     });
 </script>

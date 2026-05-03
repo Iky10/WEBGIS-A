@@ -79,8 +79,76 @@
                 </div>
             </div>
 
-            <div class="card-body p-0">
+            {{-- Desktop: Table (≥ md) --}}
+            <div class="card-body p-0 d-none d-md-block">
                 @include('dashboard.gedung_fasilitas.table')
+            </div>
+
+            {{-- Mobile: Card List (< md) --}}
+            <div class="d-block d-md-none mobile-card-list gedung-fasilitas-mobile-list">
+                @forelse($gedungFasilitas as $gf)
+                    <div class="mobile-card"
+                         data-gedung="{{ optional($gf->gedung)->nama_gedung ?? '' }}"
+                         data-kategori="{{ $gf->kategori }}"
+                         data-search="{{ strtolower($gf->nama_fasilitas.' '.(optional($gf->gedung)->nama_gedung ?? '').' '.$gf->kategori) }}">
+                        <div class="mobile-card-header">
+                            @if($gf->foto_ruangan)
+                                <img src="{{ asset($gf->foto_ruangan) }}" alt="Foto" class="mobile-card-thumb">
+                            @else
+                                <div class="mobile-card-thumb mobile-card-thumb-placeholder text-white">
+                                    <i class="fas fa-door-open"></i>
+                                </div>
+                            @endif
+                            <div class="mobile-card-title">
+                                <strong>{{ $gf->nama_fasilitas }}</strong>
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-building"></i> {{ optional($gf->gedung)->nama_gedung ?? 'N/A' }}
+                                </small>
+                            </div>
+                            <span class="badge badge-info">{{ $gf->kategori }}</span>
+                        </div>
+                        <div class="mobile-card-body">
+                            @if($gf->latitude && $gf->longitude)
+                                <div class="mobile-card-row">
+                                    <i class="fas fa-crosshairs text-muted"></i>
+                                    <span class="text-monospace small">{{ $gf->latitude }}, {{ $gf->longitude }}</span>
+                                </div>
+                            @endif
+                            <div class="mobile-card-row">
+                                <i class="fas fa-door-open text-muted"></i>
+                                <span>
+                                    <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-primary">
+                                        <input type="checkbox" class="custom-control-input toggle-bisa-diajukan"
+                                               id="bisa_diajukan_m_{{ $gf->id }}" data-id="{{ $gf->id }}"
+                                               {{ $gf->bisa_diajukan ? 'checked' : '' }}>
+                                        <label class="custom-control-label" for="bisa_diajukan_m_{{ $gf->id }}">
+                                            Bisa Diajukan:
+                                            <span class="bisa-diajukan-label-{{ $gf->id }} font-weight-bold">{{ $gf->bisa_diajukan ? 'Ya' : 'Tidak' }}</span>
+                                        </label>
+                                    </div>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mobile-card-actions">
+                            <a href="{{ route('gedung_fasilitas.edit', [$gf->id]) }}"
+                               class="btn btn-outline-secondary btn-sm flex-grow-1">
+                                <i class="far fa-edit mr-1"></i> Edit
+                            </a>
+                            {!! Form::open(['route' => ['gedung_fasilitas.destroy', $gf->id], 'method' => 'delete', 'class' => 'd-flex flex-grow-1 mb-0']) !!}
+                                {!! Form::button('<i class="far fa-trash-alt mr-1"></i> Hapus', ['type' => 'button', 'class' => 'btn btn-outline-danger btn-sm flex-grow-1', 'onclick' => 'confirmDelete(this.closest(\'form\'), \'Yakin ingin menghapus fasilitas ini?\')']) !!}
+                            {!! Form::close() !!}
+                        </div>
+                    </div>
+                @empty
+                    <div class="mobile-card-empty">
+                        <i class="fas fa-door-open fa-3x text-muted mb-3" style="opacity:0.4;"></i>
+                        <h6 class="text-muted">Belum ada data ruangan di sini</h6>
+                        <p class="text-muted small mb-2">Ayo mulai dengan menambahkan ruangan atau fasilitas pertama!</p>
+                        <a href="{{ route('gedung_fasilitas.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus mr-1"></i> Tambah Baru
+                        </a>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -172,19 +240,53 @@
             }
         });
 
-        // ─── Custom Search Bind ───
+        // ─── Mobile Card Filter ---
+        function filterMobileCards() {
+            var search = ($('#custom-search-input').val() || '').toLowerCase().trim();
+            var filterGedung = $('#filter-gedung').val();
+            var filterKategori = $('#filter-kategori').val();
+            var $cards = $('.gedung-fasilitas-mobile-list .mobile-card');
+            var shown = 0;
+            $cards.each(function() {
+                var $card = $(this);
+                var matchSearch = !search || ($card.data('search') || '').indexOf(search) !== -1;
+                var matchGedung = !filterGedung || $card.data('gedung') === filterGedung;
+                var matchKategori = !filterKategori || $card.data('kategori') === filterKategori;
+                var visible = matchSearch && matchGedung && matchKategori;
+                $card.toggle(visible);
+                if (visible) shown++;
+            });
+            var $empty = $('.gedung-fasilitas-mobile-list .mobile-card-empty-filter');
+            if (shown === 0 && $cards.length > 0) {
+                if ($empty.length === 0) {
+                    $('.gedung-fasilitas-mobile-list').append(
+                        '<div class="mobile-card-empty mobile-card-empty-filter">' +
+                        '<i class="fas fa-search fa-2x text-muted mb-2" style="opacity:0.4;"></i>' +
+                        '<h6 class="text-muted">Tidak ada hasil yang cocok</h6>' +
+                        '</div>'
+                    );
+                }
+            } else {
+                $empty.remove();
+            }
+        }
+
+        // ─── Custom Search Bind (desktop + mobile) ───
         $('#custom-search-input').on('keyup', function() {
             table.search(this.value).draw();
+            filterMobileCards();
         });
 
         // Filter Gedung (Kolom indeks 2 adalah Gedung)
         $('#filter-gedung').on('change', function () {
             table.column(2).search(this.value).draw();
+            filterMobileCards();
         });
 
         // Filter Kategori (Kolom indeks 4 adalah Kategori)
         $('#filter-kategori').on('change', function () {
             table.column(4).search(this.value).draw();
+            filterMobileCards();
         });
 
         // Mencegah dropdown filter menutup saat diklik di dalamnya
@@ -273,8 +375,17 @@
             var isChecked  = $toggle.prop('checked'); // state setelah user klik (target state)
             var labelSpan  = $('.bisa-diajukan-label-' + id);
 
-            // Cari nama ruangan dari row yang sama untuk pesan kontekstual
-            var namaRuangan = $toggle.closest('tr').find('td').eq(3).text().trim() || 'ruangan ini';
+            // Cari nama ruangan — support tabel desktop ATAU mobile card
+            var $row = $toggle.closest('tr');
+            var $card = $toggle.closest('.mobile-card');
+            var namaRuangan;
+            if ($row.length > 0) {
+                namaRuangan = $row.find('td').eq(3).text().trim() || 'ruangan ini';
+            } else if ($card.length > 0) {
+                namaRuangan = $card.find('.mobile-card-title strong').text().trim() || 'ruangan ini';
+            } else {
+                namaRuangan = 'ruangan ini';
+            }
 
             // Revert state visual segera supaya user bisa cancel tanpa side-effect
             $toggle.prop('checked', !isChecked);
@@ -307,15 +418,17 @@
                 if (!result.isConfirmed) return; // user cancel — toggle tetap di state lama
 
                 // User konfirmasi: lakukan AJAX
-                $toggle.prop('disabled', true);
+                // Sync SEMUA toggle dengan data-id sama (desktop + mobile) supaya konsisten
+                var $allToggles = $('.toggle-bisa-diajukan[data-id="' + id + '"]');
+                $allToggles.prop('disabled', true);
                 $.ajax({
                     url: '{{ url("gedung_fasilitas") }}/' + id + '/toggle-bisa-diajukan',
                     type: 'POST',
                     data: { _token: '{{ csrf_token() }}' },
                     success: function(response) {
-                        $toggle.prop('disabled', false);
+                        $allToggles.prop('disabled', false);
                         if (response.success) {
-                            $toggle.prop('checked', response.bisa_diajukan);
+                            $allToggles.prop('checked', response.bisa_diajukan);
                             labelSpan.text(response.bisa_diajukan ? 'Ya' : 'Tidak');
                             toastr.success(response.message);
                         } else {
@@ -323,7 +436,7 @@
                         }
                     },
                     error: function() {
-                        $toggle.prop('disabled', false);
+                        $allToggles.prop('disabled', false);
                         toastr.error('Terjadi kesalahan pada server.');
                     }
                 });

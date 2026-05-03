@@ -111,9 +111,90 @@
                 </div>
             </div>
 
-            {{-- ══ TABLE ══ --}}
-            <div class="card-body p-0">
+            {{-- ══ DESKTOP: TABLE (≥ md) ══ --}}
+            <div class="card-body p-0 d-none d-md-block">
                 @include('dashboard.pengajuan_ruangans.table')
+            </div>
+
+            {{-- ══ MOBILE: CARD LIST (< md) ══ --}}
+            <div class="d-block d-md-none mobile-card-list pengajuan-mobile-list">
+                @forelse($pengajuanRuangans as $pengajuan)
+                    <div class="mobile-card @if($pengajuan->status === 'diproses') mobile-card-pending @endif"
+                         data-status="{{ ucfirst($pengajuan->status) }}"
+                         data-gedung="{{ $pengajuan->ruangan->gedung->nama_gedung ?? '' }}"
+                         data-search="{{ strtolower($pengajuan->kode_pengajuan.' '.$pengajuan->nama_pemohon.' '.$pengajuan->nama_kegiatan.' '.($pengajuan->ruangan->nama_fasilitas ?? '').' '.($pengajuan->ruangan->gedung->nama_gedung ?? '')) }}">
+                        <div class="mobile-card-header">
+                            <div class="mobile-card-title">
+                                <strong>{{ $pengajuan->kode_pengajuan }}</strong>
+                                <small class="text-muted d-block"><i class="fas fa-user"></i> {{ $pengajuan->nama_pemohon }}</small>
+                            </div>
+                            @if($pengajuan->status === 'disetujui')
+                                <span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i>Disetujui</span>
+                            @elseif($pengajuan->status === 'ditolak')
+                                <span class="badge badge-danger"><i class="fas fa-times-circle mr-1"></i>Ditolak</span>
+                            @elseif($pengajuan->status === 'dibatalkan')
+                                <span class="badge badge-secondary"><i class="fas fa-ban mr-1"></i>Dibatalkan</span>
+                            @else
+                                <span class="badge badge-warning text-white"><i class="fas fa-clock mr-1"></i>Diproses</span>
+                            @endif
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-card-row">
+                                <i class="fas fa-door-open text-primary"></i>
+                                <span>
+                                    <strong>{{ $pengajuan->ruangan->nama_fasilitas ?? '-' }}</strong>
+                                    <small class="text-muted d-block">{{ $pengajuan->ruangan->gedung->nama_gedung ?? '-' }}</small>
+                                </span>
+                            </div>
+                            <div class="mobile-card-row">
+                                <i class="fas fa-tag text-muted"></i>
+                                <span>{{ $pengajuan->nama_kegiatan }}</span>
+                            </div>
+                            <div class="mobile-card-row">
+                                <i class="far fa-calendar text-muted"></i>
+                                <span>
+                                    {{ $pengajuan->tanggal_mulai->format('d/m/Y') }}@if($pengajuan->tanggal_mulai != $pengajuan->tanggal_selesai) - {{ $pengajuan->tanggal_selesai->format('d/m/Y') }}@endif
+                                    <small class="text-muted d-block">
+                                        <i class="far fa-clock"></i>
+                                        {{ \Carbon\Carbon::parse($pengajuan->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($pengajuan->jam_selesai)->format('H:i') }}
+                                    </small>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mobile-card-actions">
+                            <a href="{{ route('pengajuan_ruangans.show', $pengajuan->id) }}"
+                               class="btn btn-outline-secondary btn-sm flex-grow-1">
+                                <i class="far fa-eye mr-1"></i> Detail
+                            </a>
+                            @if($pengajuan->status === 'diproses')
+                                <form action="{{ route('pengajuan_ruangans.update-status', $pengajuan->id) }}"
+                                      method="POST" class="d-flex flex-grow-1 mb-0">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="status" value="disetujui">
+                                    <button type="button" class="btn btn-success btn-sm flex-grow-1"
+                                            onclick="confirmAction(this.closest('form'), 'Setujui Pengajuan?', 'Pengajuan ini akan disetujui.', 'question', 'Ya, setujui!')">
+                                        <i class="fas fa-check mr-1"></i> Setujui
+                                    </button>
+                                </form>
+                                <form action="{{ route('pengajuan_ruangans.update-status', $pengajuan->id) }}"
+                                      method="POST" class="form-tolak-pengajuan d-flex flex-grow-1 mb-0">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="status" value="ditolak">
+                                    <input type="hidden" name="catatan_admin" value="">
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-tolak-pengajuan flex-grow-1">
+                                        <i class="fas fa-times mr-1"></i> Tolak
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="mobile-card-empty">
+                        <i class="fas fa-file-alt fa-3x text-muted mb-3" style="opacity:0.4;"></i>
+                        <h6 class="text-muted">Belum ada pengajuan masuk</h6>
+                        <p class="text-muted small mb-0">Pengajuan dari user akan muncul di sini.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -284,19 +365,57 @@
             }
         });
 
-        // Custom Search
+        // ─── Helper: filter mobile cards (sync sama dengan desktop table) ───
+        function filterMobileCards() {
+            var search = ($('#custom-search-input').val() || '').toLowerCase().trim();
+            var filterGedung = $('#filter-gedung-pengajuan').val();
+            var filterStatus = $('#filter-status-pengajuan').val();
+            var $cards = $('.pengajuan-mobile-list .mobile-card');
+            var shownCount = 0;
+
+            $cards.each(function() {
+                var $card = $(this);
+                var matchSearch = !search || ($card.data('search') || '').indexOf(search) !== -1;
+                var matchGedung = !filterGedung || $card.data('gedung') === filterGedung;
+                var matchStatus = !filterStatus || $card.data('status') === filterStatus;
+                var visible = matchSearch && matchGedung && matchStatus;
+                $card.toggle(visible);
+                if (visible) shownCount++;
+            });
+
+            // Tampilkan empty state kalau semua ter-filter
+            var $empty = $('.pengajuan-mobile-list .mobile-card-empty-filter');
+            if (shownCount === 0 && $cards.length > 0) {
+                if ($empty.length === 0) {
+                    $('.pengajuan-mobile-list').append(
+                        '<div class="mobile-card-empty mobile-card-empty-filter">' +
+                        '<i class="fas fa-search fa-2x text-muted mb-2" style="opacity:0.4;"></i>' +
+                        '<h6 class="text-muted">Tidak ada hasil yang cocok</h6>' +
+                        '<p class="text-muted small mb-0">Coba ubah kata kunci atau filter.</p>' +
+                        '</div>'
+                    );
+                }
+            } else {
+                $empty.remove();
+            }
+        }
+
+        // Custom Search (desktop + mobile)
         $('#custom-search-input').on('keyup', function() {
             table.search(this.value).draw();
+            filterMobileCards();
         });
 
         // Filter Gedung (kolom index 3: Ruangan cell berisi gedung-name)
         $('#filter-gedung-pengajuan').on('change', function () {
             table.column(3).search(this.value).draw();
+            filterMobileCards();
         });
 
         // Filter Status (kolom index 6: Status)
         $('#filter-status-pengajuan').on('change', function () {
             table.column(6).search(this.value).draw();
+            filterMobileCards();
         });
 
         // Click banner card "Menunggu Persetujuan" → auto-filter status Diproses
