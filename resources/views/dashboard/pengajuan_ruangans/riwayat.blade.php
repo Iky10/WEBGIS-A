@@ -60,6 +60,8 @@
                                     <span class="badge badge-success">Disetujui</span>
                                 @elseif($pengajuan->status === 'ditolak')
                                     <span class="badge badge-danger">Ditolak</span>
+                                @elseif($pengajuan->status === 'dibatalkan')
+                                    <span class="badge badge-secondary">Dibatalkan</span>
                                 @else
                                     <span class="badge badge-warning text-white">Diproses</span>
                                 @endif

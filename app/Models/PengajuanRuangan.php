@@ -23,10 +23,17 @@ class PengajuanRuangan extends Model
 
     /**
      * Status values — pakai constant supaya tidak ada typo di controller / view.
+     *
+     * Flow transisi:
+     *   diproses → disetujui  (admin approve)
+     *   diproses → ditolak    (admin reject)
+     *   diproses → dibatalkan (user cancel sendiri)
+     *   disetujui/ditolak/dibatalkan = final state (tidak bisa diubah lagi)
      */
-    const STATUS_DIPROSES  = 'diproses';
-    const STATUS_DISETUJUI = 'disetujui';
-    const STATUS_DITOLAK   = 'ditolak';
+    const STATUS_DIPROSES   = 'diproses';
+    const STATUS_DISETUJUI  = 'disetujui';
+    const STATUS_DITOLAK    = 'ditolak';
+    const STATUS_DIBATALKAN = 'dibatalkan';
 
     public $table = 'pengajuan_ruangans';
 
@@ -124,9 +131,30 @@ class PengajuanRuangan extends Model
         return $query->where('status', self::STATUS_DITOLAK);
     }
 
+    public function scopeDibatalkan($query)
+    {
+        return $query->where('status', self::STATUS_DIBATALKAN);
+    }
+
     public function scopeMilikUser($query, $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    // ── Helpers ──
+
+    /**
+     * Cek apakah pengajuan ini bisa dibatalkan oleh user tertentu.
+     * Aturan: hanya pemilik, dan hanya saat status masih 'diproses'.
+     */
+    public function canBeCanceledBy($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        return $this->user_id === $user->id
+            && $this->status === self::STATUS_DIPROSES;
     }
 
     // ── Relasi ──

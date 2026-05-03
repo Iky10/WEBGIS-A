@@ -40,6 +40,8 @@
                         <span class="badge badge-success badge-lg"><i class="fas fa-check-circle mr-1"></i>Disetujui</span>
                     @elseif($pengajuanRuangan->status === 'ditolak')
                         <span class="badge badge-danger badge-lg"><i class="fas fa-times-circle mr-1"></i>Ditolak</span>
+                    @elseif($pengajuanRuangan->status === 'dibatalkan')
+                        <span class="badge badge-secondary badge-lg"><i class="fas fa-ban mr-1"></i>Dibatalkan oleh Pemohon</span>
                     @else
                         <span class="badge badge-warning text-white badge-lg"><i class="fas fa-clock mr-1"></i>Diproses</span>
                     @endif

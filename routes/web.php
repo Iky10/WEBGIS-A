@@ -33,6 +33,9 @@ Route::middleware(['auth'])->group(function () {
     // AJAX: live availability check (dipakai di form create)
     Route::post('pengajuan_ruangans/cek-ketersediaan', [App\Http\Controllers\PengajuanRuanganController::class, 'cekKetersediaan'])->name('pengajuan_ruangans.cek-ketersediaan');
 
+    // User: batalkan pengajuan miliknya (hanya saat status 'diproses')
+    Route::patch('pengajuan_ruangans/{id}/cancel', [App\Http\Controllers\PengajuanRuanganController::class, 'cancel'])->name('pengajuan_ruangans.cancel');
+
 });
 
 // ── ADMIN ONLY (wajib login + role admin) ─────────────────────

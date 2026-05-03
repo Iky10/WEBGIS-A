@@ -29,9 +29,17 @@
         padding: 5px 12px;
         border-radius: 20px;
     }
-    .badge-diproses  { background: #f39c12; color: #fff; }
-    .badge-disetujui { background: #27ae60; color: #fff; }
-    .badge-ditolak   { background: #e74c3c; color: #fff; }
+    .badge-diproses   { background: #f39c12; color: #fff; }
+    .badge-disetujui  { background: #27ae60; color: #fff; }
+    .badge-ditolak    { background: #e74c3c; color: #fff; }
+    .badge-dibatalkan { background: #95a5a6; color: #fff; }
+
+    .btn-batal {
+        border-color: #e74c3c; color: #e74c3c;
+    }
+    .btn-batal:hover {
+        background: #e74c3c; color: #fff;
+    }
 
     .btn-ajukan {
         background: linear-gradient(135deg, #3498db, #2980b9);
@@ -124,15 +132,29 @@
                                             <span class="badge badge-status badge-disetujui">Disetujui</span>
                                         @elseif($pengajuan->status === 'ditolak')
                                             <span class="badge badge-status badge-ditolak">Ditolak</span>
+                                        @elseif($pengajuan->status === 'dibatalkan')
+                                            <span class="badge badge-status badge-dibatalkan">Dibatalkan</span>
                                         @else
                                             <span class="badge badge-status badge-diproses">Diproses</span>
                                         @endif
                                     </td>
                                     <td class="text-center">
                                         <a href="{{ route('pengajuan_ruangans.show', $pengajuan->id) }}"
-                                           class="btn btn-sm btn-outline-primary">
+                                           class="btn btn-sm btn-outline-primary mr-1">
                                             <i class="far fa-eye mr-1"></i>Detail
                                         </a>
+
+                                        @if($pengajuan->canBeCanceledBy(auth()->user()))
+                                            <form action="{{ route('pengajuan_ruangans.cancel', $pengajuan->id) }}"
+                                                  method="POST" class="d-inline form-batal-pengajuan">
+                                                @csrf @method('PATCH')
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-danger btn-batal btn-batal-pengajuan"
+                                                        data-kode="{{ $pengajuan->kode_pengajuan }}">
+                                                    <i class="fas fa-times mr-1"></i>Batalkan
+                                                </button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -144,3 +166,28 @@
         @endif
     </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.querySelectorAll('.btn-batal-pengajuan').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var form = btn.closest('form');
+            var kode = btn.dataset.kode || '';
+            Swal.fire({
+                title: 'Batalkan Pengajuan?',
+                html: 'Pengajuan <strong>' + kode + '</strong> akan dibatalkan.<br>Tindakan ini tidak bisa dikembalikan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                cancelButtonColor: '#7f8c8d',
+                confirmButtonText: 'Ya, batalkan',
+                cancelButtonText: 'Tidak',
+                reverseButtons: true
+            }).then(function (result) {
+                if (result.isConfirmed) form.submit();
+            });
+        });
+    });
+</script>
+@endpush
