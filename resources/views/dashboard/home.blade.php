@@ -146,7 +146,8 @@
                     </div>
                 </div>
                 <div class="card-body p-0">
-                    <table class="table table-sm table-hover mb-0">
+                    {{-- ═══ DESKTOP: Tabel ═══ --}}
+                    <table class="table table-sm table-hover mb-0 d-none d-md-table">
                         <thead class="bg-light">
                             <tr>
                                 <th class="pl-3">Nama Gedung</th>
@@ -206,6 +207,53 @@
                             @endforelse
                         </tbody>
                     </table>
+
+                    {{-- ═══ MOBILE: Card List ═══ --}}
+                    <div class="d-block d-md-none mobile-card-list">
+                        @forelse($gedungTerbaru as $gedung)
+                        <div class="mobile-card">
+                            <div class="mobile-card-header">
+                                @if($gedung->foto_utama)
+                                    <img src="{{ asset($gedung->foto_utama) }}" class="mobile-card-thumb">
+                                @else
+                                    <span class="mobile-card-thumb mobile-card-thumb-placeholder">
+                                        <i class="fas fa-building"></i>
+                                    </span>
+                                @endif
+                                <div class="mobile-card-title">
+                                    <strong>{{ $gedung->nama_gedung }}</strong>
+                                    <small class="text-muted d-block">
+                                        <i class="far fa-calendar-alt"></i> {{ $gedung->created_at->format('d M Y') }}
+                                    </small>
+                                </div>
+                                @if($gedung->status_dipakai == 'Sedang Dipakai')
+                                    <span class="badge badge-primary">Dipakai</span>
+                                @elseif($gedung->status_dipakai == 'Tutup')
+                                    <span class="badge badge-secondary">Tutup</span>
+                                @else
+                                    <span class="badge badge-success">Terbuka</span>
+                                @endif
+                            </div>
+                            <div class="mobile-card-actions">
+                                <a href="{{ route('gedungs.show', $gedung->id) }}"
+                                   class="btn btn-sm btn-outline-secondary flex-fill">
+                                    <i class="fas fa-eye mr-1"></i> Detail
+                                </a>
+                                <a href="{{ route('gedungs.edit', $gedung->id) }}"
+                                   class="btn btn-sm btn-outline-warning flex-fill">
+                                    <i class="fas fa-edit mr-1"></i> Edit
+                                </a>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="mobile-card-empty text-center text-muted py-4">
+                            Belum ada data gedung.<br>
+                            <a href="{{ route('gedungs.create') }}" class="btn btn-sm btn-success mt-2">
+                                <i class="fas fa-plus mr-1"></i> Tambah Gedung
+                            </a>
+                        </div>
+                        @endforelse
+                    </div>
                 </div>
                 @if($totalGedung > 5)
                 <div class="card-footer text-right">
@@ -236,7 +284,8 @@
                     </div>
                 </div>
                 <div class="card-body p-0">
-                    <table class="table table-sm table-hover mb-0">
+                    {{-- ═══ DESKTOP: Tabel ═══ --}}
+                    <table class="table table-sm table-hover mb-0 d-none d-md-table">
                         <thead class="bg-light">
                             <tr>
                                 <th class="pl-3">Kode</th>
@@ -268,6 +317,46 @@
                             @endforeach
                         </tbody>
                     </table>
+
+                    {{-- ═══ MOBILE: Card List ═══ --}}
+                    <div class="d-block d-md-none mobile-card-list">
+                        @foreach($pengajuanTerbaru as $pj)
+                        <div class="mobile-card mobile-card-pending">
+                            <div class="mobile-card-header">
+                                <div class="mobile-card-title">
+                                    <strong class="text-primary">{{ $pj->kode_pengajuan }}</strong>
+                                    <small class="text-muted d-block">
+                                        <i class="far fa-calendar-alt"></i> {{ $pj->tanggal_mulai->format('d/m/Y') }}
+                                    </small>
+                                </div>
+                                <span class="badge badge-warning">Menunggu</span>
+                            </div>
+                            <div class="mobile-card-body">
+                                <div class="mobile-card-row">
+                                    <i class="fas fa-user text-secondary"></i>
+                                    <span>{{ $pj->nama_pemohon }}</span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <i class="fas fa-door-open text-secondary"></i>
+                                    <span>
+                                        <strong>{{ $pj->ruangan->nama_fasilitas ?? '-' }}</strong>
+                                        — {{ $pj->ruangan->gedung->nama_gedung ?? '-' }}
+                                    </span>
+                                </div>
+                                <div class="mobile-card-row">
+                                    <i class="fas fa-clipboard-list text-secondary"></i>
+                                    <span>{{ $pj->nama_kegiatan }}</span>
+                                </div>
+                            </div>
+                            <div class="mobile-card-actions">
+                                <a href="{{ route('pengajuan_ruangans.show', $pj->id) }}"
+                                   class="btn btn-sm btn-primary flex-fill">
+                                    <i class="fas fa-eye mr-1"></i> Lihat Detail
+                                </a>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </div>

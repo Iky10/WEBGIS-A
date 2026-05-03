@@ -402,3 +402,134 @@
         width: 100%;
     }
 }
+
+/* ════════════════════════════════════════
+   MOBILE CARD LIST (replace tabel di mobile)
+   Pattern: tabel d-none d-md-table, card list d-block d-md-none
+   Setiap row jadi 1 card dengan header/body/actions sections
+══════════════════════════════════════════ */
+.mobile-card-list {
+    padding: 8px;
+}
+.mobile-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+.mobile-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.mobile-card:active {
+    transform: scale(0.99);
+}
+.mobile-card:last-child {
+    margin-bottom: 4px;
+}
+
+/* Variant: pending (yellow accent) */
+.mobile-card-pending {
+    border-left: 4px solid #ffc107;
+}
+
+/* Header: thumbnail + title + status badge */
+.mobile-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+.mobile-card-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #e9ecef;
+}
+.mobile-card-thumb-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: #6c757d;
+    font-size: 1rem;
+}
+.mobile-card-title {
+    flex: 1;
+    min-width: 0; /* prevent overflow */
+}
+.mobile-card-title strong {
+    display: block;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    line-height: 1.3;
+    word-break: break-word;
+}
+.mobile-card-title small {
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+.mobile-card-title small i {
+    margin-right: 3px;
+    color: #95a5a6;
+}
+.mobile-card-header .badge {
+    flex-shrink: 0;
+    align-self: center;
+}
+
+/* Body: row info */
+.mobile-card-body {
+    padding: 10px 14px;
+}
+.mobile-card-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 0.85rem;
+    color: #495057;
+}
+.mobile-card-row + .mobile-card-row {
+    border-top: 1px dashed #f1f3f5;
+}
+.mobile-card-row i {
+    width: 18px;
+    text-align: center;
+    margin-top: 2px;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+}
+.mobile-card-row span {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+}
+
+/* Actions footer: button row */
+.mobile-card-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #fff;
+    border-top: 1px solid #f1f3f5;
+}
+.mobile-card-actions .btn {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+/* Empty state */
+.mobile-card-empty {
+    padding: 32px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 8px;
+}
