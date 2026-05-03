@@ -54,6 +54,171 @@
         /* Content */
         .page-content { min-height: calc(100vh - 130px); padding-top: 20px; }
 
+        /* ════════════════════════════════════════
+           USER DROPDOWN MENU
+           Desktop: dropdown overlay; Mobile: inline expanded
+        ════════════════════════════════════════ */
+        .navbar-public .user-dropdown .user-dropdown-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px !important;
+            border-radius: 6px;
+            color: #fff !important;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .navbar-public .user-dropdown .user-dropdown-toggle:hover,
+        .navbar-public .user-dropdown.show .user-dropdown-toggle {
+            background: rgba(255,255,255,0.18) !important;
+        }
+        .navbar-public .user-dropdown .user-dropdown-toggle i {
+            font-size: 1.4rem;
+        }
+        .navbar-public .user-dropdown-toggle::after {
+            margin-left: 6px;
+            transition: transform 0.2s;
+        }
+        .navbar-public .user-dropdown.show .user-dropdown-toggle::after {
+            transform: rotate(180deg);
+        }
+
+        /* Dropdown menu container */
+        .navbar-public .user-dropdown-menu {
+            min-width: 280px;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 0;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        /* User header (avatar + name + email + role) */
+        .user-dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: linear-gradient(135deg, #1a3c5e, #2d6a9f);
+            color: #fff;
+        }
+        .user-info-avatar {
+            font-size: 2.4rem;
+            color: rgba(255,255,255,0.9);
+            line-height: 1;
+        }
+        .user-info-text { flex: 1; min-width: 0; }
+        .user-info-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-info-email {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.75);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-info-role {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(243, 156, 18, 0.95);
+            color: #fff;
+            border-radius: 10px;
+            letter-spacing: 0.3px;
+        }
+        .user-info-role-user {
+            background: rgba(52, 152, 219, 0.95);
+        }
+
+        /* Dropdown items */
+        .navbar-public .user-dropdown-menu .dropdown-item {
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+        }
+        .navbar-public .user-dropdown-menu .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+        .navbar-public .user-dropdown-menu .dropdown-divider {
+            margin: 0;
+            border-color: #ecf0f1;
+        }
+
+        /* Logout item: subtle danger styling */
+        .navbar-public .dropdown-item-logout {
+            color: #e74c3c !important;
+        }
+        .navbar-public .dropdown-item-logout:hover {
+            background: #fadbd8 !important;
+            color: #c0392b !important;
+        }
+
+        /* ════════════════════════════════════════
+           MOBILE: Inline Expanded Dropdown
+           Saat hamburger expanded, dropdown items visible langsung
+           (no second-tap needed)
+        ════════════════════════════════════════ */
+        @media (max-width: 991.98px) {
+            /* Hide dropdown trigger button (no need to click in mobile) */
+            .navbar-public .user-dropdown-toggle {
+                display: none !important;
+            }
+
+            /* Force dropdown menu always visible inline */
+            .navbar-public .user-dropdown-menu {
+                position: static !important;
+                display: block !important;
+                float: none !important;
+                width: 100%;
+                margin-top: 12px !important;
+                border-radius: 8px !important;
+                box-shadow: none !important;
+                background: rgba(0,0,0,0.18);
+                border: 1px solid rgba(255,255,255,0.1);
+            }
+
+            /* User header in mobile: lighter bg (already inside drawer) */
+            .user-dropdown-header {
+                background: rgba(255,255,255,0.05);
+                border-radius: 8px 8px 0 0;
+            }
+
+            /* Dropdown items in mobile: white text on dark drawer */
+            .navbar-public .user-dropdown-menu .dropdown-item {
+                color: rgba(255,255,255,0.85) !important;
+                padding: 12px 16px;
+            }
+            .navbar-public .user-dropdown-menu .dropdown-item:hover {
+                background: rgba(255,255,255,0.08) !important;
+                color: #fff !important;
+            }
+            .navbar-public .user-dropdown-menu .dropdown-divider {
+                border-color: rgba(255,255,255,0.08);
+            }
+
+            /* Logout item in mobile: lebih subtle (text-danger only) */
+            .navbar-public .dropdown-item-logout {
+                color: #ff6b6b !important;
+            }
+            .navbar-public .dropdown-item-logout:hover {
+                background: rgba(231,76,60,0.15) !important;
+                color: #ff8585 !important;
+            }
+        }
+
         /* ══ MOBILE LAYOUT (≤ 767.98px) ══
          * Polish global untuk semua halaman public di mobile.
          * Specific page styling di-handle masing-masing CSS file.
