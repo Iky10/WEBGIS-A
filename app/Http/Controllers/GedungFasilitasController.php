@@ -61,8 +61,9 @@ class GedungFasilitasController extends AppBaseController
         ]);
 
         $input = $request->except(['foto_ruangan']);
-        // Handle checkbox for is_aktif
-        $input['is_aktif'] = $request->has('is_aktif') ? true : false;
+        // Handle checkbox fields (hidden field trick: value=0 hidden + value=1 checkbox)
+        $input['is_aktif'] = $request->boolean('is_aktif');
+        $input['bisa_diajukan'] = $request->boolean('bisa_diajukan');
 
         // Upload foto ruangan jika ada
         if ($request->hasFile('foto_ruangan')) {
@@ -142,7 +143,8 @@ class GedungFasilitasController extends AppBaseController
         }
 
         $input = $request->except(['foto_ruangan']);
-        $input['is_aktif'] = $request->has('is_aktif') ? true : false;
+        $input['is_aktif'] = $request->boolean('is_aktif');
+        $input['bisa_diajukan'] = $request->boolean('bisa_diajukan');
 
         // Upload foto ruangan jika ada file baru
         if ($request->hasFile('foto_ruangan')) {
@@ -189,7 +191,8 @@ class GedungFasilitasController extends AppBaseController
     }
 
     /**
-     * Toggle the status of the specified GedungFasilitas.
+     * Toggle the status of the specified GedungFasilitas (is_aktif).
+     * Flag 'is_aktif' = ruangan operasional / tidak (misal sedang perbaikan).
      */
     public function toggleStatus($id)
     {
@@ -207,6 +210,29 @@ class GedungFasilitasController extends AppBaseController
             'success' => true,
             'message' => 'Status berhasil diubah menjadi ' . $statusText,
             'is_aktif' => $gedungFasilitas->is_aktif
+        ]);
+    }
+
+    /**
+     * Toggle the bisa_diajukan flag of the specified GedungFasilitas.
+     * Flag 'bisa_diajukan' = ruangan boleh diajukan user untuk penggunaan ad-hoc.
+     */
+    public function toggleBisaDiajukan($id)
+    {
+        $gedungFasilitas = $this->gedungFasilitasRepository->find($id);
+
+        if (empty($gedungFasilitas)) {
+            return response()->json(['success' => false, 'message' => 'Fasilitas tidak ditemukan'], 404);
+        }
+
+        $gedungFasilitas->bisa_diajukan = !$gedungFasilitas->bisa_diajukan;
+        $gedungFasilitas->save();
+
+        $label = $gedungFasilitas->bisa_diajukan ? 'Ya' : 'Tidak';
+        return response()->json([
+            'success' => true,
+            'message' => 'Status "Bisa Diajukan" berhasil diubah menjadi ' . $label,
+            'bisa_diajukan' => $gedungFasilitas->bisa_diajukan
         ]);
     }
 

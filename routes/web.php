@@ -53,6 +53,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // WebGIS Admin
     Route::post('gedung_fasilitas/{id}/toggle-status', [App\Http\Controllers\GedungFasilitasController::class, 'toggleStatus'])->name('gedung_fasilitas.toggle-status');
+    Route::post('gedung_fasilitas/{id}/toggle-bisa-diajukan', [App\Http\Controllers\GedungFasilitasController::class, 'toggleBisaDiajukan'])->name('gedung_fasilitas.toggle-bisa-diajukan');
     Route::delete('gedung_fasilitas/bulk-delete', [App\Http\Controllers\GedungFasilitasController::class, 'bulkDelete'])->name('gedung_fasilitas.bulk-delete');
     Route::resource('gedung_fasilitas', App\Http\Controllers\GedungFasilitasController::class);
     Route::resource('jadwal_ruangans', App\Http\Controllers\JadwalRuanganController::class);

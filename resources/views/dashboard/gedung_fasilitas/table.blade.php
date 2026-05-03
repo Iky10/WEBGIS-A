@@ -13,6 +13,7 @@
             <th>Kategori</th>
             <th>Koordinat</th>
             <th>Status</th>
+            <th>Bisa Diajukan</th>
             <th>Aksi</th>
         </tr>
         </thead>
@@ -50,6 +51,14 @@
                         <input type="checkbox" class="custom-control-input toggle-status" id="status_{{ $gf->id }}" data-id="{{ $gf->id }}" {{ $gf->is_aktif ? 'checked' : '' }}>
                         <label class="custom-control-label" for="status_{{ $gf->id }}">
                             <span class="status-label-{{ $gf->id }}">{{ $gf->is_aktif ? 'Aktif' : 'Tidak Aktif' }}</span>
+                        </label>
+                    </div>
+                </td>
+                <td>
+                    <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-primary">
+                        <input type="checkbox" class="custom-control-input toggle-bisa-diajukan" id="bisa_diajukan_{{ $gf->id }}" data-id="{{ $gf->id }}" {{ $gf->bisa_diajukan ? 'checked' : '' }}>
+                        <label class="custom-control-label" for="bisa_diajukan_{{ $gf->id }}">
+                            <span class="bisa-diajukan-label-{{ $gf->id }}">{{ $gf->bisa_diajukan ? 'Ya' : 'Tidak' }}</span>
                         </label>
                     </div>
                 </td>
