@@ -233,7 +233,7 @@
                          data-gedung-id="{{ $gedung->id }}"
                          data-ruangan-count="{{ $gedung->fasilitas->count() }}">
                         @if($gedung->foto_utama)
-                            <img src="{{ asset('images/gedung/' . $gedung->foto_utama) }}"
+                            <img src="{{ asset($gedung->foto_utama) }}"
                                  alt="{{ $gedung->nama_gedung }}"
                                  class="picker-img"
                                  onerror="this.outerHTML='<div class=&quot;picker-img-placeholder&quot;><i class=&quot;fas fa-building&quot;></i></div>'">
@@ -280,7 +280,7 @@
                             'nama_fasilitas' => $r->nama_fasilitas,
                             'kategori'       => $r->kategori,
                             'keterangan'     => $r->keterangan,
-                            'foto_ruangan'   => $r->foto_ruangan ? asset('images/ruangan/' . $r->foto_ruangan) : null,
+                            'foto_ruangan'   => $r->foto_ruangan ? asset($r->foto_ruangan) : null,
                             'status'         => $r->status_dipakai,
                         ];
                     }

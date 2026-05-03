@@ -54,17 +54,31 @@ class PengajuanRuanganController extends AppBaseController
             return redirect(route('pengajuan_ruangans.index'));
         }
 
-        // Ambil gedung yang bisa diajukan + ruangan-ruangannya untuk cascade dropdown
+        // Ambil gedung yang bisa diajukan + ruangan-ruangannya untuk cascade dropdown.
+        // Filter: hanya tampilkan gedung yang punya minimal 1 ruangan aktif —
+        // hindari user pilih gedung lalu Step 2 kosong.
         $gedungs = Gedung::bisaDiajukan()
+            ->whereHas('fasilitas', function ($q) {
+                $q->where('is_aktif', true);
+            })
             ->with(['fasilitas' => function ($q) {
-                $q->orderBy('nama_ruangan');
+                $q->where('is_aktif', true)->orderBy('nama_fasilitas');
             }])
             ->orderBy('nama_gedung')
             ->get();
 
-        // Pre-select jika ada query param (misal dari link di peta)
+        // Pre-select dari query param (misal dari link di peta) atau dari old()
+        // saat validation gagal dan user di-redirect balik ke form.
         $selectedGedung  = $request->query('gedung_id');
         $selectedRuangan = $request->query('ruangan_id');
+
+        if (old('gedung_fasilitas_id')) {
+            $ruanganFromOld = GedungFasilitas::find(old('gedung_fasilitas_id'));
+            if ($ruanganFromOld) {
+                $selectedGedung  = $ruanganFromOld->gedung_id;
+                $selectedRuangan = $ruanganFromOld->id;
+            }
+        }
 
         return view('public.pengajuan_ruangan.create')
             ->with('gedungs', $gedungs)
