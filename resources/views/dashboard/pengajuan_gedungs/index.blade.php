@@ -40,7 +40,6 @@
                                 <label class="text-muted small mb-1"><i class="fas fa-building mr-1"></i> Gedung</label>
                                 <select class="form-control form-control-sm" id="filter-gedung-pengajuan">
                                     <option value="">Semua Gedung</option>
-                                    @php $gedungList = \App\Models\Gedung::pluck('nama_gedung', 'id'); @endphp
                                     @foreach($gedungList as $id => $nama)
                                         <option value="{{ $nama }}">{{ $nama }}</option>
                                     @endforeach
@@ -208,6 +207,37 @@
                 $('#btn-bulk-delete-pengajuan').addClass('d-none');
             }
         }
+
+        // ─── Tombol Tolak: prompt catatan via SweetAlert ───
+        $(document).on('click', '.btn-tolak-pengajuan', function() {
+            var $form = $(this).closest('form.form-tolak-pengajuan');
+
+            Swal.fire({
+                title: 'Tolak Pengajuan?',
+                text: 'Catatan akan dikirim ke pemohon sebagai alasan penolakan.',
+                input: 'textarea',
+                inputLabel: 'Alasan Penolakan',
+                inputPlaceholder: 'Tuliskan alasan penolakan secara jelas...',
+                inputAttributes: { 'aria-label': 'Alasan penolakan', 'maxlength': 1000 },
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-times mr-1"></i> Ya, Tolak',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                inputValidator: function(value) {
+                    if (!value || value.trim().length < 5) {
+                        return 'Alasan penolakan wajib diisi minimal 5 karakter.';
+                    }
+                }
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    $form.find('input[name="catatan_admin"]').val(result.value.trim());
+                    $form.trigger('submit');
+                }
+            });
+        });
 
         // ─── Bulk Delete ───
         $('#btn-bulk-delete-pengajuan').on('click', function() {

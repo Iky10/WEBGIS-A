@@ -52,9 +52,11 @@
                             <td class="text-muted pl-3">Status Pemakaian</td>
                             <td>
                                 @if($gedung->status_dipakai == 'Sedang Dipakai')
-                                    <span class="badge badge-success">Sedang Dipakai</span>
+                                    <span class="badge badge-primary">Sedang Dipakai</span>
+                                @elseif($gedung->status_dipakai == 'Tutup')
+                                    <span class="badge badge-secondary">Tutup</span>
                                 @else
-                                    <span class="badge badge-secondary">Kosong</span>
+                                    <span class="badge badge-success">Terbuka</span>
                                 @endif
                             </td>
                         </tr>

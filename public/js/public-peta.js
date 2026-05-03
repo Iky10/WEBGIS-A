@@ -449,11 +449,33 @@
 
             // Load ruangan markers after gedung
             loadRuanganMarkers();
+
+            // Auto-refresh status tiap 60 detik (silent — tanpa toast/loader)
+            startStatusAutoRefresh();
         })
         .catch(function () {
             document.getElementById('loading').classList.add('out');
             setTimeout(function () { document.getElementById('loading').style.display = 'none'; }, 400);
         });
+
+    /* ── AUTO-REFRESH STATUS ──────────────────────
+       Reload data GeoJSON tiap 60 detik supaya warna marker tetap sinkron
+       dengan status realtime gedung (Sedang Dipakai → Kosong saat acara berakhir).
+       Hanya update status warna marker, TIDAK reload posisi/zoom map. */
+    function startStatusAutoRefresh() {
+        setInterval(function () {
+            // Skip kalau tab tidak aktif (hemat bandwidth)
+            if (document.hidden) return;
+
+            fetch(window.WEBGIS_URL)
+                .then(function (r) { return r.json(); })
+                .then(function (gj) {
+                    allData = gj.features || [];
+                    renderMarkers(allData);
+                })
+                .catch(function () { /* silent fail — coba lagi 60 detik berikutnya */ });
+        }, 60000);
+    }
 
     /* ══════════════════════════════════════════════════
        RUANGAN MARKERS (Opsi B — sub-marker saat diklik)

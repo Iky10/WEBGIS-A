@@ -66,12 +66,12 @@
                                 </button>
                             </form>
                             <form action="{{ route('pengajuan_gedungs.update-status', $pengajuan->id) }}"
-                                  method="POST" class="mr-1 mb-0" style="display:inline;">
+                                  method="POST" class="mr-1 mb-0 form-tolak-pengajuan" style="display:inline;">
                                 @csrf @method('PATCH')
                                 <input type="hidden" name="status" value="ditolak">
-                                <button type="button" class="btn btn-secondary btn-sm"
-                                        title="Tolak"
-                                        onclick="confirmAction(this.closest('form'), 'Tolak Pengajuan?', 'Pengajuan ini akan ditolak.', 'warning', 'Ya, tolak!')">
+                                <input type="hidden" name="catatan_admin" value="">
+                                <button type="button" class="btn btn-secondary btn-sm btn-tolak-pengajuan"
+                                        title="Tolak">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </form>

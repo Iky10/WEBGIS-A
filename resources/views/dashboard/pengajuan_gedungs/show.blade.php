@@ -88,6 +88,19 @@
                     </div>
                 @endif
 
+                {{-- Audit trail: siapa & kapan keputusan dibuat --}}
+                @if($pengajuanGedung->approved_at)
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-user-check mr-1"></i>
+                            Diputuskan oleh
+                            <strong>{{ optional($pengajuanGedung->approvedBy)->name ?? 'Admin' }}</strong>
+                            pada
+                            <strong>{{ $pengajuanGedung->approved_at->format('d M Y, H:i') }}</strong>
+                        </small>
+                    </div>
+                @endif
+
                 {{-- Admin: Form update status --}}
                 @if(Auth::user()->isAdmin() && $pengajuanGedung->status === 'diproses')
                     <hr>

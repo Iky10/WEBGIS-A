@@ -56,9 +56,11 @@
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <h6 class="card-title mb-0 font-weight-bold">{{ $gedung->nama_gedung }}</h6>
                         @if($gedung->status_dipakai == 'Sedang Dipakai')
-                            <span class="badge badge-success ml-1">Sedang Dipakai</span>
+                            <span class="badge badge-primary ml-1">Sedang Dipakai</span>
+                        @elseif($gedung->status_dipakai == 'Tutup')
+                            <span class="badge badge-secondary ml-1">Tutup</span>
                         @else
-                            <span class="badge badge-secondary ml-1">Kosong</span>
+                            <span class="badge badge-success ml-1">Terbuka</span>
                         @endif
                     </div>
 

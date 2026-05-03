@@ -58,6 +58,7 @@ class PengajuanGedung extends Model
         'jam_mulai'       => 'required',
         'jam_selesai'     => 'required|after:jam_mulai',
         'jumlah_peserta'  => 'nullable|integer|min:1',
+        'keperluan'       => 'nullable|string|max:1000',
     ];
 
     /**
@@ -89,5 +90,13 @@ class PengajuanGedung extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Admin yang menyetujui/menolak pengajuan ini.
+     */
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }
