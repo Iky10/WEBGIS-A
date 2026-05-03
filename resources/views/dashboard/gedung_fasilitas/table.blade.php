@@ -12,7 +12,6 @@
             <th>Nama Ruangan / Fasilitas</th>
             <th>Kategori</th>
             <th>Koordinat</th>
-            <th>Status</th>
             <th>Bisa Diajukan</th>
             <th>Aksi</th>
         </tr>
@@ -45,14 +44,6 @@
                     @else
                         <span class="text-muted">-</span>
                     @endif
-                </td>
-                <td>
-                    <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-success">
-                        <input type="checkbox" class="custom-control-input toggle-status" id="status_{{ $gf->id }}" data-id="{{ $gf->id }}" {{ $gf->is_aktif ? 'checked' : '' }}>
-                        <label class="custom-control-label" for="status_{{ $gf->id }}">
-                            <span class="status-label-{{ $gf->id }}">{{ $gf->is_aktif ? 'Aktif' : 'Tidak Aktif' }}</span>
-                        </label>
-                    </div>
                 </td>
                 <td>
                     <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-primary">

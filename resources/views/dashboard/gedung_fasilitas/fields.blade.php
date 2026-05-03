@@ -30,22 +30,8 @@
     {!! Form::textarea('keterangan', null, ['class' => 'form-control', 'rows' => 3, 'placeholder' => 'Keterangan tambahan (opsional)']) !!}
 </div>
 
-<!-- Status Toggles -->
-<div class="form-group col-sm-6">
-    <label>Status Operasional:</label>
-    <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-success">
-        {!! Form::hidden('is_aktif', 0) !!}
-        <input type="checkbox" name="is_aktif" value="1"
-               class="custom-control-input" id="input_is_aktif"
-               {{ isset($gedungFasilitas) ? ($gedungFasilitas->is_aktif ? 'checked' : '') : 'checked' }}>
-        <label class="custom-control-label" for="input_is_aktif">
-            <span id="label-is-aktif">Aktif (ruangan beroperasi normal)</span>
-        </label>
-    </div>
-    <small class="text-muted">Set ke <strong>Tidak Aktif</strong> kalau ruangan sedang perbaikan atau tidak tersedia.</small>
-</div>
-
-<div class="form-group col-sm-6">
+<!-- Boleh Diajukan Pengguna Toggle -->
+<div class="form-group col-sm-12">
     <label>Boleh Diajukan Pengguna:</label>
     <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-primary">
         {!! Form::hidden('bisa_diajukan', 0) !!}
