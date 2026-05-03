@@ -56,20 +56,58 @@
             <ul class="navbar-nav align-items-center">
                 @auth
                     @if(Auth::user()->isAdmin())
-                        <li class="nav-item mr-2">
+                        <li class="nav-item mr-2 d-none d-lg-block">
                             <a class="nav-link btn-admin" href="{{ route('home') }}">
                                 <i class="fas fa-cogs mr-1"></i> Dashboard
                             </a>
                         </li>
                     @endif
 
-                    {{-- Logout --}}
-                    <li class="nav-item">
-                        <a class="nav-link text-danger font-weight-bold" href="#"
-                           onclick="event.preventDefault(); document.getElementById('logout-form-public').submit();"
-                           style="background: rgba(239, 68, 68, 0.1); border-radius: 6px; padding: 6px 14px !important;">
-                            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                    {{-- User Dropdown Menu (desktop: dropdown, mobile: expanded inline via CSS) --}}
+                    <li class="nav-item dropdown user-dropdown">
+                        <a class="nav-link dropdown-toggle user-dropdown-toggle" data-toggle="dropdown"
+                           href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="user-dropdown-name">{{ Str::limit(Auth::user()->name, 18) }}</span>
                         </a>
+                        <div class="dropdown-menu dropdown-menu-right user-dropdown-menu">
+                            {{-- User Info Header --}}
+                            <div class="user-dropdown-header">
+                                <div class="user-info-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="user-info-text">
+                                    <div class="user-info-name">{{ Auth::user()->name }}</div>
+                                    <div class="user-info-email">{{ Auth::user()->email }}</div>
+                                    @if(Auth::user()->isAdmin())
+                                        <span class="user-info-role">Administrator</span>
+                                    @else
+                                        <span class="user-info-role user-info-role-user">Pengguna</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            {{-- Quick Links --}}
+                            @if(Auth::user()->isAdmin())
+                                <a class="dropdown-item d-lg-none" href="{{ route('home') }}">
+                                    <i class="fas fa-cogs text-primary mr-2"></i>Dashboard Admin
+                                </a>
+                            @endif
+                            <a class="dropdown-item" href="#" title="Fitur akan datang">
+                                <i class="fas fa-user-cog text-secondary mr-2"></i>Profil Saya
+                                <small class="text-muted ml-1">(Segera)</small>
+                            </a>
+
+                            <div class="dropdown-divider"></div>
+
+                            {{-- Logout (subtle styling) --}}
+                            <a class="dropdown-item dropdown-item-logout" href="#"
+                               onclick="event.preventDefault(); document.getElementById('logout-form-public').submit();">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </a>
+                        </div>
                         <form id="logout-form-public" action="{{ route('logout') }}" method="POST" class="d-none">
                             @csrf
                         </form>
