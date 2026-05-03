@@ -163,6 +163,8 @@
 
 <!-- SIDEBAR HTML -->
 <div id="sidebar" class="hide">
+    {{-- Drag area untuk bottom sheet di mobile (klik untuk toggle expand) --}}
+    <div class="sb-drag-area" id="sbDragArea" title="Drag untuk expand/collapse"></div>
     <div class="sb-head">
         <button id="sbClose" class="sb-close"><i class="fas fa-times"></i></button>
         <div class="sb-title">Detail Gedung</div>
@@ -271,6 +273,81 @@
     window.API_JADWAL_SEMESTER_URL = '{{ url('/api/gedung') }}';
 </script>
 <script src="{{ asset('js/public-peta.js') }}"></script>
+
+{{-- Bottom Sheet Gesture (mobile only) - drag handle untuk expand/collapse + swipe-down to close --}}
+<script>
+(function() {
+    'use strict';
+
+    var sidebar = document.getElementById('sidebar');
+    var dragArea = document.getElementById('sbDragArea');
+    if (!sidebar || !dragArea) return;
+
+    // Hanya aktif di mobile (≤768px)
+    function isMobile() {
+        return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    // Click handle: toggle expand/collapse
+    dragArea.addEventListener('click', function(e) {
+        if (!isMobile()) return;
+        sidebar.classList.toggle('expanded');
+    });
+
+    // Touch drag gesture untuk swipe down → close, swipe up → expand
+    var touchStartY = 0;
+    var touchCurrentY = 0;
+    var isDragging = false;
+
+    dragArea.addEventListener('touchstart', function(e) {
+        if (!isMobile()) return;
+        touchStartY = e.touches[0].clientY;
+        isDragging = true;
+        sidebar.style.transition = 'none'; // disable transisi saat drag manual
+    }, { passive: true });
+
+    dragArea.addEventListener('touchmove', function(e) {
+        if (!isDragging || !isMobile()) return;
+        touchCurrentY = e.touches[0].clientY;
+        var deltaY = touchCurrentY - touchStartY;
+
+        // Hanya respond ke drag ke bawah (deltaY > 0) saat di state default
+        // Atau drag ke atas (deltaY < 0) saat di state default untuk expand
+        if (deltaY > 0) {
+            // Drag ke bawah: visual feedback geser sheet
+            sidebar.style.transform = 'translateY(' + deltaY + 'px)';
+        }
+    }, { passive: true });
+
+    dragArea.addEventListener('touchend', function(e) {
+        if (!isDragging || !isMobile()) return;
+        isDragging = false;
+        sidebar.style.transition = ''; // restore transisi
+        sidebar.style.transform = '';
+
+        var deltaY = touchCurrentY - touchStartY;
+
+        // Swipe down > 80px: close sidebar
+        if (deltaY > 80) {
+            sidebar.classList.remove('show');
+            sidebar.classList.add('hide');
+            sidebar.classList.remove('expanded');
+        }
+        // Swipe up > 50px: expand
+        else if (deltaY < -50) {
+            sidebar.classList.add('expanded');
+        }
+    });
+
+    // Reset expanded state saat sidebar di-close (untuk konsistensi state berikutnya)
+    var sbClose = document.getElementById('sbClose');
+    if (sbClose) {
+        sbClose.addEventListener('click', function() {
+            sidebar.classList.remove('expanded');
+        });
+    }
+})();
+</script>
 
 </body>
 </html>
