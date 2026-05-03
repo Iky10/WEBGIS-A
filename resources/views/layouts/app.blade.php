@@ -46,6 +46,75 @@
     <!-- Admin Custom -->
     <link rel="stylesheet" href="{{ asset('css/admin-custom.css') }}">
 
+    {{-- Notif Bell Styling --}}
+    <style>
+        .notif-bell-wrapper .nav-link {
+            position: relative; padding: .5rem .75rem;
+        }
+        .notif-bell-wrapper .nav-link i {
+            font-size: 1.2rem; color: #495057;
+        }
+        .notif-bell-wrapper .nav-link:hover i { color: #007bff; }
+        .notif-bell-wrapper .navbar-badge {
+            position: absolute; top: 4px; right: 2px;
+            font-size: .65rem; padding: 2px 5px;
+            border-radius: 10px; line-height: 1;
+        }
+        .notif-bell-wrapper .nav-link.has-pending i {
+            color: #f39c12;
+            animation: bellShake 2.5s ease-in-out infinite;
+        }
+        @keyframes bellShake {
+            0%, 88%, 100% { transform: rotate(0deg); }
+            90%, 94% { transform: rotate(-12deg); }
+            92%, 96% { transform: rotate(12deg); }
+        }
+        .notif-dropdown {
+            min-width: 360px; max-width: 380px; padding: 0;
+            box-shadow: 0 8px 24px rgba(0,0,0,.12);
+            border: 1px solid #e9ecef; border-radius: 8px;
+            overflow: hidden;
+        }
+        .notif-dropdown .dropdown-header {
+            background: #f8f9fa; font-weight: 600; color: #2c3e50;
+            padding: 10px 14px; font-size: .9rem;
+        }
+        .notif-item {
+            display: block; padding: 10px 14px; border-bottom: 1px solid #f1f3f5;
+            transition: background .15s; text-decoration: none; color: #2c3e50;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover {
+            background: #f8f9fa; text-decoration: none;
+            color: #2c3e50;
+        }
+        .notif-item .notif-kode {
+            font-weight: 600; font-size: .85rem; color: #007bff;
+        }
+        .notif-item .notif-urgent-badge {
+            display: inline-block; background: #e74c3c; color: #fff;
+            font-size: .65rem; padding: 1px 6px; border-radius: 8px;
+            margin-left: 6px; font-weight: 600;
+        }
+        .notif-item .notif-meta {
+            font-size: .78rem; color: #7f8c8d; margin-top: 2px;
+            display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .notif-item .notif-meta i { margin-right: 3px; }
+        .notif-item .notif-time {
+            font-size: .72rem; color: #95a5a6; margin-top: 4px;
+        }
+        .notif-empty {
+            padding: 24px 14px; text-align: center; color: #95a5a6;
+        }
+        .notif-empty i { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+        .dropdown-footer {
+            background: #f8f9fa; font-size: .85rem; color: #007bff !important;
+            font-weight: 500; padding: 10px;
+        }
+        .dropdown-footer:hover { background: #e9ecef; }
+    </style>
+
     @stack('third_party_stylesheets')
 
     @stack('page_css')
@@ -63,6 +132,32 @@
         </ul>
 
         <ul class="navbar-nav ml-auto">
+            {{-- Notifikasi Bell (admin only) --}}
+            @if(Auth::check() && Auth::user()->isAdmin())
+                <li class="nav-item dropdown notif-bell-wrapper">
+                    <a href="#" class="nav-link" data-toggle="dropdown" id="notif-bell-toggle"
+                       title="Notifikasi Pengajuan Pending">
+                        <i class="far fa-bell"></i>
+                        <span class="badge badge-danger navbar-badge notif-badge" id="notif-bell-count" style="display:none;">0</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right notif-dropdown" id="notif-dropdown">
+                        <span class="dropdown-item dropdown-header" id="notif-header">
+                            <i class="fas fa-clock mr-1"></i> Pengajuan Menunggu
+                        </span>
+                        <div class="dropdown-divider"></div>
+                        <div id="notif-list-container">
+                            <div class="dropdown-item text-center text-muted py-3">
+                                <i class="fas fa-spinner fa-spin"></i> Memuat...
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="{{ route('pengajuan_ruangans.index') }}" class="dropdown-item dropdown-footer text-center">
+                            <i class="fas fa-list mr-1"></i> Lihat Semua Pengajuan
+                        </a>
+                    </div>
+                </li>
+            @endif
+
             <li class="nav-item dropdown user-menu">
                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
                     <img src="https://assets.infyom.com/logo/blue_logo_150x150.png"
@@ -255,6 +350,111 @@
         }
     });
 </script>
+
+@if(Auth::check() && Auth::user()->isAdmin())
+{{-- Notif Bell: Polling Pengajuan Pending setiap 60 detik --}}
+<script>
+(function() {
+    'use strict';
+    var POLL_INTERVAL_MS = 60000; // 60 detik
+    var ENDPOINT = '{{ route("pengajuan_ruangans.notifikasi-pending") }}';
+
+    var $bellLink   = $('#notif-bell-toggle');
+    var $bellCount  = $('#notif-bell-count');
+    var $listContainer = $('#notif-list-container');
+    var $header     = $('#notif-header');
+
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/[&<>"']/g, function(m) {
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+        });
+    }
+
+    function renderEmpty() {
+        $listContainer.html(
+            '<div class="notif-empty">' +
+                '<i class="far fa-check-circle text-success"></i>' +
+                '<div>Tidak ada pengajuan menunggu.</div>' +
+                '<small>Semua sudah ditangani!</small>' +
+            '</div>'
+        );
+    }
+
+    function renderItems(items) {
+        if (!items || items.length === 0) {
+            renderEmpty();
+            return;
+        }
+
+        var html = items.map(function(item) {
+            var urgentBadge = item.is_urgent
+                ? '<span class="notif-urgent-badge">URGEN</span>'
+                : '';
+
+            return '<a href="' + escapeHtml(item.url) + '" class="notif-item">' +
+                       '<div>' +
+                           '<span class="notif-kode">' + escapeHtml(item.kode) + '</span>' +
+                           urgentBadge +
+                       '</div>' +
+                       '<div class="font-weight-bold mt-1">' + escapeHtml(item.nama_kegiatan) + '</div>' +
+                       '<div class="notif-meta">' +
+                           '<span><i class="fas fa-user"></i>' + escapeHtml(item.nama_pemohon) + '</span>' +
+                           '<span><i class="fas fa-door-open"></i>' + escapeHtml(item.ruangan) + '</span>' +
+                       '</div>' +
+                       '<div class="notif-meta">' +
+                           '<span><i class="fas fa-calendar"></i>' + escapeHtml(item.tanggal_mulai) + '</span>' +
+                       '</div>' +
+                       '<div class="notif-time">' +
+                           '<i class="fas fa-clock"></i> ' + escapeHtml(item.created_human) +
+                       '</div>' +
+                   '</a>';
+        }).join('');
+
+        $listContainer.html(html);
+    }
+
+    function fetchNotifications() {
+        $.get(ENDPOINT)
+            .done(function(resp) {
+                var count = parseInt(resp.count, 10) || 0;
+
+                // Update badge
+                if (count > 0) {
+                    $bellCount.text(count > 99 ? '99+' : count).show();
+                    $bellLink.addClass('has-pending');
+                    $header.html('<i class="fas fa-clock mr-1"></i> ' + count + ' Pengajuan Menunggu');
+                } else {
+                    $bellCount.hide();
+                    $bellLink.removeClass('has-pending');
+                    $header.html('<i class="fas fa-clock mr-1"></i> Pengajuan Menunggu');
+                }
+
+                renderItems(resp.items);
+            })
+            .fail(function() {
+                $listContainer.html(
+                    '<div class="notif-empty">' +
+                        '<i class="fas fa-exclamation-triangle text-warning"></i>' +
+                        '<div>Gagal memuat notifikasi.</div>' +
+                    '</div>'
+                );
+            });
+    }
+
+    // Initial fetch + polling
+    $(function() {
+        fetchNotifications();
+        setInterval(fetchNotifications, POLL_INTERVAL_MS);
+
+        // Refresh saat dropdown di-buka manual (force refresh untuk data fresh)
+        $bellLink.on('click', function() {
+            fetchNotifications();
+        });
+    });
+})();
+</script>
+@endif
 
 @stack('third_party_scripts')
 
