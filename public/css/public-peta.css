@@ -1114,12 +1114,98 @@ html, body {
 /* ═══════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════ */
-@media (max-width:600px) {
+
+/* Tablet & Mobile (≤768px) */
+@media (max-width:768px) {
+    #topbar {
+        padding: 0 12px; height: 64px;
+    }
     .t-logo-name, .t-logo-sub { display:none; }
-    .t-search { max-width:190px; }
-    #filterPanel { width:220px; }
-    .gis-popup { width:265px; }
-    #sidebar { width:100%; }
+    .t-search { flex: 1 1 auto; max-width: none; min-width: 120px; }
+
+    /* Filter panel jadi bottom sheet di mobile (lebih ergonomis untuk thumb) */
+    #filterPanel {
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important; right: 0 !important;
+        width: 100% !important;
+        max-height: 65vh;
+        border-radius: 16px 16px 0 0;
+        transform-origin: bottom center;
+    }
+    #filterPanel.hide {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    .gis-popup { width: 240px; }
+    #sidebar { width: 100%; max-width: 380px; }
+}
+
+/* Mobile (≤600px) */
+@media (max-width:600px) {
+    /* Topbar buttons jadi scroll horizontal untuk space efisien */
+    .t-btns {
+        gap: 4px;
+        max-width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none; /* Firefox */
+    }
+    .t-btns::-webkit-scrollbar { display: none; } /* Webkit */
+    .t-btn {
+        width: 36px; height: 36px; flex-shrink: 0;
+    }
+    .t-btn-text {
+        padding: 0 12px; font-size: .85rem;
+    }
+
+    /* Search bar lebih compact */
+    .t-search {
+        flex: 1 1 100px; min-width: 80px;
+    }
+    .t-search-in { font-size: .85rem; padding-left: 32px !important; }
+    .t-search-mic { display: none; } /* Mic button kurang esensial di mobile */
+
+    /* Zoom box lebih kecil dan posisi adjust */
+    #zoomBox {
+        bottom: 16px; left: 12px;
+    }
+    .z-btn {
+        width: 36px !important; height: 36px !important;
+        font-size: 18px !important;
+    }
+
+    /* Layer btn lebih kecil */
+    #layerBtn {
+        width: 36px; height: 36px; font-size: 14px;
+        top: auto; bottom: 16px; right: 12px;
+    }
+
+    /* Legend di mobile: collapsible / hide by default */
+    #legend {
+        bottom: 64px; right: 12px;
+        font-size: .75rem; padding: 8px 10px;
+        max-width: 180px;
+    }
+    #legend .leg-title {
+        font-size: .7rem;
+    }
+
+    /* Sidebar full screen di mobile */
+    #sidebar { width: 100% !important; max-width: 100% !important; }
+
+    /* Popup ruangan / gedung lebih compact */
+    .gis-popup, .ruangan-popup { width: 90vw !important; max-width: 280px !important; }
+}
+
+/* Very small mobile (≤400px) */
+@media (max-width:400px) {
+    /* Hide non-essential elements untuk space lebih */
+    #legend { display: none; }
+
+    /* Topbar buttons icon-only, no padding extra */
+    .t-btn-text span { display: none; }
+    .t-btn-text { padding: 0; width: 36px; gap: 0; }
 }
 
 /* ═══════════════════════════════════════════
