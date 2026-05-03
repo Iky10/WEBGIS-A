@@ -264,35 +264,69 @@
             });
         });
 
-        // Toggle Bisa Diajukan AJAX
+        // Toggle Bisa Diajukan AJAX (dengan konfirmasi SweetAlert)
+        // Aksi ini berdampak ke user (sembunyikan/tampilkan ruangan dari form pengajuan)
+        // jadi minta konfirmasi dulu sebelum eksekusi.
         $(document).on('change', '.toggle-bisa-diajukan', function() {
-            var id = $(this).data('id');
-            var isChecked = $(this).prop('checked');
-            var labelSpan = $('.bisa-diajukan-label-' + id);
+            var $toggle    = $(this);
+            var id         = $toggle.data('id');
+            var isChecked  = $toggle.prop('checked'); // state setelah user klik (target state)
+            var labelSpan  = $('.bisa-diajukan-label-' + id);
 
-            $(this).prop('checked', !isChecked);
-            $(this).prop('disabled', true);
+            // Cari nama ruangan dari row yang sama untuk pesan kontekstual
+            var namaRuangan = $toggle.closest('tr').find('td').eq(3).text().trim() || 'ruangan ini';
 
-            $.ajax({
-                url: '{{ url("gedung_fasilitas") }}/' + id + '/toggle-bisa-diajukan',
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(response) {
-                    $('.toggle-bisa-diajukan[data-id="'+id+'"]').prop('disabled', false);
-                    if (response.success) {
-                        $('.toggle-bisa-diajukan[data-id="'+id+'"]').prop('checked', response.bisa_diajukan);
-                        labelSpan.text(response.bisa_diajukan ? 'Ya' : 'Tidak');
-                        toastr.success(response.message);
-                    } else {
-                        toastr.error(response.message);
-                    }
-                },
-                error: function() {
-                    $('.toggle-bisa-diajukan[data-id="'+id+'"]').prop('disabled', false);
-                    toastr.error('Terjadi kesalahan pada server.');
+            // Revert state visual segera supaya user bisa cancel tanpa side-effect
+            $toggle.prop('checked', !isChecked);
+
+            // Pesan kontekstual berdasarkan target state
+            var swalConfig = isChecked
+                ? {
+                    title: 'Buka untuk Pengajuan?',
+                    html: '<strong>' + namaRuangan + '</strong> akan dibuka untuk pengajuan.<br>' +
+                          '<small class="text-muted">User akan bisa melihat dan mengajukan ruangan ini di form pengajuan.</small>',
+                    icon: 'question',
+                    confirmButtonText: 'Ya, Buka',
+                    confirmButtonColor: '#3498db'
                 }
+                : {
+                    title: 'Tutup dari Pengajuan?',
+                    html: '<strong>' + namaRuangan + '</strong> akan disembunyikan dari form pengajuan.<br>' +
+                          '<small class="text-muted">User tidak akan bisa mengajukan ruangan ini sampai dibuka kembali. Pengajuan yang sudah ada tetap berlaku.</small>',
+                    icon: 'warning',
+                    confirmButtonText: 'Ya, Tutup',
+                    confirmButtonColor: '#e67e22'
+                };
+
+            Swal.fire(Object.assign({
+                showCancelButton: true,
+                cancelButtonText: 'Batal',
+                cancelButtonColor: '#95a5a6',
+                reverseButtons: true
+            }, swalConfig)).then(function(result) {
+                if (!result.isConfirmed) return; // user cancel — toggle tetap di state lama
+
+                // User konfirmasi: lakukan AJAX
+                $toggle.prop('disabled', true);
+                $.ajax({
+                    url: '{{ url("gedung_fasilitas") }}/' + id + '/toggle-bisa-diajukan',
+                    type: 'POST',
+                    data: { _token: '{{ csrf_token() }}' },
+                    success: function(response) {
+                        $toggle.prop('disabled', false);
+                        if (response.success) {
+                            $toggle.prop('checked', response.bisa_diajukan);
+                            labelSpan.text(response.bisa_diajukan ? 'Ya' : 'Tidak');
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function() {
+                        $toggle.prop('disabled', false);
+                        toastr.error('Terjadi kesalahan pada server.');
+                    }
+                });
             });
         });
     });
