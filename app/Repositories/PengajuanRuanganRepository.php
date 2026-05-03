@@ -13,8 +13,12 @@ class PengajuanRuanganRepository extends BaseRepository
         'user_id',
         'nama_pemohon',
         'email_pemohon',
+        'no_telepon',
+        'asal_instansi',
         'jenis_kegiatan',
         'nama_kegiatan',
+        'tanggal_mulai',
+        'tanggal_selesai',
         'status',
     ];
 

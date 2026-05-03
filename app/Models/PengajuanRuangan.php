@@ -5,6 +5,7 @@ namespace App\Models;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Pengajuan penggunaan ruangan spesifik (bukan gedung utuh).
@@ -13,6 +14,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class PengajuanRuangan extends Model
 {
     use SoftDeletes, HasFactory;
+
+    /**
+     * Prefix kode pengajuan (PR = Pengajuan Ruangan).
+     * Diekstrak jadi constant supaya reusable & maintainable.
+     */
+    const KODE_PREFIX = 'PR-';
+
+    /**
+     * Status values — pakai constant supaya tidak ada typo di controller / view.
+     */
+    const STATUS_DIPROSES  = 'diproses';
+    const STATUS_DISETUJUI = 'disetujui';
+    const STATUS_DITOLAK   = 'ditolak';
 
     public $table = 'pengajuan_ruangans';
 
@@ -70,22 +84,49 @@ class PengajuanRuangan extends Model
 
     /**
      * Generate kode pengajuan otomatis: PR-YYYYMMDD-XXX
-     * (PR = Pengajuan Ruangan)
+     *
+     * Dibungkus DB::transaction + lockForUpdate untuk mencegah race condition
+     * saat dua user submit pengajuan pada detik yang sama (kode duplicate).
      */
     public static function generateKode()
     {
-        $today = now()->format('Ymd');
-        $prefix = "PR-{$today}-";
-        $last = static::withTrashed()
-            ->where('kode_pengajuan', 'like', "{$prefix}%")
-            ->orderBy('kode_pengajuan', 'desc')
-            ->first();
+        return DB::transaction(function () {
+            $prefix = self::KODE_PREFIX . now()->format('Ymd') . '-';
 
-        $nextNum = $last
-            ? ((int) substr($last->kode_pengajuan, -3)) + 1
-            : 1;
+            $last = static::withTrashed()
+                ->where('kode_pengajuan', 'like', "{$prefix}%")
+                ->lockForUpdate()
+                ->orderBy('kode_pengajuan', 'desc')
+                ->first();
 
-        return $prefix . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+            $nextNum = $last
+                ? ((int) substr($last->kode_pengajuan, -3)) + 1
+                : 1;
+
+            return $prefix . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+        });
+    }
+
+    // ── Query Scopes ──
+
+    public function scopeDiproses($query)
+    {
+        return $query->where('status', self::STATUS_DIPROSES);
+    }
+
+    public function scopeDisetujui($query)
+    {
+        return $query->where('status', self::STATUS_DISETUJUI);
+    }
+
+    public function scopeDitolak($query)
+    {
+        return $query->where('status', self::STATUS_DITOLAK);
+    }
+
+    public function scopeMilikUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 
     // ── Relasi ──
