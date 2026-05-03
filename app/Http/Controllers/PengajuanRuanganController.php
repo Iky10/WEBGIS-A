@@ -31,6 +31,11 @@ class PengajuanRuanganController extends AppBaseController
     /**
      * Admin: Daftar semua pengajuan ruangan.
      * Dilindungi oleh middleware 'admin' di routes/web.php.
+     *
+     * Menghitung 3 metrik untuk banner notifikasi admin:
+     *   - Total pending (status 'diproses')
+     *   - Baru submit dalam 24 jam terakhir
+     *   - Urgen: pending + tanggal_mulai <= 2 hari dari sekarang
      */
     public function index()
     {
@@ -41,9 +46,23 @@ class PengajuanRuanganController extends AppBaseController
         // Dropdown filter di view (clean separation — no query in Blade)
         $gedungList = Gedung::orderBy('nama_gedung')->pluck('nama_gedung', 'id');
 
+        // Metrik banner notifikasi
+        $totalPending = PengajuanRuangan::diproses()->count();
+
+        $baru24Jam = PengajuanRuangan::diproses()
+            ->where('created_at', '>=', now()->subDay())
+            ->count();
+
+        $urgen = PengajuanRuangan::diproses()
+            ->whereDate('tanggal_mulai', '<=', now()->addDays(2)->toDateString())
+            ->count();
+
         return view('dashboard.pengajuan_ruangans.index')
             ->with('pengajuanRuangans', $pengajuanRuangans)
-            ->with('gedungList', $gedungList);
+            ->with('gedungList', $gedungList)
+            ->with('totalPending', $totalPending)
+            ->with('baru24Jam', $baru24Jam)
+            ->with('urgen', $urgen);
     }
 
     /**
