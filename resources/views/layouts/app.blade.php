@@ -76,53 +76,60 @@
             overflow: hidden;
             max-height: 80vh; overflow-y: auto;
         }
-        /* Mobile: notif dropdown fit viewport (constrain width + position right edge) */
-        @media (max-width: 575.98px) {
+        /* Mobile: notif dropdown pakai position: fixed (anchor ke viewport, bukan parent)
+           Solusi paling reliable di mobile — bypass popper.js dan parent positioning context. */
+        @media (max-width: 767.98px) {
+            /* Notif Bell Dropdown: full-width minus margin */
+            .notif-bell-wrapper .dropdown-menu.notif-dropdown,
             .notif-bell-wrapper .notif-dropdown {
-                position: absolute !important;
-                top: 100% !important;
-                right: 0 !important;
-                left: auto !important;
+                position: fixed !important;
+                top: 60px !important; /* di bawah navbar AdminLTE (height ~57px) */
+                left: 8px !important;
+                right: 8px !important;
+                bottom: auto !important;
+                width: auto !important;
                 min-width: 0 !important;
-                width: calc(100vw - 16px) !important;
-                max-width: calc(100vw - 16px) !important;
-                margin-top: 6px !important;
-                margin-right: 8px;
+                max-width: none !important;
+                margin: 0 !important;
                 transform: none !important;
-                max-height: 75vh;
-            }
-            .notif-bell-wrapper {
-                position: relative !important;
+                max-height: calc(100vh - 70px);
+                overflow-y: auto;
+                border-radius: 10px;
             }
             /* Tighter padding di item supaya muat */
             .notif-item {
-                padding: 10px 12px !important;
+                padding: 12px !important;
+            }
+            .notif-item .notif-kode {
+                word-break: break-all !important; /* PR-20260503-004 boleh wrap */
             }
             .notif-item .notif-meta {
                 gap: 6px !important;
                 font-size: .72rem !important;
+                flex-wrap: wrap;
             }
             .notif-item .notif-meta span {
+                display: inline-flex;
+                align-items: center;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 max-width: 100%;
             }
-            /* Admin user-menu dropdown: same fix supaya fit viewport */
-            .user-menu .admin-user-menu {
-                position: absolute !important;
-                top: 100% !important;
-                right: 0 !important;
-                left: auto !important;
+
+            /* Admin user-menu dropdown: same fix */
+            .user-menu .admin-user-menu,
+            .user-menu .dropdown-menu {
+                position: fixed !important;
+                top: 60px !important;
+                left: 8px !important;
+                right: 8px !important;
+                bottom: auto !important;
+                width: auto !important;
                 min-width: 0 !important;
-                width: calc(100vw - 16px) !important;
-                max-width: 320px !important;
-                margin-top: 6px !important;
-                margin-right: 8px;
+                max-width: 360px !important;
+                margin: 0 0 0 auto !important; /* anchor ke kanan kalau viewport > 360 */
                 transform: none !important;
-            }
-            .user-menu {
-                position: relative !important;
             }
         }
         .notif-dropdown .dropdown-header {
