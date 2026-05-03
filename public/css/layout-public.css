@@ -55,43 +55,25 @@
         .page-content { min-height: calc(100vh - 130px); padding-top: 20px; }
 
         /* ════════════════════════════════════════
-           NAVBAR 3-ZONE LAYOUT (mobile-first like AdminLTE)
-           Mobile: [☰] [Brand] ............ [👤Avatar]
-           Desktop: [Brand] [Nav links] ... [Dashboard][👤Name▼]
+           NAVBAR 3-ZONE LAYOUT (AdminLTE Mobile)
+           Mobile: [☰] [Brand WebGIS Gedung]   [👤Avatar]
+           Desktop: [Brand] [Nav links] ...    [Dashboard][👤Name▼]
         ════════════════════════════════════════ */
         .navbar-public .navbar-toggler {
             border-color: rgba(255,255,255,0.4);
             padding: 4px 10px;
+            flex-shrink: 0; /* prevent shrink in flex */
         }
         .navbar-public .user-zone {
+            display: flex;
             flex-direction: row;
+            align-items: center;
             margin-left: auto;
+            flex-shrink: 0; /* avatar tidak boleh shrink */
+            margin-bottom: 0; /* override default ul margin */
         }
-        /* Mobile: brand text bisa terclip kalau panjang, kasih ellipsis */
-        @media (max-width: 991.98px) {
-            .navbar-public .navbar {
-                flex-wrap: nowrap; /* prevent wrap zone-zone di 1 baris */
-            }
-            .navbar-public .navbar-brand {
-                font-size: 1.05rem;
-                max-width: 50vw;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                margin-right: 8px !important;
-            }
-            .navbar-public .navbar-brand .brand-text {
-                /* Optional: di mobile super sempit, hide text dan show icon only */
-            }
-            @media (max-width: 380px) {
-                .navbar-public .navbar-brand .brand-text {
-                    display: none;
-                }
-                .navbar-public .navbar-brand i {
-                    margin-right: 0 !important;
-                    font-size: 1.4rem;
-                }
-            }
+        .navbar-public .navbar-brand {
+            margin-right: 0;
         }
 
         /* ════════════════════════════════════════
@@ -298,34 +280,64 @@
         }
 
         /* ════════════════════════════════════════
-           MOBILE: User dropdown standalone (di luar hamburger drawer)
-           Trigger = avatar bulat saja (no text), tap → dropdown overlay
+           MOBILE (< 992px): 3-zone navbar adjustments
+           - User dropdown trigger jadi avatar saja (no text, no caret)
+           - Brand text tetap visible (ellipsis kalau panjang)
+           - Dropdown menu positioned di right edge dengan margin
         ════════════════════════════════════════ */
         @media (max-width: 991.98px) {
-            /* Trigger compact: avatar saja, hide nama text */
+            /* Brand: visible, font lebih kecil, ellipsis */
+            .navbar-public .navbar-brand {
+                font-size: 1.05rem;
+                margin-left: 4px;
+                max-width: calc(100vw - 130px); /* leave room for hamburger + avatar */
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .navbar-public .navbar-brand .brand-text {
+                display: inline; /* explicit show */
+            }
+
+            /* User dropdown trigger compact: avatar saja, hide nama + caret */
             .navbar-public .user-dropdown .user-dropdown-toggle {
-                padding: 2px 6px !important;
+                padding: 2px 4px !important;
                 gap: 0;
             }
             .navbar-public .user-dropdown .user-dropdown-name {
-                display: none; /* hide nama di mobile, hemat space */
+                display: none;
             }
             .navbar-public .user-dropdown-toggle::after {
-                display: none; /* hide caret di mobile */
+                display: none;
             }
             .user-avatar-mini {
                 width: 36px; height: 36px;
                 font-size: 0.85rem;
             }
 
-            /* Dropdown menu posisi optimal di mobile (right edge dengan margin) */
+            /* Dropdown menu: posisi tepat di mobile */
             .navbar-public .user-dropdown-menu {
-                min-width: 280px;
-                max-width: calc(100vw - 24px);
-                margin-top: 12px !important;
+                min-width: 280px !important;
+                max-width: calc(100vw - 24px) !important;
+                margin-top: 10px !important;
                 margin-right: 0 !important;
                 right: 12px !important;
                 left: auto !important;
+                transform: none !important;
+            }
+        }
+
+        /* Very small mobile (< 360px): hide brand text, show icon only */
+        @media (max-width: 359.98px) {
+            .navbar-public .navbar-brand .brand-text {
+                display: none;
+            }
+            .navbar-public .navbar-brand i {
+                margin-right: 0 !important;
+                font-size: 1.4rem;
+            }
+            .navbar-public .navbar-brand {
+                max-width: none;
             }
         }
 
