@@ -31,6 +31,7 @@ class GedungFasilitasSeeder extends Seeder
                     'longitude'     => 117.12416594,
                     'foto_ruangan'  => null,
                     'is_aktif'      => true,
+                    'bisa_diajukan' => false, // Kelas reguler tidak bisa diajukan (sudah dipakai jadwal semester)
                 ]
             );
         }
@@ -48,6 +49,28 @@ class GedungFasilitasSeeder extends Seeder
                     'longitude'     => 117.12329830,
                     'foto_ruangan'  => null,
                     'is_aktif'      => true,
+                    'bisa_diajukan' => false, // Pos satpam bukan ruangan pengajuan
+                ]
+            );
+        }
+
+        // ══ Seed ruangan yang BISA diajukan (example data untuk testing) ══
+        // Sesuai use case: Auditorium, RKU, Ruang Seminar — ruangan yang bisa diajukan user.
+        // Admin akan toggle ini via UI setelah seed awal.
+        if ($trpl) {
+            GedungFasilitas::updateOrCreate(
+                [
+                    'gedung_id'      => $trpl->id,
+                    'nama_fasilitas' => 'Auditorium TRPL',
+                ],
+                [
+                    'kategori'      => 'Auditorium',
+                    'keterangan'    => 'Auditorium besar untuk seminar, workshop, dan acara besar',
+                    'latitude'      => -0.53548000,
+                    'longitude'     => 117.12420000,
+                    'foto_ruangan'  => null,
+                    'is_aktif'      => true,
+                    'bisa_diajukan' => true, // Auditorium boleh diajukan untuk kegiatan ad-hoc
                 ]
             );
         }

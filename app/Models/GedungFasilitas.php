@@ -17,6 +17,8 @@ class GedungFasilitas extends Model
         'nama_fasilitas',
         'kategori',
         'keterangan',
+        'is_aktif',
+        'bisa_diajukan',
         'latitude',
         'longitude',
         'foto_ruangan'
@@ -26,9 +28,29 @@ class GedungFasilitas extends Model
         'nama_fasilitas' => 'string',
         'kategori' => 'string',
         'keterangan' => 'string',
+        'is_aktif' => 'boolean',
+        'bisa_diajukan' => 'boolean',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8'
     ];
+
+    /**
+     * Scope: ruangan yang boleh diajukan user untuk penggunaan ad-hoc.
+     * Kombinasikan dengan is_aktif untuk filter form pengajuan:
+     *   GedungFasilitas::bisaDiajukan()->aktif()->get()
+     */
+    public function scopeBisaDiajukan($query)
+    {
+        return $query->where('bisa_diajukan', true);
+    }
+
+    /**
+     * Scope: ruangan yang sedang aktif operasional (tidak dalam perbaikan).
+     */
+    public function scopeAktif($query)
+    {
+        return $query->where('is_aktif', true);
+    }
 
     public function gedung()
     {
