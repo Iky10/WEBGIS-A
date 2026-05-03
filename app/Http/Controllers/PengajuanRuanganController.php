@@ -66,7 +66,15 @@ class PengajuanRuanganController extends AppBaseController
     }
 
     /**
-     * User: Tampilkan form pengajuan ruangan (wajib login)
+     * User: Tampilkan form pengajuan ruangan (wajib login).
+     *
+     * Pendekatan flat 2-step:
+     *   Step 1: Pilih Ruangan (semua ruangan yang bisa_diajukan + aktif, flat list)
+     *   Step 2: Detail Kegiatan
+     *
+     * Filter ganda:
+     *   - is_aktif=true        → ruangan operasional (tidak sedang perbaikan)
+     *   - bisa_diajukan=true   → admin sudah opt-in untuk diajukan user
      */
     public function create(Request $request)
     {
@@ -76,35 +84,23 @@ class PengajuanRuanganController extends AppBaseController
             return redirect(route('pengajuan_ruangans.index'));
         }
 
-        // Ambil gedung yang bisa diajukan + ruangan-ruangannya untuk cascade dropdown.
-        // Filter: hanya tampilkan gedung yang punya minimal 1 ruangan aktif —
-        // hindari user pilih gedung lalu Step 2 kosong.
-        $gedungs = Gedung::bisaDiajukan()
-            ->whereHas('fasilitas', function ($q) {
-                $q->where('is_aktif', true);
-            })
-            ->with(['fasilitas' => function ($q) {
-                $q->where('is_aktif', true)->orderBy('nama_fasilitas');
-            }])
-            ->orderBy('nama_gedung')
+        // Flat list ruangan yang bisa diajukan + masih aktif operasional.
+        // Eager-load gedung supaya sub-info (nama gedung, jam buka/tutup) tersedia di view.
+        $ruangans = GedungFasilitas::bisaDiajukan()
+            ->aktif()
+            ->with('gedung')
+            ->orderBy('nama_fasilitas')
             ->get();
 
-        // Pre-select dari query param (misal dari link di peta) atau dari old()
-        // saat validation gagal dan user di-redirect balik ke form.
-        $selectedGedung  = $request->query('gedung_id');
+        // Pre-select dari query param (misal dari link di peta marker ruangan)
+        // atau dari old() saat validation gagal.
         $selectedRuangan = $request->query('ruangan_id');
-
         if (old('gedung_fasilitas_id')) {
-            $ruanganFromOld = GedungFasilitas::find(old('gedung_fasilitas_id'));
-            if ($ruanganFromOld) {
-                $selectedGedung  = $ruanganFromOld->gedung_id;
-                $selectedRuangan = $ruanganFromOld->id;
-            }
+            $selectedRuangan = old('gedung_fasilitas_id');
         }
 
         return view('public.pengajuan_ruangan.create')
-            ->with('gedungs', $gedungs)
-            ->with('selectedGedung', $selectedGedung)
+            ->with('ruangans', $ruangans)
             ->with('selectedRuangan', $selectedRuangan);
     }
 

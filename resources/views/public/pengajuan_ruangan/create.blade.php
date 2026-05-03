@@ -202,18 +202,14 @@
 
 <div class="container py-4">
 
-    {{-- Step Indicator --}}
-    <div class="step-progress">
+    {{-- Step Indicator (2-step flat picker) --}}
+    <div class="step-progress step-progress-2">
         <div class="step-item active" id="step-1">
             <div class="step-circle">1</div>
-            <div class="step-label">Pilih Gedung</div>
+            <div class="step-label">Pilih Ruangan</div>
         </div>
         <div class="step-item" id="step-2">
             <div class="step-circle">2</div>
-            <div class="step-label">Pilih Ruangan</div>
-        </div>
-        <div class="step-item" id="step-3">
-            <div class="step-circle">3</div>
             <div class="step-label">Detail Kegiatan</div>
         </div>
     </div>
@@ -236,42 +232,51 @@
     <input type="hidden" name="gedung_fasilitas_id" id="gedung_fasilitas_id" value="{{ old('gedung_fasilitas_id', $selectedRuangan) }}">
 
     {{-- ═══════════════════════════════════════════════════
-         STEP 1 — PILIH GEDUNG
+         STEP 1 — PILIH RUANGAN (flat picker, semua ruangan bisa_diajukan)
     ═══════════════════════════════════════════════════ --}}
-    <div class="section-card" id="section-gedung">
-        <h4><span class="step-num">1</span> Pilih Gedung</h4>
-        <p class="section-desc">Pilih gedung yang ingin Anda gunakan ruangannya.</p>
+    <div class="section-card" id="section-ruangan">
+        <h4><span class="step-num">1</span> Pilih Ruangan</h4>
+        <p class="section-desc">Pilih ruangan yang ingin Anda gunakan untuk kegiatan Anda.</p>
 
-        @if($gedungs->isEmpty())
+        @if($ruangans->isEmpty())
             <div class="empty-ruangan">
-                <i class="fas fa-building"></i>
-                <h6>Belum Ada Gedung Tersedia</h6>
-                <p class="mb-0">Tidak ada gedung yang dibuka untuk pengajuan saat ini.</p>
+                <i class="fas fa-door-closed"></i>
+                <h6>Belum Ada Ruangan Tersedia</h6>
+                <p class="mb-0">Tidak ada ruangan yang dibuka untuk pengajuan saat ini. Silakan hubungi admin.</p>
             </div>
         @else
-            <div class="picker-grid">
-                @foreach($gedungs as $gedung)
-                    <div class="picker-card gedung-card
-                                {{ $selectedGedung == $gedung->id ? 'selected' : '' }}"
-                         data-gedung-id="{{ $gedung->id }}"
-                         data-ruangan-count="{{ $gedung->fasilitas->count() }}">
-                        @if($gedung->foto_utama)
-                            <img src="{{ asset($gedung->foto_utama) }}"
-                                 alt="{{ $gedung->nama_gedung }}"
+            <div class="picker-grid" id="ruangan-container">
+                @foreach($ruangans as $r)
+                    @php
+                        $status = $r->status_dipakai;
+                        $statusClass = $status === 'Sedang Dipakai' ? 'dipakai' : ($status === 'Tutup' ? 'tutup' : 'kosong');
+                        $statusLabel = $status === 'Sedang Dipakai' ? 'Sedang Dipakai' : ($status === 'Tutup' ? 'Tutup' : 'Tersedia');
+                    @endphp
+                    <div class="picker-card ruangan-card {{ $selectedRuangan == $r->id ? 'selected' : '' }}"
+                         data-ruangan-id="{{ $r->id }}">
+                        <span class="ruangan-status {{ $statusClass }}">{{ $statusLabel }}</span>
+                        @if($r->foto_ruangan)
+                            <img src="{{ asset($r->foto_ruangan) }}"
+                                 alt="{{ $r->nama_fasilitas }}"
                                  class="picker-img"
-                                 onerror="this.outerHTML='<div class=&quot;picker-img-placeholder&quot;><i class=&quot;fas fa-building&quot;></i></div>'">
+                                 onerror="this.outerHTML='<div class=&quot;picker-img-placeholder&quot;><i class=&quot;fas fa-door-open&quot;></i></div>'">
                         @else
-                            <div class="picker-img-placeholder"><i class="fas fa-building"></i></div>
+                            <div class="picker-img-placeholder"><i class="fas fa-door-open"></i></div>
                         @endif
                         <div class="picker-body">
-                            <p class="picker-title">{{ $gedung->nama_gedung }}</p>
+                            <p class="picker-title">{{ $r->nama_fasilitas }}</p>
                             <p class="picker-meta">
-                                <i class="fas fa-door-open"></i>{{ $gedung->fasilitas->count() }} ruangan
+                                <i class="fas fa-building"></i>{{ optional($r->gedung)->nama_gedung ?? '-' }}
                             </p>
-                            @if($gedung->jam_buka && $gedung->jam_tutup)
+                            @if($r->kategori)
                                 <p class="picker-meta">
-                                    <i class="fas fa-clock"></i>{{ \Carbon\Carbon::parse($gedung->jam_buka)->format('H:i') }}
-                                    — {{ \Carbon\Carbon::parse($gedung->jam_tutup)->format('H:i') }}
+                                    <i class="fas fa-tag"></i>{{ $r->kategori }}
+                                </p>
+                            @endif
+                            @if($r->gedung && $r->gedung->jam_buka && $r->gedung->jam_tutup)
+                                <p class="picker-meta">
+                                    <i class="fas fa-clock"></i>{{ \Carbon\Carbon::parse($r->gedung->jam_buka)->format('H:i') }}
+                                    — {{ \Carbon\Carbon::parse($r->gedung->jam_tutup)->format('H:i') }}
                                 </p>
                             @endif
                         </div>
@@ -282,42 +287,10 @@
     </div>
 
     {{-- ═══════════════════════════════════════════════════
-         STEP 2 — PILIH RUANGAN (hidden until gedung dipilih)
-    ═══════════════════════════════════════════════════ --}}
-    <div class="section-card locked" id="section-ruangan">
-        <h4><span class="step-num">2</span> Pilih Ruangan</h4>
-        <p class="section-desc">Pilih ruangan yang ingin Anda gunakan dari gedung yang sudah dipilih.</p>
-
-        {{-- Ruangan akan di-render di sini oleh JS saat gedung dipilih --}}
-        <div id="ruangan-container"></div>
-
-        {{-- Data ruangan embedded sebagai JSON (dihidden, dibaca oleh JS) --}}
-        <script type="application/json" id="data-ruangan">
-            @php
-                $ruanganData = [];
-                foreach ($gedungs as $g) {
-                    foreach ($g->fasilitas as $r) {
-                        $ruanganData[] = [
-                            'id'             => $r->id,
-                            'gedung_id'      => $g->id,
-                            'nama_fasilitas' => $r->nama_fasilitas,
-                            'kategori'       => $r->kategori,
-                            'keterangan'     => $r->keterangan,
-                            'foto_ruangan'   => $r->foto_ruangan ? asset($r->foto_ruangan) : null,
-                            'status'         => $r->status_dipakai,
-                        ];
-                    }
-                }
-            @endphp
-            {!! json_encode($ruanganData) !!}
-        </script>
-    </div>
-
-    {{-- ═══════════════════════════════════════════════════
-         STEP 3 — DETAIL KEGIATAN (hidden until ruangan dipilih)
+         STEP 2 — DETAIL KEGIATAN (hidden until ruangan dipilih)
     ═══════════════════════════════════════════════════ --}}
     <div class="section-card locked" id="section-detail">
-        <h4><span class="step-num">3</span> Detail Kegiatan</h4>
+        <h4><span class="step-num">2</span> Detail Kegiatan</h4>
         <p class="section-desc">Lengkapi informasi pemohon dan detail kegiatan Anda.</p>
 
         <div class="row">
@@ -411,107 +384,27 @@
     'use strict';
 
     // ── STATE ─────────────────────────────────────────────────
-    var allRuangan = JSON.parse(document.getElementById('data-ruangan').textContent.trim() || '[]');
-    var selectedGedungId  = {{ $selectedGedung ? (int)$selectedGedung : 'null' }};
     var selectedRuanganId = {{ $selectedRuangan ? (int)$selectedRuangan : 'null' }};
     var availabilityTimer = null;
 
     // ── DOM ───────────────────────────────────────────────────
-    var $ruanganContainer = $('#ruangan-container');
-    var $sectionRuangan   = $('#section-ruangan');
     var $sectionDetail    = $('#section-detail');
     var $btnSubmit        = $('#btn-submit');
     var $hiddenRuanganId  = $('#gedung_fasilitas_id');
     var $availability     = $('#availability-placeholder');
 
-    // ── STEP INDICATOR ────────────────────────────────────────
+    // ── STEP INDICATOR (2 step) ───────────────────────────────
     function updateSteps() {
         $('.step-item').removeClass('active done');
-        if (!selectedGedungId) {
+        if (!selectedRuanganId) {
             $('#step-1').addClass('active');
-        } else if (!selectedRuanganId) {
-            $('#step-1').addClass('done');
-            $('#step-2').addClass('active');
         } else {
             $('#step-1').addClass('done');
-            $('#step-2').addClass('done');
-            $('#step-3').addClass('active');
+            $('#step-2').addClass('active');
         }
     }
 
-    // ── RENDER RUANGAN CARDS ─────────────────────────────────
-    function renderRuangan(gedungId) {
-        var ruanganList = allRuangan.filter(function(r) { return r.gedung_id == gedungId; });
-
-        if (ruanganList.length === 0) {
-            $ruanganContainer.html(
-                '<div class="empty-ruangan">' +
-                    '<i class="fas fa-door-closed"></i>' +
-                    '<h6>Belum Ada Ruangan</h6>' +
-                    '<p class="mb-0">Gedung ini belum memiliki ruangan yang terdaftar.</p>' +
-                '</div>'
-            );
-            return;
-        }
-
-        var html = '<div class="picker-grid">';
-        ruanganList.forEach(function(r) {
-            var statusClass = r.status === 'Sedang Dipakai' ? 'dipakai'
-                            : r.status === 'Tutup' ? 'tutup'
-                            : 'kosong';
-            var statusLabel = r.status === 'Sedang Dipakai' ? 'Sedang Dipakai'
-                            : r.status === 'Tutup' ? 'Tutup'
-                            : 'Tersedia';
-            var isSelected  = r.id == selectedRuanganId ? 'selected' : '';
-
-            var imgHtml = r.foto_ruangan
-                ? '<img src="' + r.foto_ruangan + '" alt="' + r.nama_fasilitas + '" class="picker-img" onerror="this.outerHTML=\'<div class=&quot;picker-img-placeholder&quot;><i class=&quot;fas fa-door-open&quot;></i></div>\'">'
-                : '<div class="picker-img-placeholder"><i class="fas fa-door-open"></i></div>';
-
-            html += '<div class="picker-card ruangan-card ' + isSelected + '" data-ruangan-id="' + r.id + '">' +
-                        '<span class="ruangan-status ' + statusClass + '">' + statusLabel + '</span>' +
-                        imgHtml +
-                        '<div class="picker-body">' +
-                            '<p class="picker-title">' + escapeHtml(r.nama_fasilitas) + '</p>' +
-                            (r.kategori ? '<p class="picker-meta"><i class="fas fa-tag"></i>' + escapeHtml(r.kategori) + '</p>' : '') +
-                            (r.keterangan ? '<p class="picker-meta text-truncate" title="' + escapeHtml(r.keterangan) + '">' + escapeHtml(r.keterangan) + '</p>' : '') +
-                        '</div>' +
-                    '</div>';
-        });
-        html += '</div>';
-
-        $ruanganContainer.html(html);
-    }
-
-    function escapeHtml(s) {
-        if (!s) return '';
-        return String(s).replace(/[&<>"']/g, function(c) {
-            return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
-        });
-    }
-
-    // ── STATE TRANSITIONS ────────────────────────────────────
-    function selectGedung(gedungId) {
-        selectedGedungId  = gedungId;
-        selectedRuanganId = null;
-        $hiddenRuanganId.val('');
-
-        $('.gedung-card').removeClass('selected');
-        $('.gedung-card[data-gedung-id="' + gedungId + '"]').addClass('selected');
-
-        $sectionRuangan.removeClass('locked');
-        $sectionDetail.addClass('locked');
-        $btnSubmit.prop('disabled', true);
-
-        renderRuangan(gedungId);
-        updateSteps();
-
-        // Scroll ke section ruangan
-        setTimeout(function() {
-            $sectionRuangan[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 150);
-    }
-
+    // ── STATE TRANSITION ──────────────────────────────────────
     function selectRuangan(ruanganId) {
         selectedRuanganId = ruanganId;
         $hiddenRuanganId.val(ruanganId);
@@ -610,10 +503,6 @@
     }
 
     // ── EVENT BINDINGS ───────────────────────────────────────
-    $(document).on('click', '.gedung-card', function() {
-        selectGedung($(this).data('gedung-id'));
-    });
-
     $(document).on('click', '.ruangan-card', function() {
         selectRuangan($(this).data('ruangan-id'));
     });
@@ -642,14 +531,10 @@
     });
 
     // ── INITIAL STATE ────────────────────────────────────────
-    // Kalau ada pre-selected (via ?gedung_id= atau ?ruangan_id= atau dari old())
-    if (selectedGedungId) {
-        $sectionRuangan.removeClass('locked');
-        renderRuangan(selectedGedungId);
-        if (selectedRuanganId) {
-            $sectionDetail.removeClass('locked');
-            $btnSubmit.prop('disabled', false);
-        }
+    // Kalau ada pre-selected (via ?ruangan_id= atau dari old())
+    if (selectedRuanganId) {
+        $sectionDetail.removeClass('locked');
+        $btnSubmit.prop('disabled', false);
     }
     updateSteps();
 
