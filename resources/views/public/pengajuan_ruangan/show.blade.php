@@ -100,6 +100,64 @@
         border-radius: 12px;
         font-size: .75rem;
     }
+
+    /* ══ MOBILE LAYOUT (< 768px) ══ */
+    @media (max-width: 767.98px) {
+        .detail-header { padding: 24px 0 18px; }
+        .detail-header h2 { font-size: 1.3rem; line-height: 1.3; }
+        .detail-header .container {
+            flex-direction: column; align-items: flex-start !important; gap: 12px;
+        }
+        .detail-header .btn-kembali {
+            width: 100%; padding: 8px;
+        }
+        .detail-card .card-header {
+            flex-direction: column; align-items: flex-start !important; gap: 8px;
+            padding: 14px 16px;
+        }
+        .detail-card .card-body {
+            padding: 16px !important;
+        }
+        .ruangan-highlight {
+            padding: 12px 14px; margin-bottom: 16px;
+        }
+        .ruangan-highlight .ruangan-name {
+            font-size: 1.05rem; line-height: 1.4;
+        }
+        .ruangan-highlight .ruangan-name .badge-kategori {
+            display: inline-block; margin-top: 4px; margin-left: 0 !important;
+        }
+
+        /* Info table jadi key-value flex layout untuk mobile */
+        .info-table {
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .info-table tr {
+            display: flex; flex-direction: column; gap: 2px;
+            padding: 8px 0; border-bottom: 1px solid #f1f3f5;
+        }
+        .info-table tr:last-child { border-bottom: none; }
+        .info-table th, .info-table td {
+            display: block; width: 100% !important; padding: 0 !important;
+            border: none;
+        }
+        .info-table th {
+            font-size: .75rem; text-transform: uppercase;
+            letter-spacing: .05em; color: #95a5a6;
+        }
+        .info-table td {
+            font-size: .95rem; color: #2c3e50;
+        }
+
+        .section-title {
+            font-size: .95rem; margin-bottom: 8px;
+        }
+
+        .btn-batal-detail {
+            width: 100%; padding: 12px; font-size: .95rem;
+        }
+        .text-right.mt-4 { text-align: left !important; }
+    }
 </style>
 @endpush
 
@@ -108,7 +166,7 @@
         <div class="container d-flex justify-content-between align-items-center">
             <h2><i class="fas fa-file-alt mr-2"></i>Detail Pengajuan Ruangan</h2>
             <a href="{{ route('pengajuan_ruangans.riwayat') }}" class="btn btn-outline-light btn-kembali">
-                <i class="fas fa-arrow-left mr-1"></i> Kembali
+                <i class="fas fa-arrow-left mr-1"></i> <span>Kembali ke Riwayat</span>
             </a>
         </div>
     </div>

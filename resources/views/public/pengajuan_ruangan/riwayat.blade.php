@@ -64,6 +64,63 @@
     .ruangan-cell .nama-gedung {
         font-size: 12px; color: #7f8c8d;
     }
+
+    /* ══ MOBILE LAYOUT (< 768px) ══
+     * Table dengan 6 kolom impossible untuk mobile.
+     * Pendekatan: hide table, tampilkan card-list mobile-friendly.
+     */
+    .mobile-card-list { display: none; }
+
+    @media (max-width: 767.98px) {
+        .pengajuan-header { padding: 24px 0 20px; }
+        .pengajuan-header h2 { font-size: 1.4rem; }
+        .pengajuan-header p { font-size: .85rem; }
+        .pengajuan-header .container {
+            flex-direction: column; align-items: flex-start !important; gap: 12px;
+        }
+        .pengajuan-header .btn-ajukan {
+            width: 100%; padding: 10px; font-size: .9rem;
+        }
+
+        /* Hide desktop table, show mobile cards */
+        .desktop-table { display: none !important; }
+        .mobile-card-list {
+            display: flex; flex-direction: column; gap: 12px;
+        }
+    }
+
+    /* Mobile pengajuan card */
+    .pengajuan-mobile-item {
+        background: #fff; border-radius: 10px;
+        padding: 14px; border: 1px solid #e9ecef;
+        box-shadow: 0 2px 6px rgba(0,0,0,.04);
+    }
+    .pengajuan-mobile-item .pmi-head {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .pengajuan-mobile-item .pmi-kode {
+        font-family: monospace; font-size: .8rem; font-weight: 700;
+        color: #3498db; word-break: break-all;
+    }
+    .pengajuan-mobile-item .pmi-kegiatan {
+        font-weight: 600; color: #2c3e50; margin: 0 0 8px;
+        font-size: 1rem;
+    }
+    .pengajuan-mobile-item .pmi-info {
+        display: flex; flex-direction: column; gap: 5px;
+        font-size: .85rem; color: #5d6d7e;
+    }
+    .pengajuan-mobile-item .pmi-info i {
+        width: 16px; color: #95a5a6; margin-right: 4px;
+    }
+    .pengajuan-mobile-item .pmi-actions {
+        display: flex; gap: 8px; margin-top: 12px;
+        padding-top: 12px; border-top: 1px solid #f1f3f5;
+    }
+    .pengajuan-mobile-item .pmi-actions .btn {
+        flex: 1; padding: 8px 12px; font-size: .85rem;
+    }
 </style>
 @endpush
 
@@ -93,7 +150,8 @@
                 </div>
             </div>
         @else
-            <div class="pengajuan-card card">
+            {{-- DESKTOP: Table view (≥768px) --}}
+            <div class="pengajuan-card card desktop-table">
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
@@ -162,6 +220,63 @@
                         </table>
                     </div>
                 </div>
+            </div>
+
+            {{-- MOBILE: Card list (< 768px) --}}
+            <div class="mobile-card-list">
+                @foreach($pengajuanRuangans as $pengajuan)
+                    <div class="pengajuan-mobile-item">
+                        <div class="pmi-head">
+                            <span class="pmi-kode">{{ $pengajuan->kode_pengajuan }}</span>
+                            @if($pengajuan->status === 'disetujui')
+                                <span class="badge badge-status badge-disetujui">Disetujui</span>
+                            @elseif($pengajuan->status === 'ditolak')
+                                <span class="badge badge-status badge-ditolak">Ditolak</span>
+                            @elseif($pengajuan->status === 'dibatalkan')
+                                <span class="badge badge-status badge-dibatalkan">Dibatalkan</span>
+                            @else
+                                <span class="badge badge-status badge-diproses">Diproses</span>
+                            @endif
+                        </div>
+
+                        <h6 class="pmi-kegiatan">{{ $pengajuan->nama_kegiatan }}</h6>
+
+                        <div class="pmi-info">
+                            <span>
+                                <i class="fas fa-door-open"></i>
+                                {{ $pengajuan->ruangan->nama_fasilitas ?? '-' }}
+                                @if($pengajuan->ruangan && $pengajuan->ruangan->gedung)
+                                    <small class="text-muted">— {{ $pengajuan->ruangan->gedung->nama_gedung }}</small>
+                                @endif
+                            </span>
+                            <span>
+                                <i class="far fa-calendar"></i>
+                                {{ $pengajuan->tanggal_mulai->format('d/m/Y') }}
+                                <small class="text-muted">
+                                    {{ \Carbon\Carbon::parse($pengajuan->jam_mulai)->format('H:i') }}–{{ \Carbon\Carbon::parse($pengajuan->jam_selesai)->format('H:i') }}
+                                </small>
+                            </span>
+                        </div>
+
+                        <div class="pmi-actions">
+                            <a href="{{ route('pengajuan_ruangans.show', $pengajuan->id) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="far fa-eye mr-1"></i>Detail
+                            </a>
+                            @if($pengajuan->canBeCanceledBy(auth()->user()))
+                                <form action="{{ route('pengajuan_ruangans.cancel', $pengajuan->id) }}"
+                                      method="POST" class="form-batal-pengajuan d-flex" style="flex:1;">
+                                    @csrf @method('PATCH')
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger btn-batal btn-batal-pengajuan flex-grow-1"
+                                            data-kode="{{ $pengajuan->kode_pengajuan }}">
+                                        <i class="fas fa-times mr-1"></i>Batalkan
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
             </div>
         @endif
     </div>
