@@ -245,12 +245,160 @@
     padding-bottom: 1rem;
 }
 
-/* --- Responsive tweaks --- */
+/* ============================================
+   RESPONSIVE — Mobile Friendly Admin Panel
+   ============================================ */
+
+/* Tablet & Mobile (≤ 768px) */
 @media (max-width: 768px) {
+    /* --- Small Box (Stat Cards) --- */
     .small-box .inner h3 {
         font-size: 1.5rem;
     }
+    .small-box .icon > i {
+        font-size: 40px;
+    }
     .content-header h1 {
         font-size: 1.2rem;
+    }
+
+    /* --- Content Spacing --- */
+    .content-header { padding: 12px 0.5rem; }
+    .content-wrapper > .content { padding: 0 0.5rem; }
+    .content.px-3 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+
+    /* --- Card Body Padding --- */
+    .card-body { padding: 1rem; }
+    .card-header { padding: 0.6rem 1rem; }
+    .card-header h3.card-title,
+    .card-header .card-title {
+        font-size: 0.95rem;
+    }
+
+    /* --- Tables: horizontal scroll dengan polish --- */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #bdc3c7; border-radius: 3px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f3f5;
+    }
+    .table th, .table td {
+        white-space: nowrap; /* Cegah text wrap di cell, gunakan horizontal scroll */
+        font-size: 0.85rem;
+        padding: 0.5rem 0.6rem;
+    }
+
+    /* --- Forms: full width buttons & inputs --- */
+    .form-control, .custom-select {
+        font-size: 0.9rem;
+    }
+    .form-group label {
+        font-size: 0.85rem; margin-bottom: 4px;
+    }
+    .card-footer .btn,
+    .card-body > .btn {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    .card-footer .btn:last-child,
+    .card-body > .btn:last-child {
+        margin-bottom: 0;
+    }
+    /* Tombol Batal di samping Submit jadi stack vertikal */
+    .card-footer a.btn-default,
+    .card-footer .btn + a.btn {
+        margin-left: 0 !important;
+    }
+
+    /* --- DataTables Filter Bar --- */
+    .dataTables_wrapper .row { margin: 0; }
+    .dataTables_wrapper .col-sm-12 { padding: 0.25rem; }
+    .dataTables_paginate {
+        text-align: center !important;
+        margin-top: 8px;
+    }
+    .pagination { font-size: 0.8rem; }
+    .dataTables_info {
+        text-align: center;
+        font-size: 0.75rem;
+    }
+
+    /* --- DataTables custom search/filter row --- */
+    .row.mb-3 .col-md-4,
+    .row.mb-3 .col-md-3,
+    .row.mb-3 .col-md-2,
+    .row.mb-3 .col-md-6 {
+        margin-bottom: 8px;
+    }
+
+    /* --- Bulk action bar --- */
+    .bulk-actions-bar {
+        flex-direction: column !important;
+        gap: 8px;
+        align-items: stretch !important;
+    }
+    .bulk-actions-bar .btn-group {
+        width: 100%;
+    }
+
+    /* --- Notif Bell Dropdown --- */
+    .notif-dropdown {
+        min-width: calc(100vw - 24px) !important;
+        max-width: calc(100vw - 24px) !important;
+        right: 12px !important;
+        left: auto !important;
+    }
+
+    /* --- Modal --- */
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+}
+
+/* Mobile (≤ 576px) */
+@media (max-width: 576px) {
+    /* --- Sidebar drawer behavior already handled by AdminLTE --- */
+
+    /* --- Page header lebih compact --- */
+    .content-header { padding: 8px 0.5rem; }
+    .content-header h1 { font-size: 1.05rem; }
+    .content-header .breadcrumb {
+        font-size: 0.75rem;
+        margin-bottom: 0;
+    }
+
+    /* --- Stat box single column --- */
+    .small-box .inner h3 { font-size: 1.3rem; }
+    .small-box .inner p { font-size: 0.8rem; }
+
+    /* --- Buttons spacing --- */
+    .btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+
+    /* --- Table cell padding lebih rapat --- */
+    .table th, .table td {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.5rem;
+    }
+
+    /* --- Card header dengan tombol di kanan: stack --- */
+    .card-header.d-flex {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .card-header .float-right,
+    .card-header .ml-auto {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+    .card-header .float-right .btn,
+    .card-header .ml-auto .btn {
+        width: 100%;
     }
 }
