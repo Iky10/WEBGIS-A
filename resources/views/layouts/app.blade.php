@@ -74,6 +74,56 @@
             box-shadow: 0 8px 24px rgba(0,0,0,.12);
             border: 1px solid #e9ecef; border-radius: 8px;
             overflow: hidden;
+            max-height: 80vh; overflow-y: auto;
+        }
+        /* Mobile: notif dropdown fit viewport (constrain width + position right edge) */
+        @media (max-width: 575.98px) {
+            .notif-bell-wrapper .notif-dropdown {
+                position: absolute !important;
+                top: 100% !important;
+                right: 0 !important;
+                left: auto !important;
+                min-width: 0 !important;
+                width: calc(100vw - 16px) !important;
+                max-width: calc(100vw - 16px) !important;
+                margin-top: 6px !important;
+                margin-right: 8px;
+                transform: none !important;
+                max-height: 75vh;
+            }
+            .notif-bell-wrapper {
+                position: relative !important;
+            }
+            /* Tighter padding di item supaya muat */
+            .notif-item {
+                padding: 10px 12px !important;
+            }
+            .notif-item .notif-meta {
+                gap: 6px !important;
+                font-size: .72rem !important;
+            }
+            .notif-item .notif-meta span {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+            /* Admin user-menu dropdown: same fix supaya fit viewport */
+            .user-menu .admin-user-menu {
+                position: absolute !important;
+                top: 100% !important;
+                right: 0 !important;
+                left: auto !important;
+                min-width: 0 !important;
+                width: calc(100vw - 16px) !important;
+                max-width: 320px !important;
+                margin-top: 6px !important;
+                margin-right: 8px;
+                transform: none !important;
+            }
+            .user-menu {
+                position: relative !important;
+            }
         }
         .notif-dropdown .dropdown-header {
             background: #f8f9fa; font-weight: 600; color: #2c3e50;
@@ -135,7 +185,7 @@
             {{-- Notifikasi Bell (admin only) --}}
             @if(Auth::check() && Auth::user()->isAdmin())
                 <li class="nav-item dropdown notif-bell-wrapper">
-                    <a href="#" class="nav-link" data-toggle="dropdown" id="notif-bell-toggle"
+                    <a href="#" class="nav-link" data-toggle="dropdown" data-display="static" id="notif-bell-toggle"
                        title="Notifikasi Pengajuan Pending">
                         <i class="far fa-bell"></i>
                         <span class="badge badge-danger navbar-badge notif-badge" id="notif-bell-count" style="display:none;">0</span>
@@ -159,12 +209,12 @@
             @endif
 
             <li class="nav-item dropdown user-menu">
-                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" data-display="static">
                     <img src="https://assets.infyom.com/logo/blue_logo_150x150.png"
                          class="user-image img-circle elevation-2" alt="User Image">
                     <span class="d-none d-md-inline">{{ Auth::user()->name }}</span>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right admin-user-menu">
                     <!-- User image -->
                     <li class="user-header bg-primary">
                         <img src="https://assets.infyom.com/logo/blue_logo_150x150.png"
