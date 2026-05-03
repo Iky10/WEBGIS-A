@@ -21,16 +21,27 @@
 </head>
 <body>
 
-{{-- Navbar Publik --}}
+{{-- Navbar Publik (3-zone layout: hamburger kiri | brand | avatar kanan)
+     Mobile: [☰] [Brand]                              [👤]
+     Desktop: [Brand] [Beranda Daftar Pengajuan]   [Dashboard] [👤]
+--}}
 <nav class="navbar navbar-expand-lg navbar-public">
     <div class="container">
-        <a class="navbar-brand" href="{{ route('publik.home') }}">
-            <i class="fas fa-map-marked-alt mr-2"></i>WebGIS Gedung
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navPublik">
+        {{-- ZONE 1: Hamburger toggler (mobile only, hidden di desktop via navbar-expand-lg) --}}
+        <button class="navbar-toggler order-1 mr-2" type="button"
+                data-toggle="collapse" data-target="#navPublik"
+                aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navPublik">
+
+        {{-- ZONE 2: Brand (kiri di desktop, sebelah hamburger di mobile) --}}
+        <a class="navbar-brand order-2 mr-auto mr-lg-0" href="{{ route('publik.home') }}">
+            <i class="fas fa-map-marked-alt mr-2"></i><span class="brand-text">WebGIS Gedung</span>
+        </a>
+
+        {{-- ZONE 3: Nav links (di tengah di desktop, drawer di mobile)
+             order-4 di mobile = jatuh ke baris baru saat collapse expand --}}
+        <div class="collapse navbar-collapse order-4 order-lg-3" id="navPublik">
             <ul class="navbar-nav mr-auto ml-lg-4">
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('/') || Request::is('peta*') ? 'active' : '' }}"
@@ -53,7 +64,10 @@
                     </li>
                 @endauth
             </ul>
-            <ul class="navbar-nav align-items-center">
+        </div>
+
+        {{-- ZONE 4: User Dropdown / Login (KANAN, ALWAYS VISIBLE — di luar navbar-collapse) --}}
+        <ul class="navbar-nav order-3 order-lg-4 align-items-center user-zone">
                 @auth
                     @if(Auth::user()->isAdmin())
                         <li class="nav-item mr-2 d-none d-lg-block">
@@ -146,7 +160,6 @@
                     </li>
                 @endauth
             </ul>
-        </div>
     </div>
 </nav>
 
