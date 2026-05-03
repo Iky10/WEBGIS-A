@@ -123,10 +123,69 @@
     .filter-counter strong { color: #2c3e50; }
 
     /* ══ GEDUNG / RUANGAN PICKER CARDS ══ */
+    /*
+     * Layout adaptif (Hybrid Responsive):
+     *   Desktop (≥768px) : Grid wrap — comparison-friendly, parallel scan
+     *   Mobile  (<768px) : Horizontal scroll + snap — native swipe gesture
+     *
+     * Rationale:
+     *   Desktop user prioritas comparison (lihat semua options sekaligus)
+     *   Mobile user prioritas one-handed thumb scroll (swipe natural)
+     */
     .picker-grid {
         display: grid; gap: 16px;
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     }
+
+    /* Hint swipe (mobile only) */
+    .swipe-hint {
+        font-size: .8rem; color: #95a5a6;
+    }
+    .swipe-hint i {
+        animation: swipeHint 1.8s ease-in-out infinite;
+        display: inline-block;
+    }
+    @keyframes swipeHint {
+        0%, 100% { transform: translateX(0); }
+        50%      { transform: translateX(4px); }
+    }
+
+    /* Mobile: horizontal scroll dengan snap untuk feel modern carousel */
+    @media (max-width: 767.98px) {
+        .picker-grid {
+            display: flex;
+            grid-template-columns: none;
+            gap: 12px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch; /* iOS momentum scroll */
+            padding: 4px 4px 12px 4px;
+            margin: 0 -4px; /* offset padding biar card mepet edge layar */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: #bdc3c7 transparent;
+        }
+        /* Webkit scrollbar styling (Chrome, Safari, Edge) */
+        .picker-grid::-webkit-scrollbar {
+            height: 6px;
+        }
+        .picker-grid::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .picker-grid::-webkit-scrollbar-thumb {
+            background: #bdc3c7; border-radius: 3px;
+        }
+        .picker-grid > .picker-card {
+            flex: 0 0 75vw; /* tiap card 75% lebar layar (1 utuh + sedikit preview next) */
+            max-width: 280px;
+            scroll-snap-align: start;
+            scroll-snap-stop: always; /* paksa snap, jangan skip multi-card sekali swipe */
+        }
+        /* Visual hint: ada lebih banyak card di kanan */
+        .picker-grid::after {
+            content: ''; flex: 0 0 4px;
+        }
+    }
+
     /* Card disembunyikan oleh filter */
     .picker-card.filter-hidden { display: none; }
     .picker-card {
@@ -344,6 +403,14 @@
                     Menampilkan <strong id="counter-shown">{{ $ruangans->count() }}</strong> dari
                     <strong>{{ $ruangans->count() }}</strong> ruangan
                 </div>
+            @endif
+
+            {{-- Hint swipe untuk mobile (hanya tampil di < 768px) --}}
+            @if($ruangans->count() > 1)
+                <p class="d-md-none text-muted small mt-2 mb-2 swipe-hint">
+                    <i class="fas fa-arrows-alt-h mr-1"></i>
+                    Geser ke samping untuk lihat ruangan lain
+                </p>
             @endif
 
             <div class="picker-grid" id="ruangan-container">
