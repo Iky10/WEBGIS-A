@@ -50,11 +50,21 @@ class CreatePengajuanRuanganRequest extends FormRequest
                 return;
             }
 
-            // Cek 2: gedung induk dibuka untuk pengajuan
+            // Cek 2: ruangan ini boleh diajukan (admin sudah opt-in via toggle bisa_diajukan).
+            // Defense-in-depth: form sudah filter, tapi cek server-side cegah direct API call.
+            if ($ruangan && !$ruangan->bisa_diajukan) {
+                $validator->errors()->add(
+                    'gedung_fasilitas_id',
+                    'Ruangan ini tidak dibuka untuk pengajuan publik. Silakan pilih ruangan lain.'
+                );
+                return;
+            }
+
+            // Cek 3: gedung induk dibuka untuk pengajuan (level gedung)
             if ($ruangan && $ruangan->gedung && !$ruangan->gedung->bisa_diajukan) {
                 $validator->errors()->add(
                     'gedung_fasilitas_id',
-                    'Ruangan ini tidak tersedia untuk pengajuan (gedung induk tidak dibuka untuk umum).'
+                    'Gedung induk ruangan ini tidak dibuka untuk pengajuan umum.'
                 );
                 return;
             }
