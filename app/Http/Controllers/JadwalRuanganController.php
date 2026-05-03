@@ -67,6 +67,9 @@ class JadwalRuanganController extends AppBaseController
 
         $jadwalRuangan = $this->jadwalRuanganRepository->create($input);
 
+        // Flush cache status realtime — supaya status di peta langsung update
+        $this->flushStatusCacheForFasilitas($input['gedung_fasilitas_id']);
+
         Flash::success('Jadwal Ruangan berhasil disimpan.');
 
         return redirect(route('jadwal_ruangans.index'));
@@ -139,7 +142,17 @@ class JadwalRuanganController extends AppBaseController
             return redirect(route('jadwal_ruangans.index'));
         }
 
+        // Simpan ID ruangan lama (kalau berubah, perlu flush kedua-duanya)
+        $oldFasilitasId = $jadwalRuangan->gedung_fasilitas_id;
+        $newFasilitasId = $request->input('gedung_fasilitas_id');
+
         $jadwalRuangan = $this->jadwalRuanganRepository->update($request->all(), $id);
+
+        // Flush cache untuk ruangan lama dan baru (kalau berbeda)
+        $this->flushStatusCacheForFasilitas($oldFasilitasId);
+        if ($newFasilitasId && $newFasilitasId != $oldFasilitasId) {
+            $this->flushStatusCacheForFasilitas($newFasilitasId);
+        }
 
         Flash::success('Jadwal Ruangan berhasil diperbarui.');
 
@@ -159,10 +172,39 @@ class JadwalRuanganController extends AppBaseController
             return redirect(route('jadwal_ruangans.index'));
         }
 
+        // Simpan ID ruangan SEBELUM delete (model akan jadi soft-deleted)
+        $fasilitasId = $jadwalRuangan->gedung_fasilitas_id;
+
         $this->jadwalRuanganRepository->delete($id);
+
+        // Flush cache supaya status realtime langsung refresh
+        $this->flushStatusCacheForFasilitas($fasilitasId);
 
         Flash::success('Jadwal Ruangan berhasil dihapus.');
 
         return redirect(route('jadwal_ruangans.index'));
+    }
+
+    /**
+     * Helper: flush cache status_dipakai untuk ruangan + gedung induknya.
+     * Dipanggil setelah JadwalRuangan create/update/delete supaya status
+     * realtime di peta dan dashboard langsung tercermin (tanpa tunggu TTL 60s).
+     */
+    protected function flushStatusCacheForFasilitas($fasilitasId): void
+    {
+        if (!$fasilitasId) {
+            return;
+        }
+
+        $fasilitas = GedungFasilitas::with('gedung')->find($fasilitasId);
+        if (!$fasilitas) {
+            return;
+        }
+
+        $fasilitas->flushStatusCache();
+
+        if ($fasilitas->gedung) {
+            $fasilitas->gedung->flushStatusCache();
+        }
     }
 }
