@@ -17,7 +17,7 @@
 
     @stack('styles')
 
-<link rel="stylesheet" href="{{ asset('css/layout-public.css') }}">
+<link rel="stylesheet" href="{{ asset('css/layout-public.css') }}?v={{ filemtime(public_path('css/layout-public.css')) }}">
 </head>
 <body>
 

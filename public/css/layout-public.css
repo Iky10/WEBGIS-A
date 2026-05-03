@@ -282,21 +282,22 @@
         /* ════════════════════════════════════════
            MOBILE (< 992px): 3-zone navbar adjustments
            - User dropdown trigger jadi avatar saja (no text, no caret)
-           - Brand text tetap visible (ellipsis kalau panjang)
+           - Brand text TETAP VISIBLE (force display)
            - Dropdown menu positioned di right edge dengan margin
         ════════════════════════════════════════ */
         @media (max-width: 991.98px) {
-            /* Brand: visible, font lebih kecil, ellipsis */
+            /* Brand: smaller font, no max-width clipping */
             .navbar-public .navbar-brand {
-                font-size: 1.05rem;
-                margin-left: 4px;
-                max-width: calc(100vw - 130px); /* leave room for hamburger + avatar */
-                overflow: hidden;
-                text-overflow: ellipsis;
+                font-size: 1rem !important;
+                margin-left: 4px !important;
                 white-space: nowrap;
             }
+            /* FORCE brand text visible (override any conflicting rule) */
             .navbar-public .navbar-brand .brand-text {
-                display: inline; /* explicit show */
+                display: inline-block !important;
+                visibility: visible !important;
+                font-weight: 700;
+                color: #fff;
             }
 
             /* User dropdown trigger compact: avatar saja, hide nama + caret */
