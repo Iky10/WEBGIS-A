@@ -61,8 +61,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Pengajuan Ruangan — route khusus admin
     Route::get('pengajuan_ruangans', [App\Http\Controllers\PengajuanRuanganController::class, 'index'])->name('pengajuan_ruangans.index');
-    // AJAX endpoint untuk notif bell di navbar admin (di-poll setiap 60s)
-    Route::get('pengajuan_ruangans/notifikasi/pending', [App\Http\Controllers\PengajuanRuanganController::class, 'notifikasiPending'])->name('pengajuan_ruangans.notifikasi-pending');
     Route::patch('pengajuan_ruangans/{id}/status', [App\Http\Controllers\PengajuanRuanganController::class, 'updateStatus'])->name('pengajuan_ruangans.update-status');
     Route::delete('pengajuan_ruangans/bulk-delete', [App\Http\Controllers\PengajuanRuanganController::class, 'bulkDelete'])->name('pengajuan_ruangans.bulk-delete');
     Route::delete('pengajuan_ruangans/{pengajuan_ruangan}', [App\Http\Controllers\PengajuanRuanganController::class, 'destroy'])->name('pengajuan_ruangans.destroy');

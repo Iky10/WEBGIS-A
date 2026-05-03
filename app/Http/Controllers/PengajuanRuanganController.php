@@ -66,55 +66,6 @@ class PengajuanRuanganController extends AppBaseController
     }
 
     /**
-     * Admin: Endpoint AJAX untuk notif bell di navbar.
-     * Return JSON dengan count pending + 5 pengajuan terbaru.
-     * Di-poll dari frontend setiap 60 detik.
-     *
-     * Field is_urgent: pending dengan tanggal_mulai <= 3 hari dari sekarang
-     * (untuk highlight visual di dropdown — admin perlu approve cepat).
-     */
-    public function notifikasiPending()
-    {
-        $count = PengajuanRuangan::diproses()->count();
-
-        $items = PengajuanRuangan::with('ruangan.gedung')
-            ->diproses()
-            ->latest()
-            ->limit(5)
-            ->get()
-            ->map(function ($p) {
-                // Urgent: tanggal_mulai dalam 3 hari ke depan (termasuk hari ini)
-                // diffInDays(end, false) positive jika end di masa depan
-                $isUrgent = false;
-                if ($p->tanggal_mulai) {
-                    $daysUntil = now()->startOfDay()
-                        ->diffInDays(\Carbon\Carbon::parse($p->tanggal_mulai)->startOfDay(), false);
-                    $isUrgent = $daysUntil >= 0 && $daysUntil <= 3;
-                }
-
-                return [
-                    'id'              => $p->id,
-                    'kode'            => $p->kode_pengajuan,
-                    'nama_pemohon'    => $p->nama_pemohon,
-                    'nama_kegiatan'   => $p->nama_kegiatan,
-                    'ruangan'         => optional($p->ruangan)->nama_fasilitas ?? '-',
-                    'gedung'          => optional(optional($p->ruangan)->gedung)->nama_gedung ?? '-',
-                    'tanggal_mulai'   => $p->tanggal_mulai
-                        ? \Carbon\Carbon::parse($p->tanggal_mulai)->format('d M Y')
-                        : '-',
-                    'created_human'   => $p->created_at->diffForHumans(),
-                    'is_urgent'       => $isUrgent,
-                    'url'             => route('pengajuan_ruangans.index') . '#row-' . $p->id,
-                ];
-            });
-
-        return response()->json([
-            'count' => $count,
-            'items' => $items,
-        ]);
-    }
-
-    /**
      * User: Tampilkan form pengajuan ruangan (wajib login).
      *
      * Pendekatan flat 2-step:
