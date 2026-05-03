@@ -46,16 +46,16 @@
     </a>
 </li>
 
-{{-- Menu Pengajuan Gedung (Semua Pengajuan) --}}
+{{-- Menu Pengajuan Ruangan (Semua Pengajuan) --}}
 @php
-    $pengajuanMenungguCount = \App\Models\PengajuanGedung::where('status', 'diproses')->count();
+    $pengajuanMenungguCount = \App\Models\PengajuanRuangan::where('status', 'diproses')->count();
 @endphp
 <li class="nav-item">
-    <a href="{{ route('pengajuan_gedungs.index') }}"
-       class="nav-link {{ Request::is('pengajuan_gedungs*') ? 'active' : '' }}">
+    <a href="{{ route('pengajuan_ruangans.index') }}"
+       class="nav-link {{ Request::is('pengajuan_ruangans*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-file-alt"></i>
         <p>
-            Pengajuan Gedung
+            Pengajuan Ruangan
             @if($pengajuanMenungguCount > 0)
                 <span class="badge badge-danger right">{{ $pengajuanMenungguCount }}</span>
             @endif

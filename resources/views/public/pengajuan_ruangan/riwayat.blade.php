@@ -11,7 +11,7 @@
         color: #fff;
     }
     .pengajuan-header h2 { font-weight: 700; margin: 0; }
-    .pengajuan-header p { opacity: .8; margin: 5px 0 0; }
+    .pengajuan-header p { opacity: .85; margin: 5px 0 0; }
 
     .pengajuan-card {
         border: none;
@@ -46,33 +46,40 @@
         color: #7f8c8d;
     }
     .empty-state i { font-size: 48px; margin-bottom: 16px; display: block; color: #bdc3c7; }
+
+    .ruangan-cell {
+        min-width: 180px;
+    }
+    .ruangan-cell .nama-ruangan {
+        font-weight: 600; color: #2c3e50;
+    }
+    .ruangan-cell .nama-gedung {
+        font-size: 12px; color: #7f8c8d;
+    }
 </style>
 @endpush
 
 @section('content')
-    {{-- Header --}}
     <div class="pengajuan-header">
         <div class="container d-flex justify-content-between align-items-center">
             <div>
                 <h2><i class="fas fa-history mr-2"></i>Riwayat Pengajuan Saya</h2>
-                <p>Pantau status pengajuan penggunaan gedung Anda</p>
+                <p>Pantau status pengajuan penggunaan ruangan Anda</p>
             </div>
-            <a href="{{ route('pengajuan_gedungs.create') }}" class="btn btn-ajukan">
+            <a href="{{ route('pengajuan_ruangans.create') }}" class="btn btn-ajukan">
                 <i class="fas fa-plus mr-1"></i> Ajukan Baru
             </a>
         </div>
     </div>
 
     <div class="container py-4">
-        {{-- Flash notification ditangani oleh layout global (SweetAlert2) --}}
-
-        @if($pengajuanGedungs->isEmpty())
+        @if($pengajuanRuangans->isEmpty())
             <div class="pengajuan-card card">
                 <div class="card-body empty-state">
                     <i class="fas fa-inbox"></i>
                     <h5>Belum Ada Pengajuan</h5>
-                    <p>Anda belum pernah mengajukan penggunaan gedung.</p>
-                    <a href="{{ route('pengajuan_gedungs.create') }}" class="btn btn-ajukan mt-2">
+                    <p>Anda belum pernah mengajukan penggunaan ruangan.</p>
+                    <a href="{{ route('pengajuan_ruangans.create') }}" class="btn btn-ajukan mt-2">
                         <i class="fas fa-plus mr-1"></i> Buat Pengajuan Pertama
                     </a>
                 </div>
@@ -85,7 +92,7 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th>Kode</th>
-                                    <th>Gedung</th>
+                                    <th>Ruangan</th>
                                     <th>Kegiatan</th>
                                     <th>Tanggal</th>
                                     <th>Status</th>
@@ -93,12 +100,25 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            @foreach($pengajuanGedungs as $pengajuan)
+                            @foreach($pengajuanRuangans as $pengajuan)
                                 <tr>
                                     <td><strong>{{ $pengajuan->kode_pengajuan }}</strong></td>
-                                    <td>{{ $pengajuan->gedung->nama_gedung ?? '-' }}</td>
+                                    <td class="ruangan-cell">
+                                        <div class="nama-ruangan">
+                                            <i class="fas fa-door-open text-primary mr-1"></i>{{ $pengajuan->ruangan->nama_fasilitas ?? '-' }}
+                                        </div>
+                                        <div class="nama-gedung">
+                                            <i class="fas fa-building mr-1"></i>{{ $pengajuan->ruangan->gedung->nama_gedung ?? '-' }}
+                                        </div>
+                                    </td>
                                     <td>{{ $pengajuan->nama_kegiatan }}</td>
-                                    <td>{{ $pengajuan->tanggal_mulai->format('d/m/Y') }}</td>
+                                    <td>
+                                        {{ $pengajuan->tanggal_mulai->format('d/m/Y') }}<br>
+                                        <small class="text-muted">
+                                            {{ \Carbon\Carbon::parse($pengajuan->jam_mulai)->format('H:i') }} —
+                                            {{ \Carbon\Carbon::parse($pengajuan->jam_selesai)->format('H:i') }}
+                                        </small>
+                                    </td>
                                     <td>
                                         @if($pengajuan->status === 'disetujui')
                                             <span class="badge badge-status badge-disetujui">Disetujui</span>
@@ -109,7 +129,7 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        <a href="{{ route('pengajuan_gedungs.show', $pengajuan->id) }}"
+                                        <a href="{{ route('pengajuan_ruangans.show', $pengajuan->id) }}"
                                            class="btn btn-sm btn-outline-primary">
                                             <i class="far fa-eye mr-1"></i>Detail
                                         </a>

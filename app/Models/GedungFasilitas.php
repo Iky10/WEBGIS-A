@@ -40,21 +40,51 @@ class GedungFasilitas extends Model
         return $this->hasMany(JadwalRuangan::class, 'gedung_fasilitas_id');
     }
 
+    public function pengajuanRuangans()
+    {
+        return $this->hasMany(PengajuanRuangan::class, 'gedung_fasilitas_id');
+    }
+
+    /**
+     * Cache key untuk status_dipakai ruangan ini (di-shard per menit).
+     */
+    public function statusCacheKey()
+    {
+        return 'ruangan.status.' . $this->id . '.' . now()->format('YmdHi');
+    }
+
+    /**
+     * Hapus cache status realtime ruangan ini.
+     * Dipanggil setelah pengajuan baru dibuat, disetujui, ditolak, atau dihapus.
+     */
+    public function flushStatusCache()
+    {
+        \Cache::forget('ruangan.status.' . $this->id . '.' . now()->format('YmdHi'));
+        \Cache::forget('ruangan.status.' . $this->id . '.' . now()->subMinute()->format('YmdHi'));
+    }
+
     /**
      * Status realtime ruangan: Tutup | Sedang Dipakai | Kosong.
      *
      * Urutan pengecekan:
      *   0. Jam operasional gedung induk → di luar jam = Tutup
      *   1. Jadwal ruangan reguler (semester) overlap waktu sekarang = Sedang Dipakai
-     *   2. Pengajuan gedung induk yang disetujui & sedang aktif = Sedang Dipakai
-     *      (ruangan inherit status dari gedung kalau gedung sedang dipakai)
+     *   2. Pengajuan ruangan ini yang disetujui & sedang aktif = Sedang Dipakai
      *   3. Default = Kosong
-     *
-     * Pakai string compare untuk konsistensi dengan Gedung::getStatusDipakaiAttribute().
      */
     public function getStatusDipakaiAttribute()
     {
-        $waktuSekarang = date('H:i:s');
+        return \Cache::remember($this->statusCacheKey(), 60, function () {
+            return $this->computeStatusDipakai();
+        });
+    }
+
+    /**
+     * Hitung status realtime ruangan. Terpisah dari accessor untuk dukung caching.
+     */
+    protected function computeStatusDipakai()
+    {
+        $waktuSekarang  = date('H:i:s');
         $tanggalHariIni = now()->toDateString();
 
         // 0. Cek jam operasional gedung induk
@@ -76,7 +106,7 @@ class GedungFasilitas extends Model
         ];
         $hariIni = $hariMap[date('l')];
 
-        // 1. Cek jadwal ruangan reguler
+        // 1. Cek jadwal ruangan reguler (semester)
         $sedangDipakaiRutin = \App\Models\JadwalRuangan::where('gedung_fasilitas_id', $this->id)
             ->where('hari', $hariIni)
             ->where('jam_mulai', '<=', $waktuSekarang)
@@ -87,19 +117,17 @@ class GedungFasilitas extends Model
             return 'Sedang Dipakai';
         }
 
-        // 2. Inherit dari pengajuan gedung induk yang disetujui & aktif
-        if ($this->gedung_id) {
-            $sedangDipakaiPengajuan = \App\Models\PengajuanGedung::where('gedung_id', $this->gedung_id)
-                ->where('status', 'disetujui')
-                ->where('tanggal_mulai', '<=', $tanggalHariIni)
-                ->where('tanggal_selesai', '>=', $tanggalHariIni)
-                ->where('jam_mulai', '<=', $waktuSekarang)
-                ->where('jam_selesai', '>', $waktuSekarang)
-                ->exists();
+        // 2. Cek pengajuan ruangan ini yang disetujui & sedang aktif
+        $sedangDipakaiPengajuan = \App\Models\PengajuanRuangan::where('gedung_fasilitas_id', $this->id)
+            ->where('status', 'disetujui')
+            ->where('tanggal_mulai', '<=', $tanggalHariIni)
+            ->where('tanggal_selesai', '>=', $tanggalHariIni)
+            ->where('jam_mulai', '<=', $waktuSekarang)
+            ->where('jam_selesai', '>', $waktuSekarang)
+            ->exists();
 
-            if ($sedangDipakaiPengajuan) {
-                return 'Sedang Dipakai';
-            }
+        if ($sedangDipakaiPengajuan) {
+            return 'Sedang Dipakai';
         }
 
         return 'Kosong';

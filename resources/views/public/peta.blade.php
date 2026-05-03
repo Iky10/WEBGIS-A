@@ -55,7 +55,7 @@
             <span class="t-btn-tip">Reset Rute</span>
         </button>
         @auth
-            <a class="t-btn" href="{{ route('pengajuan_gedungs.riwayat') }}">
+            <a class="t-btn" href="{{ route('pengajuan_ruangans.riwayat') }}">
                 <i class="fas fa-file-alt"></i>
                 <span class="t-btn-tip">Pengajuan Saya</span>
             </a>
@@ -236,9 +236,9 @@
                     <button id="sbBtnPhotos" class="sb-action-btn sb-action-foto">
                         <i class="fas fa-images"></i> Foto
                     </button>
-                    <a id="sbBtnPengajuan" href="{{ route('pengajuan_gedungs.create') }}"
+                    <a id="sbBtnPengajuan" href="{{ route('pengajuan_ruangans.create') }}"
                        class="sb-action-btn sb-action-ajukan"
-                       data-tooltip="Ajukan Penggunaan Gedung">
+                       data-tooltip="Ajukan Penggunaan Ruangan">
                         <i class="fas fa-file-pen"></i> Ajukan
                     </a>
                 </div>

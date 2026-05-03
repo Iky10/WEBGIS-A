@@ -46,8 +46,8 @@
                 </li>
                 @auth
                     <li class="nav-item">
-                        <a class="nav-link {{ Request::is('pengajuan-gedung*') || Request::is('pengajuan_gedungs*') ? 'active' : '' }}"
-                           href="{{ route('pengajuan_gedungs.riwayat') }}">
+                        <a class="nav-link {{ Request::is('pengajuan-ruangan*') || Request::is('pengajuan_ruangans*') ? 'active' : '' }}"
+                           href="{{ route('pengajuan_ruangans.riwayat') }}">
                             <i class="fas fa-file-alt mr-1"></i> Pengajuan Saya
                         </a>
                     </li>

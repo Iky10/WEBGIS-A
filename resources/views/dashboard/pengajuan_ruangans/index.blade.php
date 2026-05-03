@@ -5,7 +5,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Pengajuan Penggunaan Gedung</h1>
+                    <h1>Pengajuan Penggunaan Ruangan</h1>
                 </div>
             </div>
         </div>
@@ -16,17 +16,17 @@
         <div class="clearfix"></div>
 
         <div class="card shadow-sm border-0 mb-4">
-            {{-- TOOLBAR ATAS (Static, tidak di-prepend via JS agar tidak berkedip/overflow) --}}
+            {{-- TOOLBAR ATAS --}}
             <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-3 d-flex flex-column flex-md-row justify-content-between align-items-center">
                 <div class="d-flex align-items-center mb-2 mb-md-0 w-100">
                     <div id="custom-length-menu" class="mr-3"></div>
-                    
+
                     {{-- Bulk Delete --}}
                     <button class="btn btn-danger btn-sm d-none mr-2 shadow-sm" id="btn-bulk-delete-pengajuan">
                         <i class="fas fa-trash-alt mr-1"></i>Hapus (<span id="selected-count-pengajuan">0</span>)
                     </button>
                 </div>
-                
+
                 <div class="d-flex align-items-center justify-content-md-end w-100">
                     {{-- Filter Dropdown --}}
                     <div class="dropdown mr-2" id="filter-dropdown-pengajuan">
@@ -56,7 +56,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     {{-- Custom Search --}}
                     <div class="input-group input-group-sm shadow-sm" style="width: 220px;">
                         <input type="text" id="custom-search-input" class="form-control border-right-0" placeholder="Cari data...">
@@ -69,7 +69,7 @@
 
             {{-- ══ TABLE ══ --}}
             <div class="card-body p-0">
-                @include('dashboard.pengajuan_gedungs.table')
+                @include('dashboard.pengajuan_ruangans.table')
             </div>
         </div>
     </div>
@@ -77,7 +77,6 @@
 
 @push('page_css')
 <style>
-    /* Force dropdown to appear instantly in fixed position — no slide/shift */
     .dropdown-animated {
         animation: none !important;
         transition: none !important;
@@ -99,7 +98,6 @@
     #filter-dropdown-pengajuan .dropdown-menu.show {
         opacity: 1;
     }
-    /* Fix DataTables Length Menu Spacing */
     div.dataTables_length label {
         display: flex;
         align-items: center;
@@ -110,18 +108,27 @@
         margin: 0 0.5rem;
         width: auto;
     }
-    /* Hide default search since we use custom */
     .dataTables_filter {
         display: none;
     }
-    /* Ensure table-responsive doesn't break border radius */
     .table-responsive {
         border-bottom-left-radius: 0.25rem;
         border-bottom-right-radius: 0.25rem;
     }
-    /* Table wrapper padding fix */
-    #pengajuanGedungs-table_wrapper {
+    #pengajuanRuangans-table_wrapper {
         padding-top: 0 !important;
+    }
+    /* Ruangan cell: compact layout */
+    .ruangan-cell {
+        min-width: 150px;
+    }
+    .ruangan-cell .ruangan-name {
+        font-weight: 600;
+        color: #212529;
+    }
+    .ruangan-cell .gedung-name {
+        font-size: 12px;
+        color: #6c757d;
     }
 </style>
 @endpush
@@ -129,10 +136,7 @@
 @push('page_scripts')
 <script>
     $(function () {
-        // Inisialisasi DataTable
-        var table = $('#pengajuanGedungs-table').DataTable({
-            // Hanya menggunakan 'tr' (table), 'i' (info), dan 'p' (pagination) di DOM standar.
-            // 'l' (length) akan kita pindahkan secara manual, dan 'f' (search) kita disable.
+        var table = $('#pengajuanRuangans-table').DataTable({
             dom: "<'d-none'l>" +
                  "<'row'<'col-sm-12'<'table-responsive'tr>>>" +
                  "<'row px-3 pb-3 pt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
@@ -157,40 +161,37 @@
                 { className: 'noVis', targets: [0, 7] }
             ],
             initComplete: function() {
-                // Pindahkan length menu ke toolbar custom kita agar tidak ada DOM flicker
                 var $lengthMenu = $('.dataTables_length');
                 $lengthMenu.appendTo('#custom-length-menu');
             }
         });
 
-        // ─── Custom Search Bind ───
+        // Custom Search
         $('#custom-search-input').on('keyup', function() {
             table.search(this.value).draw();
         });
 
-        // ─── Filter Gedung (kolom index 3: Gedung) ───
+        // Filter Gedung (kolom index 3: Ruangan cell berisi gedung-name)
         $('#filter-gedung-pengajuan').on('change', function () {
             table.column(3).search(this.value).draw();
         });
 
-        // ─── Filter Status (kolom index 6: Status) ───
+        // Filter Status (kolom index 6: Status)
         $('#filter-status-pengajuan').on('change', function () {
             table.column(6).search(this.value).draw();
         });
 
-        // ─── Mencegah dropdown filter menutup saat diklik di dalamnya ───
         $('.dropdown-menu').on('click', function(e) {
             e.stopPropagation();
         });
 
-        // ─── Check All ───
+        // Check All
         $('#checkAllPengajuan').on('click', function() {
             var isChecked = $(this).prop('checked');
             $('.check-row-pengajuan').prop('checked', isChecked);
             toggleBulkDeleteBtn();
         });
 
-        // ─── Check individual row ───
         $(document).on('click', '.check-row-pengajuan', function() {
             var total = $('.check-row-pengajuan').length;
             var checked = $('.check-row-pengajuan:checked').length;
@@ -208,7 +209,7 @@
             }
         }
 
-        // ─── Tombol Tolak: prompt catatan via SweetAlert ───
+        // Tombol Tolak: prompt catatan via SweetAlert
         $(document).on('click', '.btn-tolak-pengajuan', function() {
             var $form = $(this).closest('form.form-tolak-pengajuan');
 
@@ -239,7 +240,7 @@
             });
         });
 
-        // ─── Bulk Delete ───
+        // Bulk Delete
         $('#btn-bulk-delete-pengajuan').on('click', function() {
             var selectedIds = [];
             $('.check-row-pengajuan:checked').each(function() {
@@ -260,7 +261,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: '{{ route("pengajuan_gedungs.bulk-delete") }}',
+                        url: '{{ route("pengajuan_ruangans.bulk-delete") }}',
                         type: 'DELETE',
                         data: {
                             _token: '{{ csrf_token() }}',

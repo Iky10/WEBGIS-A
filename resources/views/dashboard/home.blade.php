@@ -69,7 +69,7 @@
                     <p>Total Pengajuan</p>
                 </div>
                 <div class="icon"><i class="fas fa-file-alt"></i></div>
-                <a href="{{ route('pengajuan_gedungs.index') }}" class="small-box-footer">
+                <a href="{{ route('pengajuan_ruangans.index') }}" class="small-box-footer">
                     Lihat Semua <i class="fas fa-arrow-circle-right"></i>
                 </a>
             </div>
@@ -82,7 +82,7 @@
                     <p>Menunggu Persetujuan</p>
                 </div>
                 <div class="icon"><i class="fas fa-hourglass-half"></i></div>
-                <a href="{{ route('pengajuan_gedungs.index') }}" class="small-box-footer">
+                <a href="{{ route('pengajuan_ruangans.index') }}" class="small-box-footer">
                     Proses Sekarang <i class="fas fa-arrow-circle-right"></i>
                 </a>
             </div>
@@ -95,7 +95,7 @@
                     <p>Disetujui</p>
                 </div>
                 <div class="icon"><i class="fas fa-check-double"></i></div>
-                <a href="{{ route('pengajuan_gedungs.index') }}" class="small-box-footer">
+                <a href="{{ route('pengajuan_ruangans.index') }}" class="small-box-footer">
                     Lihat Detail <i class="fas fa-arrow-circle-right"></i>
                 </a>
             </div>
@@ -108,7 +108,7 @@
                     <p>Ditolak</p>
                 </div>
                 <div class="icon"><i class="fas fa-times-circle"></i></div>
-                <a href="{{ route('pengajuan_gedungs.index') }}" class="small-box-footer">
+                <a href="{{ route('pengajuan_ruangans.index') }}" class="small-box-footer">
                     Lihat Detail <i class="fas fa-arrow-circle-right"></i>
                 </a>
             </div>
@@ -230,7 +230,7 @@
                         <span class="badge badge-warning ml-1">{{ $pengajuanMenunggu }}</span>
                     </h5>
                     <div class="card-tools">
-                        <a href="{{ route('pengajuan_gedungs.index') }}" class="btn btn-sm btn-default">
+                        <a href="{{ route('pengajuan_ruangans.index') }}" class="btn btn-sm btn-default">
                             Kelola Semua <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -241,7 +241,7 @@
                             <tr>
                                 <th class="pl-3">Kode</th>
                                 <th>Pemohon</th>
-                                <th>Gedung</th>
+                                <th>Ruangan</th>
                                 <th>Kegiatan</th>
                                 <th>Tanggal</th>
                                 <th>Aksi</th>
@@ -252,11 +252,14 @@
                             <tr>
                                 <td class="pl-3"><strong>{{ $pj->kode_pengajuan }}</strong></td>
                                 <td>{{ $pj->nama_pemohon }}</td>
-                                <td>{{ $pj->gedung->nama_gedung ?? '-' }}</td>
+                                <td>
+                                    <strong>{{ $pj->ruangan->nama_fasilitas ?? '-' }}</strong>
+                                    <br><small class="text-muted">{{ $pj->ruangan->gedung->nama_gedung ?? '-' }}</small>
+                                </td>
                                 <td>{{ $pj->nama_kegiatan }}</td>
                                 <td>{{ $pj->tanggal_mulai->format('d/m/Y') }}</td>
                                 <td>
-                                    <a href="{{ route('pengajuan_gedungs.show', $pj->id) }}"
+                                    <a href="{{ route('pengajuan_ruangans.show', $pj->id) }}"
                                        class="btn btn-xs btn-default">
                                         <i class="fas fa-eye"></i> Lihat
                                     </a>

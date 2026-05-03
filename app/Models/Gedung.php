@@ -177,17 +177,20 @@ class Gedung extends Model
             }
         }
 
-        // 2. Cek pengajuan gedung yang disetujui pada hari & jam ini
-        $sedangDipakaiPengajuan = \App\Models\PengajuanGedung::where('gedung_id', $this->id)
-            ->where('status', 'disetujui')
-            ->where('tanggal_mulai', '<=', $tanggalHariIni)
-            ->where('tanggal_selesai', '>=', $tanggalHariIni)
-            ->where('jam_mulai', '<=', $waktuSekarang)
-            ->where('jam_selesai', '>', $waktuSekarang)
-            ->exists();
+        // 2. Cek pengajuan ruangan yang disetujui pada hari & jam ini
+        //    (gedung dianggap "Sedang Dipakai" kalau minimal SATU ruangannya dipakai)
+        if ($fasilitasIds->isNotEmpty()) {
+            $sedangDipakaiPengajuan = \App\Models\PengajuanRuangan::whereIn('gedung_fasilitas_id', $fasilitasIds)
+                ->where('status', 'disetujui')
+                ->where('tanggal_mulai', '<=', $tanggalHariIni)
+                ->where('tanggal_selesai', '>=', $tanggalHariIni)
+                ->where('jam_mulai', '<=', $waktuSekarang)
+                ->where('jam_selesai', '>', $waktuSekarang)
+                ->exists();
 
-        if ($sedangDipakaiPengajuan) {
-            return 'Sedang Dipakai';
+            if ($sedangDipakaiPengajuan) {
+                return 'Sedang Dipakai';
+            }
         }
 
         return 'Kosong';
