@@ -21,53 +21,51 @@
 </head>
 <body>
 
-{{-- Navbar Publik (3-zone layout: hamburger kiri | brand | avatar kanan)
+{{-- Navbar Publik (AdminLTE pattern):
      Mobile: [☰] [Brand]                              [👤]
+             ↓ klik hamburger
+             Sidebar slide dari kiri (overlay)
      Desktop: [Brand] [Beranda Daftar Pengajuan]   [Dashboard] [👤]
 --}}
 <nav class="navbar navbar-expand-lg navbar-public">
     <div class="container">
-        {{-- ZONE 1: Hamburger toggler (mobile only, hidden di desktop via navbar-expand-lg) --}}
-        <button class="navbar-toggler order-1 mr-2" type="button"
-                data-toggle="collapse" data-target="#navPublik"
-                aria-expanded="false" aria-label="Toggle navigation">
+        {{-- ZONE 1: Hamburger toggler — trigger sidebar drawer (mobile only) --}}
+        <button class="navbar-toggler mr-2" type="button" id="publicSidebarToggle"
+                aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        {{-- ZONE 2: Brand (kiri di desktop, sebelah hamburger di mobile) --}}
-        <a class="navbar-brand order-2 mr-auto mr-lg-0" href="{{ route('publik.home') }}">
+        {{-- ZONE 2: Brand --}}
+        <a class="navbar-brand mr-auto mr-lg-0" href="{{ route('publik.home') }}">
             <i class="fas fa-map-marked-alt mr-2"></i><span class="brand-text">WebGIS Gedung</span>
         </a>
 
-        {{-- ZONE 3: Nav links (di tengah di desktop, drawer di mobile)
-             order-4 di mobile = jatuh ke baris baru saat collapse expand --}}
-        <div class="collapse navbar-collapse order-4 order-lg-3" id="navPublik">
-            <ul class="navbar-nav mr-auto ml-lg-4">
+        {{-- ZONE 3: Desktop Nav Links (inline, hidden di mobile) --}}
+        <ul class="navbar-nav d-none d-lg-flex mr-auto ml-4">
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('/') || Request::is('peta*') ? 'active' : '' }}"
+                   href="{{ route('publik.home') }}">
+                    <i class="fas fa-home mr-1"></i> Beranda
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ Request::is('gedung*') ? 'active' : '' }}"
+                   href="{{ route('publik.gedung') }}">
+                    <i class="fas fa-building mr-1"></i> Daftar Gedung
+                </a>
+            </li>
+            @auth
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('/') || Request::is('peta*') ? 'active' : '' }}"
-                       href="{{ route('publik.home') }}">
-                        <i class="fas fa-home mr-1"></i> Beranda
+                    <a class="nav-link {{ Request::is('pengajuan-ruangan*') || Request::is('pengajuan_ruangans*') ? 'active' : '' }}"
+                       href="{{ route('pengajuan_ruangans.riwayat') }}">
+                        <i class="fas fa-file-alt mr-1"></i> Pengajuan Saya
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ Request::is('gedung*') ? 'active' : '' }}"
-                       href="{{ route('publik.gedung') }}">
-                        <i class="fas fa-building mr-1"></i> Daftar Gedung
-                    </a>
-                </li>
-                @auth
-                    <li class="nav-item">
-                        <a class="nav-link {{ Request::is('pengajuan-ruangan*') || Request::is('pengajuan_ruangans*') ? 'active' : '' }}"
-                           href="{{ route('pengajuan_ruangans.riwayat') }}">
-                            <i class="fas fa-file-alt mr-1"></i> Pengajuan Saya
-                        </a>
-                    </li>
-                @endauth
-            </ul>
-        </div>
+            @endauth
+        </ul>
 
-        {{-- ZONE 4: User Dropdown / Login (KANAN, ALWAYS VISIBLE — di luar navbar-collapse) --}}
-        <ul class="navbar-nav order-3 order-lg-4 align-items-center user-zone">
+        {{-- ZONE 4: User Dropdown / Login (kanan, ALWAYS visible) --}}
+        <ul class="navbar-nav align-items-center user-zone">
                 @auth
                     @if(Auth::user()->isAdmin())
                         <li class="nav-item mr-2 d-none d-lg-block">
@@ -162,6 +160,107 @@
             </ul>
     </div>
 </nav>
+
+{{-- ═══════════════════════════════════════════
+     MOBILE SIDEBAR DRAWER (off-canvas, slide dari kiri)
+     Pattern AdminLTE — only visible di mobile (<992px)
+═══════════════════════════════════════════ --}}
+<aside id="publicSidebar" class="public-sidebar d-lg-none">
+    {{-- Sidebar Header (logo + brand) --}}
+    <div class="public-sidebar-header">
+        <a href="{{ route('publik.home') }}" class="public-sidebar-logo">
+            <i class="fas fa-map-marked-alt"></i>
+            <span>WebGIS Gedung</span>
+        </a>
+        <button class="public-sidebar-close" id="publicSidebarClose" aria-label="Close menu">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    {{-- Menu Items --}}
+    <ul class="public-sidebar-menu">
+        <li class="{{ Request::is('/') || Request::is('peta*') ? 'active' : '' }}">
+            <a href="{{ route('publik.home') }}">
+                <i class="fas fa-home"></i>
+                <span>Beranda</span>
+            </a>
+        </li>
+        <li class="{{ Request::is('gedung*') ? 'active' : '' }}">
+            <a href="{{ route('publik.gedung') }}">
+                <i class="fas fa-building"></i>
+                <span>Daftar Gedung</span>
+            </a>
+        </li>
+        @auth
+            <li class="{{ Request::is('pengajuan-ruangan*') || Request::is('pengajuan_ruangans*') ? 'active' : '' }}">
+                <a href="{{ route('pengajuan_ruangans.riwayat') }}">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Pengajuan Saya</span>
+                </a>
+            </li>
+            @if(Auth::user()->isAdmin())
+                <li class="public-sidebar-divider"></li>
+                <li>
+                    <a href="{{ route('home') }}">
+                        <i class="fas fa-cogs"></i>
+                        <span>Dashboard Admin</span>
+                    </a>
+                </li>
+            @endif
+        @else
+            <li class="public-sidebar-divider"></li>
+            <li>
+                <a href="{{ route('login') }}">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Login</span>
+                </a>
+            </li>
+        @endauth
+    </ul>
+</aside>
+
+{{-- Sidebar Backdrop (overlay) --}}
+<div id="publicSidebarBackdrop" class="public-sidebar-backdrop d-lg-none"></div>
+
+{{-- Sidebar Toggle JS --}}
+<script>
+(function() {
+    var sidebar = document.getElementById('publicSidebar');
+    var backdrop = document.getElementById('publicSidebarBackdrop');
+    var toggleBtn = document.getElementById('publicSidebarToggle');
+    var closeBtn = document.getElementById('publicSidebarClose');
+
+    if (!sidebar || !backdrop || !toggleBtn) return;
+
+    function openSidebar() {
+        sidebar.classList.add('show');
+        backdrop.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+        sidebar.classList.remove('show');
+        backdrop.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    toggleBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (sidebar.classList.contains('show')) closeSidebar();
+        else openSidebar();
+    });
+    backdrop.addEventListener('click', closeSidebar);
+    if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+
+    // Close saat resize ke desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 992) closeSidebar();
+    });
+    // ESC key untuk close
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('show')) closeSidebar();
+    });
+})();
+</script>
 
 {{-- Konten Halaman --}}
 <div class="page-content">
