@@ -132,7 +132,30 @@
         border-left: 4px solid;
     }
     .availability-box.checking {
-        background: #f8f9fa; border-color: #adb5bd; color: #6c757d;
+        background: #f0f9ff; border-color: #0ea5e9; color: #075985;
+        animation: checkingPulse 1.8s ease-in-out infinite;
+    }
+    .availability-box.checking .spinner-icon {
+        display: inline-block; width: 18px; height: 18px;
+        border: 2.5px solid rgba(14,165,233,.25);
+        border-top-color: #0ea5e9; border-radius: 50%;
+        animation: spinnerRotate .8s linear infinite;
+        vertical-align: middle; margin-right: 10px;
+    }
+    .availability-box.checking .checking-dots::after {
+        content: ''; display: inline-block; width: 24px;
+        animation: dotsAnimate 1.4s steps(4) infinite;
+    }
+    @keyframes spinnerRotate { to { transform: rotate(360deg); } }
+    @keyframes dotsAnimate {
+        0%   { content: ''; }
+        25%  { content: '.'; }
+        50%  { content: '..'; }
+        75%  { content: '...'; }
+    }
+    @keyframes checkingPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(14,165,233,.15); }
+        50%      { box-shadow: 0 0 0 6px rgba(14,165,233,.05); }
     }
     .availability-box.available {
         background: #eafaf1; border-color: #27ae60; color: #1e8449;
@@ -576,10 +599,12 @@
             },
             error: function() {
                 $availability.html(
-                    '<div class="availability-box checking">' +
-                        '<i class="fas fa-info-circle mr-2"></i>Tidak dapat mengecek ketersediaan saat ini. Silakan coba lagi.' +
+                    '<div class="availability-box unavailable">' +
+                        '<h6><i class="fas fa-exclamation-triangle mr-2"></i>Gagal Mengecek Ketersediaan</h6>' +
+                        '<p class="mb-0">Terjadi kesalahan saat menghubungi server. Silakan coba lagi dalam beberapa saat.</p>' +
                     '</div>'
                 );
+                $btnSubmit.prop('disabled', true);
             }
         });
     }
