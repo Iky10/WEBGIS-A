@@ -264,7 +264,7 @@
             });
         });
 
-        // Toggle Status AJAX
+        // Toggle Status AJAX (is_aktif)
         $(document).on('change', '.toggle-status', function() {
             var id = $(this).data('id');
             var isChecked = $(this).prop('checked');
@@ -292,6 +292,38 @@
                 },
                 error: function() {
                     $('.toggle-status[data-id="'+id+'"]').prop('disabled', false);
+                    toastr.error('Terjadi kesalahan pada server.');
+                }
+            });
+        });
+
+        // Toggle Bisa Diajukan AJAX
+        $(document).on('change', '.toggle-bisa-diajukan', function() {
+            var id = $(this).data('id');
+            var isChecked = $(this).prop('checked');
+            var labelSpan = $('.bisa-diajukan-label-' + id);
+
+            $(this).prop('checked', !isChecked);
+            $(this).prop('disabled', true);
+
+            $.ajax({
+                url: '{{ url("gedung_fasilitas") }}/' + id + '/toggle-bisa-diajukan',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    $('.toggle-bisa-diajukan[data-id="'+id+'"]').prop('disabled', false);
+                    if (response.success) {
+                        $('.toggle-bisa-diajukan[data-id="'+id+'"]').prop('checked', response.bisa_diajukan);
+                        labelSpan.text(response.bisa_diajukan ? 'Ya' : 'Tidak');
+                        toastr.success(response.message);
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function() {
+                    $('.toggle-bisa-diajukan[data-id="'+id+'"]').prop('disabled', false);
                     toastr.error('Terjadi kesalahan pada server.');
                 }
             });
