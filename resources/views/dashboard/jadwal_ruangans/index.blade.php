@@ -39,8 +39,73 @@
                 </div>
             </div>
 
-            <div class="card-body p-0">
+            {{-- Desktop: Table (≥ md) --}}
+            <div class="card-body p-0 d-none d-md-block">
                 @include('dashboard.jadwal_ruangans.table')
+            </div>
+
+            {{-- Mobile: Card List (< md) --}}
+            <div class="d-block d-md-none mobile-card-list jadwal-ruangan-mobile-list">
+                @php
+                    $hariColors = [
+                        'Senin' => 'primary', 'Selasa' => 'info', 'Rabu' => 'success',
+                        'Kamis' => 'warning', 'Jumat' => 'danger',
+                        'Sabtu' => 'secondary', 'Minggu' => 'dark',
+                    ];
+                @endphp
+                @forelse($jadwalRuangans as $jadwal)
+                    @php
+                        $gedungName = optional(optional($jadwal->fasilitas)->gedung)->nama_gedung ?? 'N/A';
+                        $ruanganName = optional($jadwal->fasilitas)->nama_fasilitas ?? 'N/A';
+                        $badgeColor = $hariColors[$jadwal->hari] ?? 'info';
+                    @endphp
+                    <div class="mobile-card"
+                         data-search="{{ strtolower($jadwal->nama_kegiatan.' '.$jadwal->hari.' '.$gedungName.' '.$ruanganName) }}">
+                        <div class="mobile-card-header">
+                            <div class="mobile-card-title">
+                                <strong>{{ $jadwal->nama_kegiatan }}</strong>
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-door-open"></i> {{ $ruanganName }}
+                                </small>
+                            </div>
+                            <span class="badge badge-{{ $badgeColor }}">{{ $jadwal->hari }}</span>
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-card-row">
+                                <i class="fas fa-building text-muted"></i>
+                                <span>{{ $gedungName }}</span>
+                            </div>
+                            <div class="mobile-card-row">
+                                <i class="far fa-clock text-muted"></i>
+                                <span>{{ \Carbon\Carbon::parse($jadwal->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($jadwal->jam_selesai)->format('H:i') }}</span>
+                            </div>
+                            @if($jadwal->keterangan)
+                                <div class="mobile-card-row">
+                                    <i class="fas fa-sticky-note text-muted"></i>
+                                    <span>{{ $jadwal->keterangan }}</span>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="mobile-card-actions">
+                            <a href="{{ route('jadwal_ruangans.edit', [$jadwal->id]) }}"
+                               class="btn btn-outline-secondary btn-sm flex-grow-1">
+                                <i class="far fa-edit mr-1"></i> Edit
+                            </a>
+                            {!! Form::open(['route' => ['jadwal_ruangans.destroy', $jadwal->id], 'method' => 'delete', 'class' => 'd-flex flex-grow-1 mb-0']) !!}
+                                {!! Form::button('<i class="far fa-trash-alt mr-1"></i> Hapus', ['type' => 'button', 'class' => 'btn btn-outline-danger btn-sm flex-grow-1', 'onclick' => 'confirmDelete(this.closest(\'form\'), \'Yakin ingin menghapus jadwal ruangan ini?\')']) !!}
+                            {!! Form::close() !!}
+                        </div>
+                    </div>
+                @empty
+                    <div class="mobile-card-empty">
+                        <i class="far fa-calendar-alt fa-3x text-muted mb-3" style="opacity:0.4;"></i>
+                        <h6 class="text-muted">Belum ada jadwal ruangan</h6>
+                        <p class="text-muted small mb-2">Tambahkan jadwal baru untuk memulai.</p>
+                        <a href="{{ route('jadwal_ruangans.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus mr-1"></i> Tambah Jadwal
+                        </a>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -108,9 +173,35 @@
             }
         });
 
-        // ─── Custom Search Bind ───
+        // ─── Mobile Card Filter ───
+        function filterMobileCards() {
+            var search = ($('#custom-search-input').val() || '').toLowerCase().trim();
+            var $cards = $('.jadwal-ruangan-mobile-list .mobile-card');
+            var shown = 0;
+            $cards.each(function() {
+                var visible = !search || (($(this).data('search') || '').indexOf(search) !== -1);
+                $(this).toggle(visible);
+                if (visible) shown++;
+            });
+            var $empty = $('.jadwal-ruangan-mobile-list .mobile-card-empty-filter');
+            if (shown === 0 && $cards.length > 0) {
+                if ($empty.length === 0) {
+                    $('.jadwal-ruangan-mobile-list').append(
+                        '<div class="mobile-card-empty mobile-card-empty-filter">' +
+                        '<i class="fas fa-search fa-2x text-muted mb-2" style="opacity:0.4;"></i>' +
+                        '<h6 class="text-muted">Tidak ada hasil yang cocok</h6>' +
+                        '</div>'
+                    );
+                }
+            } else {
+                $empty.remove();
+            }
+        }
+
+        // ─── Custom Search Bind (desktop + mobile) ───
         $('#custom-search-input').on('keyup', function() {
             table.search(this.value).draw();
+            filterMobileCards();
         });
     });
 </script>

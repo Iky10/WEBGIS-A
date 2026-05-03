@@ -39,8 +39,67 @@
                 </div>
             </div>
 
-            <div class="card-body p-0">
+            {{-- Desktop: Table (≥ md) --}}
+            <div class="card-body p-0 d-none d-md-block">
                 @include('dashboard.gedungs.table')
+            </div>
+
+            {{-- Mobile: Card List (< md) --}}
+            <div class="d-block d-md-none mobile-card-list gedungs-mobile-list">
+                @forelse($gedungs as $gedung)
+                    <div class="mobile-card"
+                         data-search="{{ strtolower($gedung->nama_gedung.' '.$gedung->alamat.' '.$gedung->deskripsi) }}">
+                        <div class="mobile-card-header">
+                            <div class="mobile-card-title">
+                                <strong>{{ $gedung->nama_gedung }}</strong>
+                                @if($gedung->alamat)
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-map-marker-alt"></i> {{ Str::limit($gedung->alamat, 50) }}
+                                    </small>
+                                @endif
+                            </div>
+                            @if($gedung->bisa_diajukan)
+                                <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Bisa Diajukan</span>
+                            @else
+                                <span class="badge badge-secondary"><i class="fas fa-ban mr-1"></i>Tidak Bisa</span>
+                            @endif
+                        </div>
+                        <div class="mobile-card-body">
+                            @if($gedung->deskripsi)
+                                <div class="mobile-card-row">
+                                    <i class="fas fa-info-circle text-muted"></i>
+                                    <span>{{ Str::limit($gedung->deskripsi, 120) }}</span>
+                                </div>
+                            @endif
+                            <div class="mobile-card-row">
+                                <i class="fas fa-crosshairs text-muted"></i>
+                                <span class="text-monospace small">{{ $gedung->x }}, {{ $gedung->y }}</span>
+                            </div>
+                        </div>
+                        <div class="mobile-card-actions">
+                            <a href="{{ route('gedungs.show', [$gedung->id]) }}"
+                               class="btn btn-outline-secondary btn-sm flex-grow-1">
+                                <i class="far fa-eye mr-1"></i> Detail
+                            </a>
+                            <a href="{{ route('gedungs.edit', [$gedung->id]) }}"
+                               class="btn btn-outline-primary btn-sm flex-grow-1">
+                                <i class="far fa-edit mr-1"></i> Edit
+                            </a>
+                            {!! Form::open(['route' => ['gedungs.destroy', $gedung->id], 'method' => 'delete', 'class' => 'd-flex flex-grow-1 mb-0']) !!}
+                                {!! Form::button('<i class="far fa-trash-alt mr-1"></i>', ['type' => 'button', 'class' => 'btn btn-outline-danger btn-sm flex-grow-1', 'onclick' => 'confirmDelete(this.closest(\'form\'), \'Yakin ingin menghapus gedung ini?\')']) !!}
+                            {!! Form::close() !!}
+                        </div>
+                    </div>
+                @empty
+                    <div class="mobile-card-empty">
+                        <i class="fas fa-building fa-3x text-muted mb-3" style="opacity:0.4;"></i>
+                        <h6 class="text-muted">Belum ada data gedung</h6>
+                        <p class="text-muted small mb-2">Tambahkan gedung baru untuk memulai.</p>
+                        <a href="{{ route('gedungs.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus mr-1"></i> Tambah Gedung
+                        </a>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -108,9 +167,35 @@
             }
         });
 
-        // ─── Custom Search Bind ───
+        // ─── Mobile Card Filter ───
+        function filterMobileCards() {
+            var search = ($('#custom-search-input').val() || '').toLowerCase().trim();
+            var $cards = $('.gedungs-mobile-list .mobile-card');
+            var shown = 0;
+            $cards.each(function() {
+                var visible = !search || (($(this).data('search') || '').indexOf(search) !== -1);
+                $(this).toggle(visible);
+                if (visible) shown++;
+            });
+            var $empty = $('.gedungs-mobile-list .mobile-card-empty-filter');
+            if (shown === 0 && $cards.length > 0) {
+                if ($empty.length === 0) {
+                    $('.gedungs-mobile-list').append(
+                        '<div class="mobile-card-empty mobile-card-empty-filter">' +
+                        '<i class="fas fa-search fa-2x text-muted mb-2" style="opacity:0.4;"></i>' +
+                        '<h6 class="text-muted">Tidak ada hasil yang cocok</h6>' +
+                        '</div>'
+                    );
+                }
+            } else {
+                $empty.remove();
+            }
+        }
+
+        // ─── Custom Search Bind (desktop + mobile) ───
         $('#custom-search-input').on('keyup', function() {
             table.search(this.value).draw();
+            filterMobileCards();
         });
     });
 </script>
