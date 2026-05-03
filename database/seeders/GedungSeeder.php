@@ -65,7 +65,30 @@ class GedungSeeder extends Seeder
             ],
         ];
 
-        foreach (array_merge($bisaDiajukan, $tidakBisaDiajukan) as $data) {
+        // Data riil dari DB rekan tim (TRPL & Pos Sekuriti) — koordinat Politani Samarinda asli.
+        // Foto sengaja dikosongkan — silakan upload sendiri via UI Admin → Edit Gedung.
+        $dataRiil = [
+            [
+                'nama_gedung'    => 'TRPL ( Teknologi Rekayasa Perangkat Lunak )',
+                'alamat'         => 'Jl. Samratulangi, Sungai Keledang, Kec. Samarinda Seberang, Kota Samarinda, Kalimantan Timur 75131',
+                'deskripsi'      => 'Gedung TRPL ( Teknologi Rekayasa Perangkat Lunak )',
+                'x'              => -0.53542925,
+                'y'              => 117.12428420,
+                'bisa_diajukan'  => true,
+                'foto_utama'     => null,
+            ],
+            [
+                'nama_gedung'    => 'Pos Sekuriti',
+                'alamat'         => 'Jl. Samratulangi, Sungai Keledang, Kec. Samarinda Seberang, Kota Samarinda, Kalimantan Timur 75131',
+                'deskripsi'      => 'Pos Sekuriti',
+                'x'              => -0.53526042,
+                'y'              => 117.12329623,
+                'bisa_diajukan'  => false,
+                'foto_utama'     => null,
+            ],
+        ];
+
+        foreach (array_merge($bisaDiajukan, $tidakBisaDiajukan, $dataRiil) as $data) {
             Gedung::updateOrCreate(
                 ['nama_gedung' => $data['nama_gedung']],
                 $data

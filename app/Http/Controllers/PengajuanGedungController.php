@@ -34,8 +34,12 @@ class PengajuanGedungController extends AppBaseController
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Dipakai oleh dropdown filter Gedung di view (clean separation — no query in Blade)
+        $gedungList = Gedung::orderBy('nama_gedung')->pluck('nama_gedung', 'id');
+
         return view('dashboard.pengajuan_gedungs.index')
-            ->with('pengajuanGedungs', $pengajuanGedungs);
+            ->with('pengajuanGedungs', $pengajuanGedungs)
+            ->with('gedungList', $gedungList);
     }
 
     /**
@@ -97,7 +101,7 @@ class PengajuanGedungController extends AppBaseController
      */
     public function show($id)
     {
-        $pengajuanGedung = PengajuanGedung::with(['gedung', 'user'])->find($id);
+        $pengajuanGedung = PengajuanGedung::with(['gedung', 'user', 'approvedBy'])->find($id);
 
         if (empty($pengajuanGedung)) {
             Flash::error('Pengajuan tidak ditemukan.');
@@ -126,11 +130,21 @@ class PengajuanGedungController extends AppBaseController
     {
         $validated = $request->validate([
             'status'        => 'required|in:disetujui,ditolak',
-            'catatan_admin' => 'nullable|string|max:1000',
+            'catatan_admin' => 'required_if:status,ditolak|nullable|string|max:1000',
+        ], [
+            'catatan_admin.required_if' => 'Catatan wajib diisi saat menolak pengajuan (sebagai alasan untuk pemohon).',
         ]);
 
         $pengajuan = PengajuanGedung::with('gedung')->findOrFail($id);
-        $pengajuan->update($validated);
+        $pengajuan->update(array_merge($validated, [
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+        ]));
+
+        // Flush cache status gedung — penting agar perubahan status pengajuan langsung tercermin di peta
+        if ($pengajuan->gedung) {
+            $pengajuan->gedung->flushStatusCache();
+        }
 
         Log::info("Pengajuan {$pengajuan->kode_pengajuan} status diupdate menjadi: {$validated['status']} oleh admin: " . Auth::user()->name);
 

@@ -40,40 +40,68 @@ class GedungFasilitas extends Model
         return $this->hasMany(JadwalRuangan::class, 'gedung_fasilitas_id');
     }
 
+    /**
+     * Status realtime ruangan: Tutup | Sedang Dipakai | Kosong.
+     *
+     * Urutan pengecekan:
+     *   0. Jam operasional gedung induk → di luar jam = Tutup
+     *   1. Jadwal ruangan reguler (semester) overlap waktu sekarang = Sedang Dipakai
+     *   2. Pengajuan gedung induk yang disetujui & sedang aktif = Sedang Dipakai
+     *      (ruangan inherit status dari gedung kalau gedung sedang dipakai)
+     *   3. Default = Kosong
+     *
+     * Pakai string compare untuk konsistensi dengan Gedung::getStatusDipakaiAttribute().
+     */
     public function getStatusDipakaiAttribute()
     {
-        // Cek jam operasional gedung induk terlebih dahulu
+        $waktuSekarang = date('H:i:s');
+        $tanggalHariIni = now()->toDateString();
+
+        // 0. Cek jam operasional gedung induk
         $gedung = $this->gedung;
         if ($gedung && $gedung->jam_buka && $gedung->jam_tutup) {
-            $now = \Carbon\Carbon::now();
-            $jamBuka = \Carbon\Carbon::createFromFormat('H:i:s', $gedung->jam_buka);
-            $jamTutup = \Carbon\Carbon::createFromFormat('H:i:s', $gedung->jam_tutup);
-
-            if ($now->lt($jamBuka) || $now->gt($jamTutup)) {
+            if ($waktuSekarang < $gedung->jam_buka || $waktuSekarang > $gedung->jam_tutup) {
                 return 'Tutup';
             }
         }
 
-        // Jika gedung buka, cek jadwal ruangan
         $hariMap = [
-            'Sunday' => 'Minggu',
-            'Monday' => 'Senin',
-            'Tuesday' => 'Selasa',
+            'Sunday'    => 'Minggu',
+            'Monday'    => 'Senin',
+            'Tuesday'   => 'Selasa',
             'Wednesday' => 'Rabu',
-            'Thursday' => 'Kamis',
-            'Friday' => 'Jumat',
-            'Saturday' => 'Sabtu',
+            'Thursday'  => 'Kamis',
+            'Friday'    => 'Jumat',
+            'Saturday'  => 'Sabtu',
         ];
-        
         $hariIni = $hariMap[date('l')];
-        $waktuSekarang = date('H:i:s');
 
-        $sedangDipakai = \App\Models\JadwalRuangan::where('gedung_fasilitas_id', $this->id)
+        // 1. Cek jadwal ruangan reguler
+        $sedangDipakaiRutin = \App\Models\JadwalRuangan::where('gedung_fasilitas_id', $this->id)
             ->where('hari', $hariIni)
             ->where('jam_mulai', '<=', $waktuSekarang)
-            ->where('jam_selesai', '>=', $waktuSekarang)
+            ->where('jam_selesai', '>', $waktuSekarang)
             ->exists();
 
-        return $sedangDipakai ? 'Sedang Dipakai' : 'Kosong';
+        if ($sedangDipakaiRutin) {
+            return 'Sedang Dipakai';
+        }
+
+        // 2. Inherit dari pengajuan gedung induk yang disetujui & aktif
+        if ($this->gedung_id) {
+            $sedangDipakaiPengajuan = \App\Models\PengajuanGedung::where('gedung_id', $this->gedung_id)
+                ->where('status', 'disetujui')
+                ->where('tanggal_mulai', '<=', $tanggalHariIni)
+                ->where('tanggal_selesai', '>=', $tanggalHariIni)
+                ->where('jam_mulai', '<=', $waktuSekarang)
+                ->where('jam_selesai', '>', $waktuSekarang)
+                ->exists();
+
+            if ($sedangDipakaiPengajuan) {
+                return 'Sedang Dipakai';
+            }
+        }
+
+        return 'Kosong';
     }
 }

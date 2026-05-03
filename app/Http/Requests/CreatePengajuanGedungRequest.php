@@ -39,11 +39,11 @@ class CreatePengajuanGedungRequest extends FormRequest
                 return;
             }
 
-            $gedungId      = $this->input('gedung_id');
-            $tanggalMulai  = $this->input('tanggal_mulai');
+            $gedungId       = $this->input('gedung_id');
+            $tanggalMulai   = $this->input('tanggal_mulai');
             $tanggalSelesai = $this->input('tanggal_selesai');
-            $jamMulai      = $this->input('jam_mulai');
-            $jamSelesai    = $this->input('jam_selesai');
+            $jamMulai       = $this->input('jam_mulai');
+            $jamSelesai     = $this->input('jam_selesai');
 
             // Cek apakah gedung bisa diajukan
             $gedung = \App\Models\Gedung::find($gedungId);
@@ -53,6 +53,33 @@ class CreatePengajuanGedungRequest extends FormRequest
                     'Gedung ini tidak tersedia untuk pengajuan penggunaan.'
                 );
                 return;
+            }
+
+            // Validasi jam_mulai tidak boleh di masa lalu jika tanggal_mulai = hari ini
+            if ($tanggalMulai === now()->toDateString() && $jamMulai) {
+                $waktuSekarang = now()->format('H:i');
+                if ($jamMulai <= $waktuSekarang) {
+                    $validator->errors()->add(
+                        'jam_mulai',
+                        'Jam mulai harus setelah waktu sekarang (' . $waktuSekarang . ') untuk pengajuan hari ini.'
+                    );
+                    return;
+                }
+            }
+
+            // Cek throttle: max 5 pengajuan per user dalam 1 jam terakhir (cegah spam)
+            if (\Illuminate\Support\Facades\Auth::check()) {
+                $jumlahPengajuan = PengajuanGedung::where('user_id', \Illuminate\Support\Facades\Auth::id())
+                    ->where('created_at', '>=', now()->subHour())
+                    ->count();
+
+                if ($jumlahPengajuan >= 5) {
+                    $validator->errors()->add(
+                        'gedung_id',
+                        'Anda sudah membuat 5 pengajuan dalam 1 jam terakhir. Silakan tunggu sebelum mengajukan lagi.'
+                    );
+                    return;
+                }
             }
 
             // Cek apakah ada pengajuan yang overlap pada gedung yang sama

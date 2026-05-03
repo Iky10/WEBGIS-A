@@ -40,7 +40,7 @@ class PengajuanGedungSeeder extends Seeder
                     'jam_mulai' => '08:00',
                     'jam_selesai' => '12:00',
                     'jumlah_peserta' => 50,
-                    'keterangan' => 'Pengujian fitur pengajuan',
+                    'keperluan' => 'Pengujian fitur pengajuan',
                     'status' => 'diproses',
                 ]
             );
@@ -64,7 +64,7 @@ class PengajuanGedungSeeder extends Seeder
                     'jam_mulai' => '09:00',
                     'jam_selesai' => '16:00',
                     'jumlah_peserta' => 30,
-                    'keterangan' => 'Pelatihan pengembangan aplikasi mobile',
+                    'keperluan' => 'Pelatihan pengembangan aplikasi mobile',
                     'status' => 'diproses',
                 ]
             );
