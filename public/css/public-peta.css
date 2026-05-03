@@ -1045,15 +1045,15 @@ html, body {
     box-shadow:0 8px 22px rgba(71,85,105,.4);
 }
 
-/* Ajukan — Biru / Indigo */
+/* Ajukan — Orange / Red (eye-catching CTA) */
 .sb-action-ajukan {
-    background:linear-gradient(135deg, #3b82f6, #6366f1);
-    box-shadow:0 4px 14px rgba(59,130,246,.35);
+    background:linear-gradient(135deg, #f97316, #ef4444);
+    box-shadow:0 4px 14px rgba(249,115,22,.35);
 }
 .sb-action-ajukan:hover {
-    background:linear-gradient(135deg, #2563eb, #4f46e5);
+    background:linear-gradient(135deg, #ea580c, #dc2626);
     transform:translateY(-2px);
-    box-shadow:0 8px 22px rgba(99,102,241,.45);
+    box-shadow:0 8px 22px rgba(239,68,68,.45);
     color:#fff;
 }
 
