@@ -63,50 +63,76 @@
                         </li>
                     @endif
 
-                    {{-- User Dropdown Menu (desktop: dropdown, mobile: expanded inline via CSS) --}}
+                    {{-- User Dropdown Menu (AdminLTE-style: avatar besar + member since + footer 2 buttons) --}}
+                    @php
+                        // Generate inisial dari nama (max 2 char). 'User Biasa' → 'UB', 'Riki' → 'RI'
+                        $userName = Auth::user()->name ?? 'User';
+                        $nameParts = preg_split('/\s+/', trim($userName));
+                        if (count($nameParts) >= 2) {
+                            $initials = strtoupper(mb_substr($nameParts[0], 0, 1) . mb_substr($nameParts[1], 0, 1));
+                        } else {
+                            $initials = strtoupper(mb_substr($userName, 0, 2));
+                        }
+                        // Hash nama untuk pilih warna avatar (consistent per user)
+                        $avatarColors = [
+                            ['#3498db', '#2980b9'], // blue
+                            ['#27ae60', '#1e8449'], // green
+                            ['#e67e22', '#d35400'], // orange
+                            ['#9b59b6', '#7d3c98'], // purple
+                            ['#1abc9c', '#16a085'], // teal
+                            ['#e74c3c', '#c0392b'], // red
+                        ];
+                        $colorIdx = abs(crc32($userName)) % count($avatarColors);
+                        $avatarGradient = 'linear-gradient(135deg, ' . $avatarColors[$colorIdx][0] . ', ' . $avatarColors[$colorIdx][1] . ')';
+                        $memberSince = Auth::user()->created_at ? Auth::user()->created_at->isoFormat('MMM YYYY') : '-';
+                    @endphp
                     <li class="nav-item dropdown user-dropdown">
                         <a class="nav-link dropdown-toggle user-dropdown-toggle" data-toggle="dropdown"
                            href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-user-circle"></i>
-                            <span class="user-dropdown-name">{{ Str::limit(Auth::user()->name, 18) }}</span>
+                            <span class="user-avatar-mini" style="background: {{ $avatarGradient }};">{{ $initials }}</span>
+                            <span class="user-dropdown-name">{{ Str::limit($userName, 18) }}</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right user-dropdown-menu">
-                            {{-- User Info Header --}}
+                            {{-- Header: avatar besar di tengah + nama + member since --}}
                             <div class="user-dropdown-header">
-                                <div class="user-info-avatar">
-                                    <i class="fas fa-user-circle"></i>
+                                <div class="user-avatar-big" style="background: {{ $avatarGradient }};">
+                                    {{ $initials }}
                                 </div>
-                                <div class="user-info-text">
-                                    <div class="user-info-name">{{ Auth::user()->name }}</div>
-                                    <div class="user-info-email">{{ Auth::user()->email }}</div>
+                                <div class="user-info-name">{{ $userName }}</div>
+                                <div class="user-info-email">{{ Auth::user()->email }}</div>
+                                <div class="user-info-meta">
                                     @if(Auth::user()->isAdmin())
                                         <span class="user-info-role">Administrator</span>
                                     @else
                                         <span class="user-info-role user-info-role-user">Pengguna</span>
                                     @endif
+                                    <span class="user-info-since">
+                                        <i class="far fa-clock"></i> Sejak {{ $memberSince }}
+                                    </span>
                                 </div>
                             </div>
 
-                            <div class="dropdown-divider"></div>
-
-                            {{-- Quick Links --}}
+                            {{-- Quick Links (only di mobile / kalau diperlukan) --}}
                             @if(Auth::user()->isAdmin())
-                                <a class="dropdown-item d-lg-none" href="{{ route('home') }}">
+                                <a class="dropdown-item d-lg-none user-dropdown-link" href="{{ route('home') }}">
                                     <i class="fas fa-cogs text-primary mr-2"></i>Dashboard Admin
                                 </a>
+                                <div class="dropdown-divider d-lg-none"></div>
                             @endif
-                            <a class="dropdown-item" href="#" title="Fitur akan datang">
-                                <i class="fas fa-user-cog text-secondary mr-2"></i>Profil Saya
-                                <small class="text-muted ml-1">(Segera)</small>
-                            </a>
 
-                            <div class="dropdown-divider"></div>
-
-                            {{-- Logout (subtle styling) --}}
-                            <a class="dropdown-item dropdown-item-logout" href="#"
-                               onclick="event.preventDefault(); document.getElementById('logout-form-public').submit();">
-                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                            </a>
+                            {{-- Footer: 2 buttons (Profil + Logout) --}}
+                            <div class="user-dropdown-footer">
+                                <a href="#" class="user-footer-btn user-footer-btn-profile" title="Fitur profil akan datang">
+                                    <i class="fas fa-user-cog mr-1"></i>
+                                    <span>Profil Saya</span>
+                                    <span class="badge-coming-soon">Segera</span>
+                                </a>
+                                <a href="#" class="user-footer-btn user-footer-btn-logout"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form-public').submit();">
+                                    <i class="fas fa-sign-out-alt mr-1"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </div>
                         </div>
                         <form id="logout-form-public" action="{{ route('logout') }}" method="POST" class="d-none">
                             @csrf
