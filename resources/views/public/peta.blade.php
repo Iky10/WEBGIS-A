@@ -274,7 +274,13 @@
 </script>
 <script src="{{ asset('js/public-peta.js') }}"></script>
 
-{{-- Bottom Sheet Gesture (mobile only) - drag handle untuk expand/collapse + swipe-down to close --}}
+{{-- Bottom Sheet 3-State Gesture (mobile only)
+     Pattern Google Maps: peek (14vh) ↔ half (52vh) ↔ full (92vh)
+     - Tap drag handle: cycle state ke atas (peek → half → full → peek)
+     - Drag up: ke state lebih besar
+     - Drag down: ke state lebih kecil
+     - Drag down dari peek: close sidebar
+--}}
 <script>
 (function() {
     'use strict';
@@ -283,67 +289,144 @@
     var dragArea = document.getElementById('sbDragArea');
     if (!sidebar || !dragArea) return;
 
-    // Hanya aktif di mobile (≤768px)
+    // States dalam urutan dari kecil ke besar
+    var STATES = ['peek', 'half', 'full'];
+    var DEFAULT_STATE = 'half';
+
     function isMobile() {
         return window.matchMedia('(max-width: 768px)').matches;
     }
 
-    // Click handle: toggle expand/collapse
+    function getCurrentState() {
+        for (var i = 0; i < STATES.length; i++) {
+            if (sidebar.classList.contains(STATES[i])) return STATES[i];
+        }
+        return DEFAULT_STATE; // fallback
+    }
+
+    function setState(newState) {
+        STATES.forEach(function(s) { sidebar.classList.remove(s); });
+        sidebar.classList.remove('expanded'); // legacy class cleanup
+        sidebar.classList.add(newState);
+    }
+
+    // Tap drag handle: cycle state (peek → half → full → peek)
     dragArea.addEventListener('click', function(e) {
         if (!isMobile()) return;
-        sidebar.classList.toggle('expanded');
+        var current = getCurrentState();
+        var idx = STATES.indexOf(current);
+        var next = STATES[(idx + 1) % STATES.length];
+        setState(next);
     });
 
-    // Touch drag gesture untuk swipe down → close, swipe up → expand
+    // Touch drag gesture
     var touchStartY = 0;
     var touchCurrentY = 0;
     var isDragging = false;
+    var initialHeight = 0;
 
     dragArea.addEventListener('touchstart', function(e) {
         if (!isMobile()) return;
         touchStartY = e.touches[0].clientY;
+        touchCurrentY = touchStartY;
         isDragging = true;
-        sidebar.style.transition = 'none'; // disable transisi saat drag manual
+        initialHeight = sidebar.offsetHeight;
+        sidebar.style.transition = 'none';
     }, { passive: true });
 
     dragArea.addEventListener('touchmove', function(e) {
         if (!isDragging || !isMobile()) return;
         touchCurrentY = e.touches[0].clientY;
         var deltaY = touchCurrentY - touchStartY;
-
-        // Hanya respond ke drag ke bawah (deltaY > 0) saat di state default
-        // Atau drag ke atas (deltaY < 0) saat di state default untuk expand
-        if (deltaY > 0) {
-            // Drag ke bawah: visual feedback geser sheet
-            sidebar.style.transform = 'translateY(' + deltaY + 'px)';
-        }
+        // Live drag: ubah height inline (positive deltaY = drag down = shrink)
+        var newHeight = initialHeight - deltaY;
+        // Clamp ke 0–100vh
+        var minH = 0;
+        var maxH = window.innerHeight * 0.92;
+        newHeight = Math.max(minH, Math.min(maxH, newHeight));
+        sidebar.style.height = newHeight + 'px';
     }, { passive: true });
 
     dragArea.addEventListener('touchend', function(e) {
         if (!isDragging || !isMobile()) return;
         isDragging = false;
         sidebar.style.transition = ''; // restore transisi
-        sidebar.style.transform = '';
+        sidebar.style.height = ''; // clear inline, biar class CSS yg control
 
         var deltaY = touchCurrentY - touchStartY;
+        var current = getCurrentState();
+        var idx = STATES.indexOf(current);
 
-        // Swipe down > 80px: close sidebar
-        if (deltaY > 80) {
-            sidebar.classList.remove('show');
-            sidebar.classList.add('hide');
-            sidebar.classList.remove('expanded');
+        // Threshold: 60px untuk trigger state change
+        if (deltaY < -60) {
+            // Drag UP: state berikutnya yang lebih besar
+            if (idx < STATES.length - 1) {
+                setState(STATES[idx + 1]);
+            }
+        } else if (deltaY > 60) {
+            // Drag DOWN: state sebelumnya yang lebih kecil, atau close kalau sudah peek
+            if (idx > 0) {
+                setState(STATES[idx - 1]);
+            } else {
+                // Sudah di peek state, drag down = close
+                sidebar.classList.remove('show');
+                STATES.forEach(function(s) { sidebar.classList.remove(s); });
+            }
         }
-        // Swipe up > 50px: expand
-        else if (deltaY < -50) {
-            sidebar.classList.add('expanded');
-        }
+        // Kalau delta < threshold, tetap di state sebelumnya (snap back via class)
     });
 
-    // Reset expanded state saat sidebar di-close (untuk konsistensi state berikutnya)
+    // Klik X close: reset state ke default untuk next open
     var sbClose = document.getElementById('sbClose');
     if (sbClose) {
         sbClose.addEventListener('click', function() {
-            sidebar.classList.remove('expanded');
+            STATES.forEach(function(s) { sidebar.classList.remove(s); });
+        });
+    }
+
+    // Saat sidebar baru open (via openSidebar), set ke default state (half)
+    // Observer untuk detect class 'show' added
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            if (m.attributeName === 'class' && isMobile()) {
+                if (sidebar.classList.contains('show')) {
+                    // Pastikan ada 1 state class
+                    var hasState = STATES.some(function(s) { return sidebar.classList.contains(s); });
+                    if (!hasState) {
+                        sidebar.classList.add(DEFAULT_STATE);
+                    }
+                }
+            }
+        });
+    });
+    observer.observe(sidebar, { attributes: true });
+
+    // ── Hide empty stat cards (FUNGSI/STATUS/LANTAI/TAHUN dengan value '-') ──
+    // Observer untuk detect content changes, lalu cek tiap .sb-stat
+    function hideEmptyStats() {
+        var stats = document.querySelectorAll('.sb-stat');
+        stats.forEach(function(stat) {
+            var valueEl = stat.querySelector('.sb-stat-v');
+            if (!valueEl) return;
+            var v = (valueEl.textContent || '').trim();
+            // Hide kalau empty, '-', '0', atau placeholder
+            if (v === '' || v === '-' || v === 'null') {
+                stat.classList.add('sb-stat-empty');
+            } else {
+                stat.classList.remove('sb-stat-empty');
+            }
+        });
+    }
+
+    // Listen for content updates di sb-content (after AJAX populated data)
+    var sbContent = document.getElementById('sbContent');
+    if (sbContent) {
+        var contentObserver = new MutationObserver(function() {
+            // Debounce sedikit supaya semua field ke-update dulu
+            setTimeout(hideEmptyStats, 50);
+        });
+        contentObserver.observe(sbContent, {
+            childList: true, subtree: true, characterData: true
         });
     }
 })();

@@ -1141,9 +1141,18 @@ html, body {
     .gis-popup { width: 240px; }
 
     /* ──────────────────────────────────────────
-       SIDEBAR Detail Gedung → Bottom Sheet (Google Maps style)
-       Map tetap visible di atas (~35vh), sheet dari bawah (~65vh).
-       User bisa drag handle untuk expand ke full screen.
+       MARKER PREVIEW — hide di mobile (touch tidak hover)
+       Tap marker langsung buka bottom sheet, no popup floating.
+    ────────────────────────────────────────── */
+    .marker-preview {
+        display: none !important;
+    }
+
+    /* ──────────────────────────────────────────
+       BOTTOM SHEET — 3-state pattern Google Maps
+       - peek    : ~14vh (hanya nama gedung visible)
+       - half    : ~52vh (default saat klik marker)
+       - full    : ~92vh (drag up untuk expand)
     ────────────────────────────────────────── */
     #sidebar {
         top: auto !important;
@@ -1152,51 +1161,96 @@ html, body {
         right: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
-        height: 65vh !important;
-        max-height: 95vh;
+        height: 52vh; /* default = half state */
+        max-height: 92vh;
         border-right: none !important;
         border-top: 1px solid var(--border-hi);
         border-radius: 18px 18px 0 0;
         box-shadow: 0 -10px 40px rgba(0,0,0,.6);
         transform: translateY(100%) !important;
-        transition: transform .35s cubic-bezier(.4,0,.2,1), height .25s ease;
+        transition: transform .35s cubic-bezier(.4,0,.2,1),
+                    height .28s cubic-bezier(.4,0,.2,1);
     }
     #sidebar.show {
         transform: translateY(0) !important;
     }
-    /* Expanded state: full screen (saat drag-up atau klik handle) */
-    #sidebar.expanded {
-        height: 95vh !important;
+    /* State: peek (minimized — hanya nama gedung visible) */
+    #sidebar.peek {
+        height: 14vh !important;
+    }
+    /* State: half (default) — already set above */
+    #sidebar.half {
+        height: 52vh !important;
+    }
+    /* State: full (expanded) */
+    #sidebar.expanded,
+    #sidebar.full {
+        height: 92vh !important;
     }
 
-    /* Drag handle visual indicator (knob bar di top tengah) */
+    /* Drag handle area (clickable + draggable) */
+    .sb-drag-area {
+        position: absolute; top: 0; left: 0; right: 0;
+        height: 32px; z-index: 9;
+        cursor: grab;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .sb-drag-area:active { cursor: grabbing; }
+
+    /* Drag knob visual (lebih jelas + animated hover) */
     #sidebar::before {
         content: '';
         position: absolute;
-        top: 8px; left: 50%;
+        top: 10px; left: 50%;
         transform: translateX(-50%);
-        width: 44px; height: 5px;
-        background: rgba(255,255,255,.25);
+        width: 48px; height: 5px;
+        background: rgba(255,255,255,.35);
         border-radius: 3px;
         z-index: 10;
         pointer-events: none;
+        transition: background .2s, width .2s;
+    }
+    .sb-drag-area:hover ~ * #sidebar::before,
+    #sidebar:hover::before {
+        background: rgba(255,255,255,.55);
+        width: 56px;
     }
 
-    /* Tap area untuk drag handle (area yang bisa di-tap untuk toggle expand) */
-    .sb-drag-area {
-        position: absolute; top: 0; left: 0; right: 0;
-        height: 24px; z-index: 9;
-        cursor: grab;
-    }
-
-    /* Sb-head adjust supaya tidak ketabrak handle */
+    /* Sb-head: padding adjust + always visible saat peek */
     .sb-head {
-        padding-top: 22px !important;
+        padding-top: 26px !important;
+        padding-bottom: 12px !important;
     }
 
-    /* Foto sb-img-wrap reduce di mobile bottom sheet */
-    .sb-img-wrap {
-        height: 160px !important;
+    /* Saat peek state, tampilkan info ringkas (nama gedung di body) */
+    #sidebar.peek .sb-body {
+        overflow: hidden;
+    }
+
+    /* Foto sb-img-wrap reduce di mobile */
+    .sb-img-wrap { height: 180px !important; }
+
+    /* Hide empty stat cards (.sb-stat-empty class di-add via JS) */
+    .sb-stat.sb-stat-empty { display: none !important; }
+
+    /* Tap area fasilitas/ruangan card — generous untuk thumb (Apple HIG 44px+) */
+    .sb-fas-item {
+        padding: 14px !important;
+        min-height: 64px;
+        transition: background .15s, transform .1s, border-color .15s;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+    .sb-fas-item:active {
+        background: rgba(59,130,246,.18) !important;
+        border-color: var(--accent) !important;
+        transform: scale(.98);
+    }
+    .sb-fas-expand-btn {
+        min-height: 44px !important;
+        font-size: .85rem !important;
+        padding: 10px 14px !important;
     }
 }
 
