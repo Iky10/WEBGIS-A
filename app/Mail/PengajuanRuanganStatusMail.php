@@ -5,34 +5,28 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\PengajuanGedung;
+use App\Models\PengajuanRuangan;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class PengajuanStatusMail extends Mailable implements ShouldQueue
+class PengajuanRuanganStatusMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public $pengajuan;
     public $statusLabel;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct(PengajuanGedung $pengajuan)
+    public function __construct(PengajuanRuangan $pengajuan)
     {
         $this->pengajuan = $pengajuan;
         $this->statusLabel = $pengajuan->status === 'disetujui' ? 'Disetujui' : 'Ditolak';
     }
 
-    /**
-     * Build the message.
-     */
     public function build()
     {
-        $subject = "Pengajuan {$this->pengajuan->kode_pengajuan} — {$this->statusLabel}";
+        $subject = "Pengajuan Ruangan {$this->pengajuan->kode_pengajuan} — {$this->statusLabel}";
 
         return $this->subject($subject)
-                    ->view('emails.pengajuan_status');
+                    ->view('emails.pengajuan_ruangan_status');
     }
 }

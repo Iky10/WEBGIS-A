@@ -2,14 +2,14 @@
 
 namespace App\Repositories;
 
-use App\Models\PengajuanGedung;
+use App\Models\PengajuanRuangan;
 use App\Repositories\BaseRepository;
 
-class PengajuanGedungRepository extends BaseRepository
+class PengajuanRuanganRepository extends BaseRepository
 {
     protected $fieldSearchable = [
         'kode_pengajuan',
-        'gedung_id',
+        'gedung_fasilitas_id',
         'user_id',
         'nama_pemohon',
         'email_pemohon',
@@ -25,6 +25,6 @@ class PengajuanGedungRepository extends BaseRepository
 
     public function model()
     {
-        return PengajuanGedung::class;
+        return PengajuanRuangan::class;
     }
 }

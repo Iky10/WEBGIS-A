@@ -1,4 +1,4 @@
-    <table class="table table-hover" id="pengajuanGedungs-table">
+    <table class="table table-hover" id="pengajuanRuangans-table">
         <thead>
             <tr>
                 <th width="40" class="text-center align-middle">
@@ -9,7 +9,7 @@
                 </th>
                 <th>Kode</th>
                 <th>Pemohon</th>
-                <th>Gedung</th>
+                <th>Ruangan</th>
                 <th>Kegiatan</th>
                 <th>Tanggal</th>
                 <th>Status</th>
@@ -17,12 +17,12 @@
             </tr>
         </thead>
         <tbody>
-        @forelse($pengajuanGedungs as $pengajuan)
+        @forelse($pengajuanRuangans as $pengajuan)
             <tr>
                 <td class="text-center align-middle">
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input check-row-pengajuan" id="check_pg_{{ $pengajuan->id }}" value="{{ $pengajuan->id }}">
-                        <label class="custom-control-label" for="check_pg_{{ $pengajuan->id }}"></label>
+                        <input type="checkbox" class="custom-control-input check-row-pengajuan" id="check_pr_{{ $pengajuan->id }}" value="{{ $pengajuan->id }}">
+                        <label class="custom-control-label" for="check_pr_{{ $pengajuan->id }}"></label>
                     </div>
                 </td>
                 <td><strong>{{ $pengajuan->kode_pengajuan }}</strong></td>
@@ -30,13 +30,24 @@
                     {{ $pengajuan->nama_pemohon }}
                     <br><small class="text-muted">{{ $pengajuan->user->name ?? '-' }}</small>
                 </td>
-                <td>{{ $pengajuan->gedung->nama_gedung ?? '-' }}</td>
+                <td class="ruangan-cell">
+                    <div class="ruangan-name">
+                        <i class="fas fa-door-open text-primary mr-1"></i>{{ $pengajuan->ruangan->nama_fasilitas ?? '-' }}
+                    </div>
+                    <div class="gedung-name">
+                        <i class="fas fa-building mr-1"></i>{{ $pengajuan->ruangan->gedung->nama_gedung ?? '-' }}
+                    </div>
+                </td>
                 <td>{{ $pengajuan->nama_kegiatan }}</td>
                 <td>
                     {{ $pengajuan->tanggal_mulai->format('d/m/Y') }}
                     @if($pengajuan->tanggal_mulai != $pengajuan->tanggal_selesai)
                         - {{ $pengajuan->tanggal_selesai->format('d/m/Y') }}
                     @endif
+                    <br><small class="text-muted">
+                        {{ \Carbon\Carbon::parse($pengajuan->jam_mulai)->format('H:i') }}
+                        - {{ \Carbon\Carbon::parse($pengajuan->jam_selesai)->format('H:i') }}
+                    </small>
                 </td>
                 <td>
                     @if($pengajuan->status === 'disetujui')
@@ -49,13 +60,13 @@
                 </td>
                 <td style="width: 180px;">
                     <div class="d-flex align-items-center">
-                        <a href="{{ route('pengajuan_gedungs.show', $pengajuan->id) }}"
+                        <a href="{{ route('pengajuan_ruangans.show', $pengajuan->id) }}"
                            class="btn btn-default btn-sm mr-1" title="Lihat Detail">
                             <i class="far fa-eye"></i>
                         </a>
 
                         @if($pengajuan->status === 'diproses')
-                            <form action="{{ route('pengajuan_gedungs.update-status', $pengajuan->id) }}"
+                            <form action="{{ route('pengajuan_ruangans.update-status', $pengajuan->id) }}"
                                   method="POST" class="mr-1 mb-0" style="display:inline;">
                                 @csrf @method('PATCH')
                                 <input type="hidden" name="status" value="disetujui">
@@ -65,7 +76,7 @@
                                     <i class="fas fa-check"></i>
                                 </button>
                             </form>
-                            <form action="{{ route('pengajuan_gedungs.update-status', $pengajuan->id) }}"
+                            <form action="{{ route('pengajuan_ruangans.update-status', $pengajuan->id) }}"
                                   method="POST" class="mr-1 mb-0 form-tolak-pengajuan" style="display:inline;">
                                 @csrf @method('PATCH')
                                 <input type="hidden" name="status" value="ditolak">
@@ -77,7 +88,7 @@
                             </form>
                         @endif
 
-                        <form action="{{ route('pengajuan_gedungs.destroy', $pengajuan->id) }}"
+                        <form action="{{ route('pengajuan_ruangans.destroy', $pengajuan->id) }}"
                               method="POST" class="mb-0" style="display:inline;">
                             @csrf @method('DELETE')
                             <button type="button" class="btn btn-danger btn-sm"

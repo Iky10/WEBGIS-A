@@ -32,8 +32,8 @@ class DatabaseSeeder extends Seeder
             // Jalankan manual jika file fisik sudah tersedia:
             //   php artisan db:seed --class=JadwalSemesterSeeder
 
-            // Data turunan (butuh user + gedung)
-            PengajuanGedungSeeder::class,
+            // Data turunan (butuh user + ruangan)
+            PengajuanRuanganSeeder::class,
         ]);
     }
 }

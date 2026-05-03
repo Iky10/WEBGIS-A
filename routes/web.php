@@ -24,11 +24,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home',            [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/admin/dashboard', [App\Http\Controllers\HomeController::class, 'index'])->name('admin.dashboard');
 
-    // Pengajuan Gedung — route untuk semua user yang login
-    Route::get('pengajuan-gedung/riwayat', [App\Http\Controllers\PengajuanGedungController::class, 'riwayat'])->name('pengajuan_gedungs.riwayat');
-    Route::get('pengajuan_gedungs/create', [App\Http\Controllers\PengajuanGedungController::class, 'create'])->name('pengajuan_gedungs.create');
-    Route::post('pengajuan_gedungs', [App\Http\Controllers\PengajuanGedungController::class, 'store'])->name('pengajuan_gedungs.store');
-    Route::get('pengajuan_gedungs/{pengajuan_gedung}', [App\Http\Controllers\PengajuanGedungController::class, 'show'])->name('pengajuan_gedungs.show');
+    // Pengajuan Ruangan — route untuk semua user yang login
+    Route::get('pengajuan-ruangan/riwayat', [App\Http\Controllers\PengajuanRuanganController::class, 'riwayat'])->name('pengajuan_ruangans.riwayat');
+    Route::get('pengajuan_ruangans/create', [App\Http\Controllers\PengajuanRuanganController::class, 'create'])->name('pengajuan_ruangans.create');
+    Route::post('pengajuan_ruangans', [App\Http\Controllers\PengajuanRuanganController::class, 'store'])->name('pengajuan_ruangans.store');
+    Route::get('pengajuan_ruangans/{pengajuan_ruangan}', [App\Http\Controllers\PengajuanRuanganController::class, 'show'])->name('pengajuan_ruangans.show');
+
+    // AJAX: live availability check (dipakai di form create)
+    Route::post('pengajuan_ruangans/cek-ketersediaan', [App\Http\Controllers\PengajuanRuanganController::class, 'cekKetersediaan'])->name('pengajuan_ruangans.cek-ketersediaan');
 
 });
 
@@ -53,11 +56,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('jadwal_semester', App\Http\Controllers\JadwalSemesterController::class);
     Route::get('/webgis', [App\Http\Controllers\WebGisController::class, 'index'])->name('webgis.index');
 
-    // Pengajuan Gedung — route khusus admin
-    Route::get('pengajuan_gedungs', [App\Http\Controllers\PengajuanGedungController::class, 'index'])->name('pengajuan_gedungs.index');
-    Route::patch('pengajuan_gedungs/{id}/status', [App\Http\Controllers\PengajuanGedungController::class, 'updateStatus'])->name('pengajuan_gedungs.update-status');
-    Route::delete('pengajuan_gedungs/bulk-delete', [App\Http\Controllers\PengajuanGedungController::class, 'bulkDelete'])->name('pengajuan_gedungs.bulk-delete');
-    Route::delete('pengajuan_gedungs/{pengajuan_gedung}', [App\Http\Controllers\PengajuanGedungController::class, 'destroy'])->name('pengajuan_gedungs.destroy');
+    // Pengajuan Ruangan — route khusus admin
+    Route::get('pengajuan_ruangans', [App\Http\Controllers\PengajuanRuanganController::class, 'index'])->name('pengajuan_ruangans.index');
+    Route::patch('pengajuan_ruangans/{id}/status', [App\Http\Controllers\PengajuanRuanganController::class, 'updateStatus'])->name('pengajuan_ruangans.update-status');
+    Route::delete('pengajuan_ruangans/bulk-delete', [App\Http\Controllers\PengajuanRuanganController::class, 'bulkDelete'])->name('pengajuan_ruangans.bulk-delete');
+    Route::delete('pengajuan_ruangans/{pengajuan_ruangan}', [App\Http\Controllers\PengajuanRuanganController::class, 'destroy'])->name('pengajuan_ruangans.destroy');
 
 });
 
