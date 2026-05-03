@@ -44,7 +44,7 @@
     @include('layouts.datatables_css')
 
     <!-- Admin Custom -->
-    <link rel="stylesheet" href="{{ asset('css/admin-custom.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin-custom.css') }}?v={{ filemtime(public_path('css/admin-custom.css')) }}">
 
     {{-- Notif Bell Styling --}}
     <style>
