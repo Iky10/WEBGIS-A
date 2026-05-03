@@ -445,15 +445,22 @@
                 font-size: 0.85rem;
             }
 
-            /* Dropdown menu: posisi tepat di mobile */
+            /* Dropdown menu di mobile: pakai data-display=static (no popper)
+               Position absolute relative ke parent .dropdown li.
+               Right: 0 anchor ke kanan parent (avatar trigger). */
             .navbar-public .user-dropdown-menu {
+                position: absolute !important;
+                top: 100% !important;
+                right: 0 !important;
+                left: auto !important;
+                margin-top: 10px !important;
                 min-width: 280px !important;
                 max-width: calc(100vw - 24px) !important;
-                margin-top: 10px !important;
-                margin-right: 0 !important;
-                right: 12px !important;
-                left: auto !important;
                 transform: none !important;
+            }
+            /* Parent <li.dropdown> butuh position relative untuk anchor child absolute */
+            .navbar-public .user-dropdown {
+                position: relative !important;
             }
         }
 

@@ -100,6 +100,7 @@
                     @endphp
                     <li class="nav-item dropdown user-dropdown">
                         <a class="nav-link dropdown-toggle user-dropdown-toggle" data-toggle="dropdown"
+                           data-display="static"
                            href="#" role="button" aria-haspopup="true" aria-expanded="false">
                             <span class="user-avatar-mini" style="background: {{ $avatarGradient }};">{{ $initials }}</span>
                             <span class="user-dropdown-name">{{ Str::limit($userName, 18) }}</span>
