@@ -14,6 +14,21 @@
     .form-header h2 { font-weight: 700; margin: 0; }
     .form-header p { opacity: .85; margin: 5px 0 0; }
 
+    /* ══ BACK BUTTON ══ */
+    .back-link {
+        display: inline-flex; align-items: center; gap: 8px;
+        color: rgba(255,255,255,.85); text-decoration: none;
+        font-size: .9rem; font-weight: 500;
+        padding: 6px 12px; border-radius: 6px;
+        margin-bottom: 12px; transition: all .2s;
+        background: rgba(255,255,255,.08);
+    }
+    .back-link:hover {
+        color: #fff; background: rgba(255,255,255,.18);
+        text-decoration: none; transform: translateX(-3px);
+    }
+    .back-link i { font-size: .85rem; }
+
     /* ══ STEP INDICATOR ══ */
     .step-progress {
         display: flex; justify-content: space-between; align-items: center;
@@ -70,11 +85,50 @@
         color: #7f8c8d; margin-bottom: 20px; font-size: .95rem;
     }
 
+    /* ══ FILTER BAR (Search + Kategori) ══ */
+    .ruangan-filter-bar {
+        display: flex; gap: 12px; flex-wrap: wrap;
+        margin-bottom: 16px; align-items: stretch;
+    }
+    .ruangan-filter-bar .search-wrapper {
+        position: relative; flex: 1 1 280px;
+    }
+    .ruangan-filter-bar .search-wrapper i {
+        position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+        color: #95a5a6; font-size: .9rem;
+    }
+    .ruangan-filter-bar input.search-ruangan {
+        width: 100%; padding: 10px 14px 10px 38px;
+        border: 1.5px solid #e9ecef; border-radius: 8px;
+        font-size: .95rem; transition: border-color .2s, box-shadow .2s;
+    }
+    .ruangan-filter-bar input.search-ruangan:focus {
+        outline: none; border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52,152,219,.15);
+    }
+    .ruangan-filter-bar select.filter-kategori {
+        flex: 0 1 220px; padding: 10px 14px;
+        border: 1.5px solid #e9ecef; border-radius: 8px;
+        background: #fff; font-size: .95rem; cursor: pointer;
+        transition: border-color .2s;
+    }
+    .ruangan-filter-bar select.filter-kategori:focus {
+        outline: none; border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52,152,219,.15);
+    }
+    .filter-counter {
+        font-size: .85rem; color: #7f8c8d; margin-bottom: 12px;
+        font-weight: 500;
+    }
+    .filter-counter strong { color: #2c3e50; }
+
     /* ══ GEDUNG / RUANGAN PICKER CARDS ══ */
     .picker-grid {
         display: grid; gap: 16px;
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     }
+    /* Card disembunyikan oleh filter */
+    .picker-card.filter-hidden { display: none; }
     .picker-card {
         border: 2px solid #e9ecef; border-radius: 10px;
         background: #fff; cursor: pointer; overflow: hidden;
@@ -178,7 +232,17 @@
     .btn-kirim:hover { background: linear-gradient(135deg, #219a52, #1e8449); color: #fff; }
     .btn-kirim:disabled { opacity: .5; cursor: not-allowed; }
 
-    .btn-batal { border-radius: 8px; padding: 12px 28px; }
+    /* Tombol Batal: outline secondary, bukan destructive */
+    .btn-batal {
+        border: 1.5px solid #bdc3c7; color: #7f8c8d;
+        background: #fff; border-radius: 8px;
+        padding: 12px 28px; font-weight: 500;
+        transition: all .2s;
+    }
+    .btn-batal:hover {
+        background: #ecf0f1; color: #2c3e50;
+        border-color: #95a5a6; text-decoration: none;
+    }
 
     /* ══ EMPTY STATE ══ */
     .empty-ruangan {
@@ -186,6 +250,14 @@
         background: #f8f9fa; border-radius: 10px;
     }
     .empty-ruangan i { font-size: 2rem; margin-bottom: 10px; display: block; color: #bdc3c7; }
+
+    /* Empty state khusus untuk hasil filter (no match) */
+    .empty-filter-result {
+        display: none; padding: 24px; text-align: center; color: #7f8c8d;
+        background: #f8f9fa; border-radius: 10px; margin-top: 8px;
+    }
+    .empty-filter-result i { font-size: 1.8rem; margin-bottom: 8px; display: block; color: #bdc3c7; }
+    .empty-filter-result.show { display: block; }
 
     /* Validation errors list */
     .alert-danger { border-radius: 10px; border-left: 4px solid #e74c3c; }
@@ -195,6 +267,9 @@
 @section('content')
 <div class="form-header">
     <div class="container">
+        <a href="{{ url('/') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Kembali ke Beranda
+        </a>
         <h2><i class="fas fa-door-open mr-2"></i>Ajukan Penggunaan Ruangan</h2>
         <p>Pilih ruangan yang ingin Anda gunakan dan isi detail kegiatan</p>
     </div>
@@ -245,6 +320,32 @@
                 <p class="mb-0">Tidak ada ruangan yang dibuka untuk pengajuan saat ini. Silakan hubungi admin.</p>
             </div>
         @else
+            {{-- Filter Bar: hanya tampil kalau ruangan > 4 (cegah overkill untuk data sedikit) --}}
+            @if($ruangans->count() > 4)
+                @php
+                    $kategoriList = $ruangans->pluck('kategori')->filter()->unique()->sort()->values();
+                @endphp
+                <div class="ruangan-filter-bar">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="search-ruangan" id="input-search-ruangan"
+                               placeholder="Cari nama ruangan atau gedung..." autocomplete="off">
+                    </div>
+                    @if($kategoriList->count() > 1)
+                        <select class="filter-kategori" id="select-kategori">
+                            <option value="">Semua Kategori</option>
+                            @foreach($kategoriList as $kat)
+                                <option value="{{ $kat }}">{{ $kat }}</option>
+                            @endforeach
+                        </select>
+                    @endif
+                </div>
+                <div class="filter-counter" id="filter-counter">
+                    Menampilkan <strong id="counter-shown">{{ $ruangans->count() }}</strong> dari
+                    <strong>{{ $ruangans->count() }}</strong> ruangan
+                </div>
+            @endif
+
             <div class="picker-grid" id="ruangan-container">
                 @foreach($ruangans as $r)
                     @php
@@ -253,7 +354,9 @@
                         $statusLabel = $status === 'Sedang Dipakai' ? 'Sedang Dipakai' : ($status === 'Tutup' ? 'Tutup' : 'Tersedia');
                     @endphp
                     <div class="picker-card ruangan-card {{ $selectedRuangan == $r->id ? 'selected' : '' }}"
-                         data-ruangan-id="{{ $r->id }}">
+                         data-ruangan-id="{{ $r->id }}"
+                         data-search="{{ Str::lower($r->nama_fasilitas . ' ' . optional($r->gedung)->nama_gedung . ' ' . $r->kategori) }}"
+                         data-kategori="{{ $r->kategori }}">
                         <span class="ruangan-status {{ $statusClass }}">{{ $statusLabel }}</span>
                         @if($r->foto_ruangan)
                             <img src="{{ asset($r->foto_ruangan) }}"
@@ -282,6 +385,12 @@
                         </div>
                     </div>
                 @endforeach
+            </div>
+            {{-- Empty state saat hasil filter zero match --}}
+            <div class="empty-filter-result" id="empty-filter-result">
+                <i class="fas fa-search-minus"></i>
+                <h6>Tidak Ada Ruangan Cocok</h6>
+                <p class="mb-0">Coba ubah kata kunci pencarian atau filter kategori.</p>
             </div>
         @endif
     </div>
@@ -529,6 +638,59 @@
             $('input[name="jam_selesai"]').val(String(h).padStart(2, '0') + ':' + parts[1]);
         }
     });
+
+    // ── FILTER (Search + Kategori) ───────────────────────────
+    var $searchInput   = $('#input-search-ruangan');
+    var $kategoriSelect = $('#select-kategori');
+    var $counterShown  = $('#counter-shown');
+    var $emptyFilter   = $('#empty-filter-result');
+    var $ruanganContainer = $('#ruangan-container');
+
+    function applyFilter() {
+        var query    = ($searchInput.val() || '').trim().toLowerCase();
+        var kategori = ($kategoriSelect.val() || '').trim();
+        var totalShown = 0;
+
+        $('.ruangan-card').each(function() {
+            var $card = $(this);
+            var searchData = ($card.data('search') || '').toString().toLowerCase();
+            var cardKategori = ($card.data('kategori') || '').toString();
+
+            var matchSearch = !query || searchData.indexOf(query) !== -1;
+            var matchKategori = !kategori || cardKategori === kategori;
+
+            if (matchSearch && matchKategori) {
+                $card.removeClass('filter-hidden');
+                totalShown++;
+            } else {
+                $card.addClass('filter-hidden');
+            }
+        });
+
+        // Update counter & empty state
+        if ($counterShown.length) {
+            $counterShown.text(totalShown);
+        }
+        if (totalShown === 0) {
+            $ruanganContainer.hide();
+            $emptyFilter.addClass('show');
+        } else {
+            $ruanganContainer.show();
+            $emptyFilter.removeClass('show');
+        }
+    }
+
+    // Bind events kalau filter bar muncul (data > 4 ruangan)
+    if ($searchInput.length) {
+        var filterDebounceTimer;
+        $searchInput.on('input', function() {
+            clearTimeout(filterDebounceTimer);
+            filterDebounceTimer = setTimeout(applyFilter, 150);
+        });
+    }
+    if ($kategoriSelect.length) {
+        $kategoriSelect.on('change', applyFilter);
+    }
 
     // ── INITIAL STATE ────────────────────────────────────────
     // Kalau ada pre-selected (via ?ruangan_id= atau dari old())
