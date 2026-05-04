@@ -34,6 +34,15 @@
     </a>
 </li>
 
+{{-- Menu Vegetasi --}}
+<li class="nav-item">
+    <a href="{{ route('vegetasis.index') }}"
+       class="nav-link {{ Request::is('vegetasis*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-leaf"></i>
+        <p>Master Vegetasi</p>
+    </a>
+</li>
+
 {{-- Menu Jadwal Ruangan --}}
 <li class="nav-item">
     <a href="{{ route('jadwal_ruangans.index') }}"

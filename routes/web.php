@@ -12,6 +12,7 @@ Route::get('/gedung/{id}', [App\Http\Controllers\PublikController::class, 'detai
 // API GeoJSON untuk Leaflet (publik)
 Route::get('/webgis/geojson', [App\Http\Controllers\WebGisController::class, 'geojson'])->name('webgis.geojson');
 Route::get('/webgis/geojson-ruangan', [App\Http\Controllers\WebGisController::class, 'geojsonRuangan'])->name('webgis.geojson.ruangan');
+Route::get('/webgis/geojson-vegetasi', [App\Http\Controllers\WebGisController::class, 'geojsonVegetasi'])->name('webgis.geojson.vegetasi');
 Route::get('/api/gedung/{id}', [App\Http\Controllers\PublikController::class, 'apiDetail'])->name('api.gedung.detail');
 
 // ── AUTH ──────────────────────────────────────────────────────
@@ -37,6 +38,12 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('gedung_fasilitas', App\Http\Controllers\GedungFasilitasController::class);
     Route::resource('jadwal_ruangans', App\Http\Controllers\JadwalRuanganController::class);
     Route::resource('jadwal_semester', App\Http\Controllers\JadwalSemesterController::class);
+    
+    // Vegetasi CRUD
+    Route::delete('vegetasis/foto/{id}', [App\Http\Controllers\VegetasiController::class, 'deleteImage'])
+        ->name('vegetasis.foto.destroy');
+    Route::resource('vegetasis', App\Http\Controllers\VegetasiController::class);
+
     Route::get('/webgis', [App\Http\Controllers\WebGisController::class, 'index'])->name('webgis.index');
     
     // Semester Aktif Settings

@@ -141,22 +141,22 @@
 
         if (zoom >= ZOOM_THRESHOLD) {
             // ZOOM IN: Tampilkan ruangan, sembunyikan gedung
-            if (map.hasLayer(markerGroup)) map.removeLayer(markerGroup);
-            if (map.hasLayer(labelGroup)) map.removeLayer(labelGroup);
             if (!map.hasLayer(ruanganMarkerGroup)) ruanganMarkerGroup.addTo(map);
+            if (!map.hasLayer(vegetasiMarkerGroup)) vegetasiMarkerGroup.addTo(map);
 
             if (modeBadge) {
-                modeBadge.textContent = '\uD83C\uDFE0 Ruangan';
+                modeBadge.textContent = '\uD83C\uDFE0 Ruangan & Vegetasi';
                 modeBadge.className = 'zoom-mode-badge mode-ruangan';
             }
             if (currentMapMode !== 'ruangan') {
                 currentMapMode = 'ruangan';
-                toast('\uD83C\uDFE0 Mode Ruangan');
+                toast('\uD83C\uDFE0 Mode Detail (Ruangan & Vegetasi)');
             }
         } else {
-            // ZOOM OUT: Tampilkan gedung, sembunyikan ruangan
+            // ZOOM OUT: Tampilkan gedung, sembunyikan ruangan & vegetasi
             if (!map.hasLayer(markerGroup)) markerGroup.addTo(map);
             if (map.hasLayer(ruanganMarkerGroup)) map.removeLayer(ruanganMarkerGroup);
+            if (map.hasLayer(vegetasiMarkerGroup)) map.removeLayer(vegetasiMarkerGroup);
 
             // Labels muncul di zoom >= 16
             if (zoom >= 16) {
@@ -487,8 +487,9 @@
 
             toast(allData.length + ' gedung dimuat');
 
-            // Load ruangan markers after gedung
+            // Load markers after gedung
             loadRuanganMarkers();
+            loadVegetasiMarkers();
         })
         .catch(function () {
             document.getElementById('loading').classList.add('out');
@@ -500,6 +501,9 @@
     ══════════════════════════════════════════════════ */
     var allRuanganData = [];
     var ruanganMarkerGroup = L.layerGroup().addTo(map);
+
+    var allVegetasiData = [];
+    var vegetasiMarkerGroup = L.layerGroup().addTo(map);
 
     // Warna per kategori ruangan
     var kategoriColors = {
@@ -1537,6 +1541,7 @@
         sidebar.classList.add('show');
         sbLoading.style.display = 'block';
         sbContent.style.display = 'none';
+        sbMainIdx = 0; // Reset index carousel
 
         // Ruangan markers dikelola otomatis oleh zoom level
 
@@ -1611,9 +1616,9 @@
                             : '';
 
                         fasHtml += '<div class="sb-fas-item"' + hiddenStyle + '>'
-                            + '<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:4px;">'
-                            + '<strong style="font-size:0.9rem; color:var(--text);">' + f.nama_fasilitas + '</strong>'
-                            + (f.kategori ? '<span style="font-size:0.65rem; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border:1px solid var(--accent-dim); padding:2px 8px; border-radius:100px; background:var(--accent-dim);">' + f.kategori + '</span>' : '')
+                            + '<div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">'
+                            + '<strong style="font-size:0.95rem; color:var(--text); flex:1; min-width:140px;">' + f.nama_fasilitas + '</strong>'
+                            + (f.kategori ? '<span style="font-size:0.6rem; color:var(--accent); font-weight:800; text-transform:uppercase; letter-spacing:0.8px; border:1px solid var(--accent-dim); padding:3px 10px; border-radius:100px; background:var(--accent-dim); white-space:normal; text-align:center; max-width:180px;">' + f.kategori + '</span>' : '')
                             + '</div>'
                             + (f.keterangan ? '<div style="font-size:0.75rem; color:var(--muted); margin-bottom:8px; line-height:1.4;">' + f.keterangan + '</div>' : '')
                             + '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">'
@@ -1678,4 +1683,165 @@
             }
         }, 1600);
     };
+
+    /* ── LIGHTBOX LOGIC ── */
+    window.openLightbox = function (src) {
+        var lb = document.getElementById('lightbox');
+        var img = document.getElementById('lightboxImg');
+        if (!lb || !img) return;
+
+        img.src = src;
+        lb.style.display = 'flex';
+        setTimeout(function () {
+            lb.classList.add('show');
+        }, 10);
+    };
+
+    window.closeLightbox = function () {
+        var lb = document.getElementById('lightbox');
+        if (!lb) return;
+
+        lb.classList.remove('show');
+        setTimeout(function () {
+            lb.style.display = 'none';
+        }, 300);
+    };
+
+    /* ── SIDEBAR CAROUSEL LOGIC ── */
+    var sbMainIdx = 0;
+    window.sbMainGalleryNav = function (dir) {
+        var slides = document.querySelectorAll('.sb-main-slide');
+        if (slides.length <= 1) return;
+
+        slides[sbMainIdx].classList.remove('active');
+        sbMainIdx = (sbMainIdx + dir + slides.length) % slides.length;
+        slides[sbMainIdx].classList.add('active');
+
+        var counter = document.getElementById('sbMainCounter');
+        if (counter) {
+            counter.textContent = (sbMainIdx + 1) + ' / ' + slides.length;
+        }
+    };
+
+    /* ══════════════════════════════════════════════════
+       VEGETASI MARKERS
+    ══════════════════════════════════════════════════ */
+    function makeVegetasiIcon(kategori) {
+        var c = '#064e3b'; // Hijau Tua
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">'
+            + '<defs><filter id="vds"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="rgba(0,0,0,.4)"/></filter></defs>'
+            + '<path filter="url(#vds)" d="M11 1C6.03 1 2 5.03 2 10c0 6.5 9 19 9 19s9-12.5 9-19C20 5.03 15.97 1 11 1z" fill="' + c + '" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/>'
+            + '<circle cx="11" cy="10" r="4" fill="rgba(255,255,255,.92)"/>'
+            + '<circle cx="11" cy="10" r="2" fill="' + c + '"/>'
+            + '</svg>';
+        return L.divIcon({ html: svg, className: '', iconSize: [22, 30], iconAnchor: [11, 30], popupAnchor: [0, -32] });
+    }
+
+    function buildVegetasiPopup(p) {
+        var id = 'veg_' + p.id;
+        var imgHtml = p.foto_utama
+            ? '<img class="rp-img" src="' + p.foto_utama + '" alt="' + p.nama_vegetasi + '" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:12px; border:1px solid var(--border);">'
+            : '<div style="width:100%; height:140px; background:rgba(255,255,255,0.03); border-radius:10px; margin-bottom:12px; border:1px dashed var(--border); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.75rem;">Tidak ada foto utama</div>';
+
+        // Persiapkan data foto gabungan untuk galeri
+        var allPhotos = [];
+        if (p.foto_utama) allPhotos.push(p.foto_utama);
+        if (p.foto_tambahan) allPhotos = allPhotos.concat(p.foto_tambahan);
+
+        var slidesHtml = allPhotos.map(function (src, idx) {
+            var activeClass = idx === 0 ? ' active' : '';
+            return '<img class="rp-carousel-slide' + activeClass + '" src="' + src + '" onclick="openLightbox(\'' + src + '\')">';
+        }).join('');
+
+        return '<div class="ruangan-popup" id="rpPopup_' + id + '">'
+            + '<div class="rp-slider step-1" id="rpSlider_' + id + '">'
+
+            // PANEL 1: Info Singkat (Overview)
+            + '<div class="rp-panel rp-panel-1">'
+            + '<div class="rp-header" style="background:rgba(34,197,94,0.05);">'
+            + '<div class="rp-icon" style="background:rgba(34,197,94,0.15); color:#4ade80;">🌳</div>'
+            + '<div class="rp-header-text">'
+            + '<div class="rp-name">' + p.nama_vegetasi + '</div>'
+            + '<div class="rp-kategori" style="color:#4ade80;">' + p.kategori + '</div>'
+            + '</div>'
+            + '</div>'
+            + '<div class="rp-body">'
+            + '<div class="rp-gedung"><i class="fas fa-building" style="color:var(--accent);"></i> ' + p.nama_gedung + '</div>'
+            + imgHtml
+            + '<button class="rp-btn-detail" onclick="goToStep(\'' + id + '\', 2)"><i class="fas fa-info-circle"></i> Lihat Detail</button>'
+            + '</div>'
+            + '</div>'
+
+            // PANEL 2: Detail Lengkap
+            + '<div class="rp-panel rp-panel-2">'
+            + '<div class="rp-detail-header">'
+            + '<button class="rp-btn-back" onclick="goToStep(\'' + id + '\', 1)"><i class="fas fa-arrow-left"></i></button>'
+            + '<div class="rp-detail-title">Detail Vegetasi</div>'
+            + '</div>'
+            + '<div class="rp-detail-body">'
+            + '<div class="rp-detail-card">'
+            + '<div class="rp-detail-label">Keterangan</div>'
+            + (p.keterangan ? '<div class="rp-detail-value">' + p.keterangan + '</div>' : '<div class="rp-detail-value text-muted">-</div>')
+            + '</div>'
+            + '<button class="rp-btn-jadwal mt-3" onclick="goToStep(\'' + id + '\', 3)"><i class="fas fa-images"></i> Galeri Foto (' + allPhotos.length + ')</button>'
+            + '</div>'
+            + '</div>'
+
+            // PANEL 3: Galeri Foto
+            + '<div class="rp-panel rp-panel-3">'
+            + '<div class="rp-detail-header">'
+            + '<button class="rp-btn-back" onclick="goToStep(\'' + id + '\', 2)"><i class="fas fa-arrow-left"></i></button>'
+            + '<div class="rp-detail-title">Galeri Foto</div>'
+            + '</div>'
+            + '<div class="rp-detail-body">'
+            + '<div class="rp-carousel" id="rpCarousel_' + id + '">'
+            + (slidesHtml || '<div style="color:var(--muted); font-size:0.8rem; text-align:center; padding:40px 0;">Tidak ada foto</div>')
+            + '</div>'
+            + (allPhotos.length > 0 ?
+                '<div class="rp-carousel-nav">'
+                + '<button class="rp-carousel-btn" onclick="carouselNav(\'' + id + '\', -1)"><i class="fas fa-chevron-left"></i></button>'
+                + '<span class="rp-carousel-counter" id="rpCounter_' + id + '">1 / ' + allPhotos.length + '</span>'
+                + '<button class="rp-carousel-btn" onclick="carouselNav(\'' + id + '\', 1)"><i class="fas fa-chevron-right"></i></button>'
+                + '</div>'
+                + '<div style="text-align:center; font-size:0.7rem; color:var(--muted); margin-top:6px;"><i class="fas fa-hand-pointer"></i> Klik foto untuk memperbesar</div>'
+                : '')
+            + '</div>'
+            + '</div>'
+
+            + '</div>' // rp-slider
+            + '</div>'; // ruangan-popup
+    }
+
+    function renderVegetasiMarkers(data) {
+        vegetasiMarkerGroup.clearLayers();
+        data.forEach(function (f) {
+            var lat = f.geometry.coordinates[1];
+            var lng = f.geometry.coordinates[0];
+            var p = f.properties;
+
+            var m = L.marker([lat, lng], { icon: makeVegetasiIcon(p.kategori), title: p.nama_vegetasi });
+            m.bindPopup(buildVegetasiPopup(p), { maxWidth: 250 });
+            
+            m.bindTooltip(p.nama_vegetasi, {
+                direction: 'top',
+                offset: [0, -30],
+                className: 'ruangan-tooltip'
+            });
+
+            vegetasiMarkerGroup.addLayer(m);
+        });
+    }
+
+    function loadVegetasiMarkers() {
+        fetch('/webgis/geojson-vegetasi')
+            .then(function (r) { return r.json(); })
+            .then(function (gj) {
+                allVegetasiData = gj.features || [];
+                renderVegetasiMarkers(allVegetasiData);
+                updateZoomLayers();
+            })
+            .catch(function (err) {
+                console.error('Gagal memuat data vegetasi:', err);
+            });
+    }
 })();
