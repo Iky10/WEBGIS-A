@@ -70,8 +70,6 @@
     var allData = [];
     var markerGroup = L.layerGroup().addTo(map);
     var labelGroup = L.layerGroup();
-    var filterFungsi = '';
-    var filterKondisi = '';
 
     function renderMarkers(data) {
         markerGroup.clearLayers();
@@ -177,42 +175,215 @@
     }
     map.on('zoomend', updateZoomLayers);
 
-    /* ── FILTER CHIPS ─────────────────────────── */
-    function applyFilter() {
-        renderMarkers(allData.filter(function (f) {
-            var p = f.properties;
-            return (!filterFungsi || p.fungsi === filterFungsi)
-                && (!filterKondisi || p.kondisi === filterKondisi);
-        }));
+    /* ── FILTER (Checkbox Multi-Select with OK/Cancel) ── */
+    var activeKategori = [];  // Currently applied kategori ruangan filter
+    var activeKondisi = [];   // Currently applied kondisi gedung filter
+    var showAllKategori = true; // Flag if "Semua" is checked for kategori
+    var showAllKondisi = true;  // Flag if "Semua" is checked for kondisi
+    var showVegetasi = true;  // Whether vegetasi markers are visible
+    var savedCheckboxState = {}; // Snapshot of checkbox states before opening panel
+
+    function getCheckedValues(name) {
+        var values = [];
+        document.querySelectorAll('.fp-checkbox[name="' + name + '"]').forEach(function (cb) {
+            if (cb.checked && cb.value !== '') values.push(cb.value);
+        });
+        return values;
     }
 
-    function setupChips(containerId, onSelect) {
-        document.getElementById(containerId).addEventListener('click', function (e) {
-            var chip = e.target.closest('.chip');
-            if (!chip) return;
-            this.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('on'); });
-            chip.classList.add('on');
-            onSelect(chip.dataset.v);
-            applyFilter();
+    function isAllChecked(name) {
+        var cb = document.querySelector('.fp-checkbox[name="' + name + '"][value=""]');
+        return cb ? cb.checked : false;
+    }
+
+    function applyFilter() {
+        // Filter gedung by kondisi (status pemakaian)
+        var filteredGedung = allData.filter(function (f) {
+            var p = f.properties;
+            if (showAllKondisi) return true;
+            if (activeKondisi.length === 0) return false;
+            return activeKondisi.indexOf(p.kondisi) !== -1;
+        });
+        renderMarkers(filteredGedung);
+
+        // Filter ruangan by kategori
+        var filteredRuangan = allRuanganData.filter(function (f) {
+            var p = f.properties;
+            if (showAllKategori) return true;
+            if (activeKategori.length === 0) return false;
+            return activeKategori.indexOf(p.kategori) !== -1;
+        });
+        renderRuanganMarkers(filteredRuangan);
+
+        // Vegetasi toggle
+        if (showVegetasi) {
+            renderVegetasiMarkers(allVegetasiData);
+        } else {
+            vegetasiMarkerGroup.clearLayers();
+        }
+
+        updateZoomLayers();
+    }
+
+    // Count items per category and update count badges
+    function updateFilterCounts() {
+        // Ruangan kategori counts
+        var kategoriMap = {};
+        var totalRuangan = allRuanganData.length;
+
+        allRuanganData.forEach(function (f) {
+            var p = f.properties;
+            kategoriMap[p.kategori] = (kategoriMap[p.kategori] || 0) + 1;
+        });
+
+        var countKatAll = document.getElementById('countKategoriAll');
+        if (countKatAll) countKatAll.textContent = '(' + totalRuangan + ')';
+
+        // Update each kategori count using slug-based IDs
+        var kategoriList = [
+            'Ruang Kelas', 'Post Penjagaan', 'Ruang Kuliah Umum',
+            'Perpustakaan', 'Kepala Ruangan / Pengurus', 'Ruangan Sekretariatan / Administrasi'
+        ];
+        kategoriList.forEach(function (k) {
+            // Convert to slug (same as Str::slug in blade with '' separator)
+            var slug = k.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').replace(/-/g, '');
+            var el = document.getElementById('countKategori' + slug);
+            if (el) el.textContent = '(' + (kategoriMap[k] || 0) + ')';
+        });
+
+        // Gedung kondisi counts
+        var kondisiMap = {};
+        var totalGedung = allData.length;
+
+        allData.forEach(function (f) {
+            var p = f.properties;
+            kondisiMap[p.kondisi] = (kondisiMap[p.kondisi] || 0) + 1;
+        });
+
+        var countKAll = document.getElementById('countKondisiAll');
+        if (countKAll) countKAll.textContent = '(' + totalGedung + ')';
+
+        var countSD = document.getElementById('countKondisiSedangDipakai');
+        if (countSD) countSD.textContent = '(' + (kondisiMap['Sedang Dipakai'] || 0) + ')';
+
+        var countK = document.getElementById('countKondisiKosong');
+        if (countK) countK.textContent = '(' + (kondisiMap['Kosong'] || 0) + ')';
+
+        // Vegetasi count
+        var countVeg = document.getElementById('countVegetasi');
+        if (countVeg) countVeg.textContent = '(' + allVegetasiData.length + ')';
+    }
+
+    // "Semua" checkbox logic: when "Semua" is toggled, toggle all others
+    function setupSemuaCheckbox(name) {
+        var semuaCb = document.querySelector('.fp-checkbox[name="' + name + '"][value=""]');
+        var otherCbs = document.querySelectorAll('.fp-checkbox[name="' + name + '"]:not([value=""])');
+
+        if (!semuaCb) return;
+
+        semuaCb.addEventListener('change', function () {
+            var checked = this.checked;
+            otherCbs.forEach(function (cb) { cb.checked = checked; });
+        });
+
+        // When individual checkbox changes, update "Semua" state
+        otherCbs.forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                var allChecked = true;
+                otherCbs.forEach(function (c) { if (!c.checked) allChecked = false; });
+                semuaCb.checked = allChecked;
+            });
         });
     }
-    setupChips('chipsFungsi', function (v) { filterFungsi = v; });
-    setupChips('chipsKondisi', function (v) { filterKondisi = v; });
 
-    document.getElementById('fpReset').addEventListener('click', function () {
-        filterFungsi = filterKondisi = '';
-        document.querySelectorAll('#chipsFungsi .chip, #chipsKondisi .chip').forEach(function (c) { c.classList.remove('on'); });
-        document.querySelector('#chipsFungsi .chip[data-v=""]').classList.add('on');
-        document.querySelector('#chipsKondisi .chip[data-v=""]').classList.add('on');
-        renderMarkers(allData);
-        toast('Filter direset');
+    setupSemuaCheckbox('kategori');
+    setupSemuaCheckbox('kondisi');
+
+    // Save current checkbox state (for Cancel)
+    function saveCheckboxState() {
+        savedCheckboxState = {};
+        document.querySelectorAll('.fp-checkbox').forEach(function (cb) {
+            var key = cb.name + '|' + cb.value;
+            savedCheckboxState[key] = cb.checked;
+        });
+    }
+
+    // Restore checkbox state (Cancel button)
+    function restoreCheckboxState() {
+        document.querySelectorAll('.fp-checkbox').forEach(function (cb) {
+            var key = cb.name + '|' + cb.value;
+            if (savedCheckboxState.hasOwnProperty(key)) {
+                cb.checked = savedCheckboxState[key];
+            }
+        });
+    }
+
+    // OK button - apply filters
+    document.getElementById('fpOk').addEventListener('click', function () {
+        // Read kategori ruangan filter
+        showAllKategori = isAllChecked('kategori');
+        activeKategori = getCheckedValues('kategori');
+
+        // Read kondisi filter
+        showAllKondisi = isAllChecked('kondisi');
+        activeKondisi = getCheckedValues('kondisi');
+
+        // Read vegetasi toggle
+        var vegCb = document.querySelector('.fp-checkbox[name="vegetasi"]');
+        showVegetasi = vegCb ? vegCb.checked : true;
+
+        applyFilter();
+
+        // Close panel
+        document.getElementById('filterPanel').classList.add('hide');
+        document.getElementById('btnFilter').classList.remove('on');
+        toast('Filter diterapkan');
+    });
+
+    // Cancel button - restore and close
+    document.getElementById('fpCancel').addEventListener('click', function () {
+        restoreCheckboxState();
+        document.getElementById('filterPanel').classList.add('hide');
+        document.getElementById('btnFilter').classList.remove('on');
+        toast('Filter dibatalkan');
+    });
+
+    // Close button (X) - same as cancel
+    document.getElementById('fpClose').addEventListener('click', function () {
+        restoreCheckboxState();
+        document.getElementById('filterPanel').classList.add('hide');
+        document.getElementById('btnFilter').classList.remove('on');
+    });
+
+    // Collapsible sections
+    document.querySelectorAll('.fp-section-header').forEach(function (header) {
+        header.addEventListener('click', function () {
+            var targetId = this.getAttribute('data-toggle');
+            var body = document.getElementById(targetId);
+            if (!body) return;
+            body.classList.toggle('open');
+            this.classList.toggle('collapsed');
+        });
     });
 
     /* ── FILTER PANEL TOGGLE ──────────────────── */
     document.getElementById('btnFilter').addEventListener('click', function () {
         var p = document.getElementById('filterPanel');
+        var willOpen = p.classList.contains('hide');
+
+        if (willOpen) {
+            saveCheckboxState(); // Save state before user makes changes
+        }
+
         var open = p.classList.toggle('hide');
         this.classList.toggle('on', !open);
+    });
+
+    /* ── LEGEND TOGGLE ────────────────────────── */
+    document.getElementById('legToggle').addEventListener('click', function () {
+        var content = document.getElementById('legContent');
+        content.classList.toggle('collapsed');
+        this.classList.toggle('collapsed');
     });
 
     /* ── SEARCH ───────────────────────────────── */
@@ -467,6 +638,7 @@
         .then(function (gj) {
             allData = gj.features || [];
             renderMarkers(allData);
+            updateFilterCounts();
 
             if (allData.length) {
                 var pts = allData.map(function (f) { return [f.geometry.coordinates[1], f.geometry.coordinates[0]]; });
@@ -909,6 +1081,7 @@
                 allRuanganData = gj.features || [];
                 renderRuanganMarkers(allRuanganData);
                 updateZoomLayers(); // Apply zoom visibility
+                updateFilterCounts(); // Update filter count badges
             })
             .catch(function (err) {
                 console.error('Gagal memuat data ruangan:', err);
@@ -1839,6 +2012,7 @@
                 allVegetasiData = gj.features || [];
                 renderVegetasiMarkers(allVegetasiData);
                 updateZoomLayers();
+                updateFilterCounts(); // Update filter count badges
             })
             .catch(function (err) {
                 console.error('Gagal memuat data vegetasi:', err);

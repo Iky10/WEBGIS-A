@@ -67,38 +67,97 @@
 
 <div id="filterPanel" class="hide">
     <div class="fp-head">
-        <div class="fp-head-icon"><i class="fas fa-layer-group"></i></div>
-        <div class="fp-head-title">Filter Peta</div>
+        <div class="fp-head-left">
+            <div class="fp-head-icon"><i class="fas fa-layer-group"></i></div>
+            <div class="fp-head-title">Filter Peta</div>
+        </div>
+        <button class="fp-close" id="fpClose"><i class="fas fa-times"></i></button>
     </div>
     <div class="fp-body">
 
-        <span class="fp-label">Fungsi Gedung</span>
-        <div class="fp-chips" id="chipsFungsi">
-            <div class="chip on" data-v="">Semua</div>
-            @foreach(['Perkantoran','Pendidikan','Kesehatan','Komersial','Publik','Lainnya'] as $f)
-            <div class="chip" data-v="{{ $f }}">{{ $f }}</div>
-            @endforeach
+        <!-- Section: Kategori Ruangan -->
+        <div class="fp-section">
+            <div class="fp-section-header" data-toggle="secKategori">
+                <span class="fp-label">Kategori Ruangan</span>
+                <i class="fas fa-chevron-up fp-chevron"></i>
+            </div>
+            <div class="fp-section-body open" id="secKategori">
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kategori" value="" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Semua</span>
+                    <span class="fp-check-count" id="countKategoriAll"></span>
+                </label>
+                @foreach(['Ruang Kelas','Post Penjagaan','Ruang Kuliah Umum','Perpustakaan','Kepala Ruangan / Pengurus','Ruangan Sekretariatan / Administrasi'] as $k)
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kategori" value="{{ $k }}" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">{{ $k }}</span>
+                    <span class="fp-check-count" id="countKategori{{ Str::slug($k,'') }}"></span>
+                </label>
+                @endforeach
+            </div>
         </div>
 
-        <span class="fp-label">Status Pemakaian</span>
-        <div class="fp-chips" id="chipsKondisi">
-            <div class="chip on" data-v="">Semua</div>
-            <div class="chip" data-v="Sedang Dipakai">Sedang Dipakai</div>
-            <div class="chip" data-v="Kosong">Kosong</div>
+        <!-- Section: Status Pemakaian -->
+        <div class="fp-section">
+            <div class="fp-section-header" data-toggle="secKondisi">
+                <span class="fp-label">Status Pemakaian</span>
+                <i class="fas fa-chevron-up fp-chevron"></i>
+            </div>
+            <div class="fp-section-body open" id="secKondisi">
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kondisi" value="" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Semua</span>
+                    <span class="fp-check-count" id="countKondisiAll"></span>
+                </label>
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kondisi" value="Sedang Dipakai" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Sedang Dipakai</span>
+                    <span class="fp-check-count" id="countKondisiSedangDipakai"></span>
+                </label>
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kondisi" value="Kosong" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Kosong</span>
+                    <span class="fp-check-count" id="countKondisiKosong"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Section: Vegetasi -->
+        <div class="fp-section">
+            <div class="fp-section-header" data-toggle="secVegetasi">
+                <span class="fp-label">Vegetasi</span>
+                <i class="fas fa-chevron-up fp-chevron"></i>
+            </div>
+            <div class="fp-section-body open" id="secVegetasi">
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="vegetasi" value="show" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Tampilkan Vegetasi</span>
+                    <span class="fp-check-count" id="countVegetasi"></span>
+                </label>
+            </div>
         </div>
 
         <div class="fp-sep"></div>
 
-        <div class="fp-footer">
-            <div>
-                <div class="fp-count-num" id="fpCount">—</div>
-                <div class="fp-count-lbl">gedung terlihat</div>
-            </div>
-            <button class="fp-reset" id="fpReset">
-                <i class="fas fa-undo"></i> Reset
-            </button>
+        <div class="fp-summary">
+            <div class="fp-count-num" id="fpCount">—</div>
+            <div class="fp-count-lbl">gedung terlihat</div>
         </div>
 
+    </div>
+    <div class="fp-actions">
+        <button class="fp-btn fp-btn-cancel" id="fpCancel">
+            <i class="fas fa-times"></i> Batal
+        </button>
+        <button class="fp-btn fp-btn-ok" id="fpOk">
+            <i class="fas fa-check"></i> OK
+        </button>
     </div>
 </div>
 
@@ -114,19 +173,36 @@
 </div>
 
 <div id="legend">
-    <div class="leg-title">Status Pemakaian Gedung</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Sedang Dipakai</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#6c757d;box-shadow:0 0 5px #6c757d;"></div>Kosong</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#475569;"></div>Tidak diketahui</div>
-    <div class="leg-sep"></div>
-    <div class="leg-title">Kategori Ruangan</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></div>Ruang Kelas</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#ef4444;box-shadow:0 0 5px #ef4444;"></div>Post Penjagaan</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#8b5cf6;box-shadow:0 0 5px #8b5cf6;"></div>Ruang Kuliah Umum</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#f59e0b;box-shadow:0 0 5px #f59e0b;"></div>Perpustakaan</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#10b981;box-shadow:0 0 5px #10b981;"></div>Kepala Ruangan</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#6366f1;box-shadow:0 0 5px #6366f1;"></div>Sekretariatan</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#064e3b;box-shadow:0 0 5px #064e3b;"></div>Vegetasi</div>
+    <button class="leg-toggle" id="legToggle" title="Toggle Legend"><i class="fas fa-chevron-down"></i></button>
+    <div class="leg-content" id="legContent">
+        <div class="leg-group">
+            <div class="leg-title">Status Pemakaian Gedung</div>
+            <div class="leg-items">
+                <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Sedang Dipakai</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#6c757d;box-shadow:0 0 5px #6c757d;"></div>Kosong</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#475569;"></div>Tidak diketahui</div>
+            </div>
+        </div>
+        <div class="leg-divider"></div>
+        <div class="leg-group">
+            <div class="leg-title">Kategori Ruangan</div>
+            <div class="leg-items">
+                <div class="leg-row"><div class="leg-dot" style="background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></div>Ruang Kelas</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#ef4444;box-shadow:0 0 5px #ef4444;"></div>Post Penjagaan</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#8b5cf6;box-shadow:0 0 5px #8b5cf6;"></div>Ruang Kuliah Umum</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#f59e0b;box-shadow:0 0 5px #f59e0b;"></div>Perpustakaan</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#10b981;box-shadow:0 0 5px #10b981;"></div>Kepala Ruangan</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#6366f1;box-shadow:0 0 5px #6366f1;"></div>Sekretariatan</div>
+            </div>
+        </div>
+        <div class="leg-divider"></div>
+        <div class="leg-group">
+            <div class="leg-title">Vegetasi</div>
+            <div class="leg-items">
+                <div class="leg-row"><div class="leg-dot" style="background:#064e3b;box-shadow:0 0 5px #064e3b;"></div>Vegetasi</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="coords">Arahkan mouse ke peta</div>
