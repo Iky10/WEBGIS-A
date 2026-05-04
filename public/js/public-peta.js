@@ -920,477 +920,598 @@
     };
 
     /* ── LEAFLET ROUTING MACHINE ───────────────── */
-    var routeProfile = 'car'; // default profile: car, bike, foot
+    var routeProfile = 'car';
     var routingControl = null;
     var currentWaypoints = [];
-    var currentCoordinates = { start: null, end: null }; // Simpan koordinat numerik
-    var userMarker = null;
+    var currentCoordinates = { start: null, end: null };
+    var userMarker = null; // Ini untuk marker Start (titik biru)
+    var routePoints = [];      // Untuk tracking klik user
+    var routesData = [];         // Semua data route dari OSRM
+    var routeLayers = [];        // Semua polyline layer yang digambar
+    var routeLabels = [];        // Tooltip label pada rute (misal: +5 mnt)
+    var selectedRouteIndex = 0;  // Index route yang sedang aktif
+    var animationFrameId = null; // ID untuk requestAnimationFrame
+    var animatingMarker = null;  // Marker yang bergerak
 
-    // Map user-friendly names to OSRM profiles
+    // Profile mapping
     var profileMap = {
         'car': 'driving',
-        'bike': 'cycling',
-        'foot': 'walking',
-        'driving': 'driving',
-        'cycling': 'cycling',
-        'walking': 'walking'
+        'bike': 'driving', // Motor di Indonesia menggunakan rute mobil (OSRM driving)
+        'foot': 'walking'
     };
+
+    // Kecepatan rata-rata (km/jam) untuk estimasi waktu ala Google Maps
+    var averageSpeeds = {
+        'car': 30,    // Rata-rata mobil di perkotaan (incl. traffic ringan)
+        'bike': 40,   // Rata-rata motor di perkotaan (lebih lincah)
+        'foot': 5     // Rata-rata jalan kaki (standard Google Maps)
+    };
+
+    function calculateEstimatedTime(distanceInMeters, mode) {
+        var speedKmh = averageSpeeds[mode] || 30;
+        var timeInHours = (distanceInMeters / 1000) / speedKmh;
+        var timeInMinutes = Math.round(timeInHours * 60);
+        
+        // Minimal 1 menit jika jarak sangat dekat
+        return Math.max(1, timeInMinutes);
+    }
+
+    function formatDuration(minutes) {
+        if (minutes < 60) return minutes + ' mnt';
+        
+        var d = Math.floor(minutes / 1440);
+        var h = Math.floor((minutes % 1440) / 60);
+        var m = minutes % 60;
+        
+        if (d > 0) {
+            var res = d + ' hari';
+            if (h > 0) res += ' ' + h + ' jam';
+            return res;
+        }
+        
+        var res = h + ' jam';
+        if (m > 0) res += ' ' + m + ' mnt';
+        return res;
+    }
+
+    // Icons
+    var startIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: '<div class="marker-start-dot"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+
+    var endIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: '<div class="marker-end-pin"><i class="fas fa-map-marker-alt" style="font-size: 26px;"></i></div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 30]
+    });
 
     function createRoutingControl(profile, waypoints) {
         var osrmProfile = profileMap[profile || routeProfile] || 'driving';
 
-        // Hapus control lama jika ada
         if (routingControl) {
-            try {
-                map.removeControl(routingControl);
-            } catch (e) {
-                console.log('Old control removal error:', e);
-            }
+            map.removeControl(routingControl);
             routingControl = null;
         }
 
-        console.log('Creating routing with profile:', osrmProfile, 'waypoints:', waypoints);
-
         var control = L.Routing.control({
-            waypoints: (waypoints && waypoints.length >= 2) ? waypoints : [],
-            routeWhileDragging: false,
+            waypoints: waypoints || [],
+            show: false,
+            showAlternatives: true,
             addWaypoints: false,
+            draggableWaypoints: false,
+            routeWhileDragging: false,
             fitSelectedRoutes: true,
             router: L.Routing.osrmv1({
                 serviceUrl: 'https://router.project-osrm.org/route/v1',
-                profile: osrmProfile,
-                timeout: 10000,
-                stepInterpolation: true,
-                exclude: [],
-                // Add timestamp to prevent caching
+                profile: (osrmProfile === 'foot' ? 'walking' : 'driving'),
+                timeout: 15000,
+                alternatives: true, // Beritahu LRM bahwa kita mau alternatif
                 urlParameters: {
-                    '_t': Date.now()
-                }
+                    alternatives: '3', // Minta hingga 3 rute ke server OSRM
+                    steps: 'true',
+                    overview: 'full',
+                    continue_straight: 'false'
+                },
+                useHints: false
             }),
-            lineOptions: {
-                styles: [{
-                    color: '#3b82f6',
-                    opacity: 0.8,
-                    weight: 6
-                }]
+            // Matikan renderer bawaan LRM – kita gambar polyline sendiri
+            lineOptions: { addWaypoints: false, styles: [] },
+            createMarker: function (i, wp) {
+                if (i === 0) return L.marker(wp.latLng, { icon: startIcon });
+                return L.marker(wp.latLng, { icon: endIcon });
             },
-            createMarker: function () {
-                return null;
-            }
+            // Minta semua alternatif route dari OSRM
+            plan: L.Routing.plan(waypoints || [], { createMarker: function(i, wp) {
+                if (i === 0) return L.marker(wp.latLng, { icon: startIcon });
+                return L.marker(wp.latLng, { icon: endIcon });
+            }, routeWhileDragging: false })
         }).addTo(map);
 
-        // Attach event listeners
-        attachRoutingEvents(control);
+        control.on('routesfound', onRouteFound);
+        control.on('routingerror', function() {
+            toast('Rute tidak ditemukan');
+            toggleNavPanel();
+        });
 
         return control;
     }
 
-    function attachRoutingEvents(control) {
-        control.on('routesfound', onRouteFound);
-        control.on('routingerror', onRoutingError);
-    }
-
-    // Fungsi untuk fetch durasi dan jarak dari OSRM secara langsung
-    function calculateRouteDirect(startLat, startLng, endLat, endLng, profile) {
-        var osrmProfile = profileMap[profile] || 'driving';
-
-        // Pastikan koordinat adalah numerik
-        startLat = parseFloat(startLat);
-        startLng = parseFloat(startLng);
-        endLat = parseFloat(endLat);
-        endLng = parseFloat(endLng);
-
-        // Validasi koordinat
-        if (isNaN(startLat) || isNaN(startLng) || isNaN(endLat) || isNaN(endLng)) {
-            console.error('Invalid coordinates:', { startLat, startLng, endLat, endLng });
-            return Promise.reject(new Error('Invalid coordinates'));
-        }
-
-        // OSRM API: /route/v1/{profile}/{lon1},{lat1};{lon2},{lat2}
-        var url = 'https://router.project-osrm.org/route/v1/' + osrmProfile + '/' +
-            startLng + ',' + startLat + ';' + endLng + ',' + endLat +
-            '?overview=false&_t=' + Date.now(); // Cache buster
-
-        console.log('Fetching route from OSRM:');
-        console.log('  URL:', url);
-        console.log('  Profile:', osrmProfile);
-        console.log('  Start:', startLat, startLng);
-        console.log('  End:', endLat, endLng);
-
-        return fetch(url)
-            .then(function (response) {
-                console.log('OSRM Response status:', response.status);
-                if (!response.ok) throw new Error('OSRM response not ok: ' + response.status);
-                return response.json();
-            })
-            .then(function (data) {
-                console.log('OSRM Direct Response:', data);
-
-                if (data.routes && data.routes[0]) {
-                    var route = data.routes[0];
-                    var duration = route.duration; // seconds
-                    var distance = route.distance; // meters
-
-                    console.log('Direct API - Duration: ' + duration + 's, Distance: ' + distance + 'm, Profile: ' + osrmProfile);
-
-                    return {
-                        duration: duration,
-                        distance: distance,
-                        profile: osrmProfile
-                    };
-                } else {
-                    throw new Error('No routes found in response');
-                }
-            })
-            .catch(function (err) {
-                console.error('OSRM Direct API error:', err);
-                throw err;
-            });
-    }
-
     function onRouteFound(e) {
-        console.log('Route found! Event triggered:', e);
+        console.log("Jumlah rute ditemukan:", e.routes.length);
+        // Hapus polyline & label lama
+        routeLayers.forEach(function(layer) { if(layer) map.removeLayer(layer); });
+        routeLabels.forEach(function(label) { if(label) map.removeLayer(label); });
+        routeLayers = [];
+        routeLabels = [];
+
+        // Simpan maksimal 2 rute (Tercepat & Alternatif)
+        routesData = e.routes.slice(0, 2);
+        selectedRouteIndex = 0;
+        
+        if (routesData.length < 2) {
+            toast('Rute terbaik ditemukan. Tidak ada jalur alternatif yang signifikan.');
+        } else {
+            toast('Ditemukan ' + routesData.length + ' opsi rute untuk perbandingan.');
+        }
+        
+        var mainDuration = calculateEstimatedTime(routesData[0].summary.totalDistance, routeProfile);
+
+        // ── Gambar rute alternatif dulu agar rute utama di atas ──
+        var drawOrder = routesData.length > 1 ? [1, 0] : [0];
+
+        var routeListHtml = '';
+        if (routesData.length < 2) {
+            routeListHtml = '<div class="nav-route-item active" data-idx="0">'
+                + '<span class="nav-route-item-title">Rute Tunggal</span>'
+                + '<span class="nav-route-item-time">' + formatDuration(calculateEstimatedTime(routesData[0].summary.totalDistance, routeProfile)) + '</span>'
+                + '</div>';
+        } else {
+            drawOrder.forEach(function(idx) {
+                var route = routesData[idx];
+                var duration = calculateEstimatedTime(route.summary.totalDistance, routeProfile);
+                var isActive = (idx === selectedRouteIndex);
+                var title = idx === 0 ? 'Tercepat' : 'Alternatif';
+                
+                routeListHtml += '<div class="nav-route-item ' + (isActive ? 'active' : '') + '" data-idx="' + idx + '" onclick="selectRoute(' + idx + ')">'
+                    + '<span class="nav-route-item-title">' + title + '</span>'
+                    + '<span class="nav-route-item-time">' + formatDuration(duration) + '</span>'
+                    + '</div>';
+            });
+        }
+        document.getElementById('navRouteList').innerHTML = routeListHtml;
+
+        drawOrder.forEach(function(idx) {
+            var route = routesData[idx];
+            var isActive = (idx === selectedRouteIndex);
+
+            var polyline = L.polyline(route.coordinates, {
+                color:   isActive ? '#22c55e' : '#3b82f6', // Gunakan Biru untuk rute alternatif agar kontras
+                weight:  isActive ? 12 : 9,               // Lebih tebal lagi
+                opacity: isActive ? 1  : 0.5,
+                lineCap:  'round',
+                lineJoin: 'round',
+                interactive: true,
+                bubblingMouseEvents: false
+            }).addTo(map);
+
+            polyline._routeIndex = idx;
+
+            // Tambahkan Label untuk rute
+            var duration = calculateEstimatedTime(route.summary.totalDistance, routeProfile);
+            var labelText = "";
+            
+            if (idx === 0) {
+                labelText = '<b>' + formatDuration(duration) + '</b> (Tercepat)';
+            } else {
+                var diff = duration - mainDuration;
+                var diffText = diff > 0 ? "+" + formatDuration(diff) : (diff < 0 ? formatDuration(diff) : "Sama");
+                labelText = '<span style="color:#1a73e8"><b>' + formatDuration(duration) + '</b> (' + diffText + ')</span>';
+            }
+            
+            // Titik tengah rute untuk label (geser sedikit jika rute tumpang tindih)
+            var coordIdx = Math.floor(route.coordinates.length * (0.3 + (idx * 0.2)));
+            var labelPoint = route.coordinates[coordIdx];
+            var label = L.tooltip({
+                permanent: true,
+                direction: 'center',
+                className: 'route-label'
+            })
+            .setContent(labelText)
+            .setLatLng(labelPoint)
+            .addTo(map);
+            
+            // Buat label bisa diklik
+            label.on('add', function() {
+                var el = this.getElement();
+                if (el) {
+                    el.addEventListener('click', function(ev) {
+                        ev.stopPropagation();
+                        selectRoute(idx);
+                    });
+                }
+            });
+            
+            routeLabels[idx] = label;
+
+            if (isActive) {
+                requestAnimationFrame(function() {
+                    var el = polyline.getElement();
+                    if (el) el.classList.add('route-active');
+                });
+            }
+
+            polyline.on('click', function(ev) { 
+                L.DomEvent.stopPropagation(ev);
+                selectRoute(idx); 
+            });
+
+            polyline.on('mouseover', function() {
+                if (idx !== selectedRouteIndex) {
+                    this.setStyle({ color: '#6b7280', weight: 7, opacity: 0.85 });
+                }
+            });
+            polyline.on('mouseout', function() {
+                if (idx !== selectedRouteIndex) {
+                    this.setStyle({ color: '#9ca3af', weight: 5, opacity: 0.6 });
+                }
+            });
+
+            routeLayers[idx] = polyline;
+        });
+
+        // Update panel dengan route utama
+        updateRoutePanel(selectedRouteIndex);
+        showNavPanel();
+        animateRoute(selectedRouteIndex);
         document.getElementById('btnResetRoute').style.display = 'flex';
 
-        if (e.routes && e.routes[0]) {
-            var route = e.routes[0];
-            console.log('Route summary full:', route.summary);
-            console.log('Route summary totalTime:', route.summary.totalTime);
-            console.log('Route summary totalDistance:', route.summary.totalDistance);
+        // Bounding box gabungan semua rute
+        var bounds = routeLayers[0].getBounds();
+        routeLayers.forEach(function(l) { if (l) bounds.extend(l.getBounds()); });
+        map.fitBounds(bounds.pad(0.12));
+    }
 
-            var duration = formatDuration(route.summary.totalTime);
-            var distance = formatDistance(route.summary.totalDistance);
+    function animateRoute(index) {
+        var route = routesData[index];
+        if (!route || !route.coordinates) return;
 
-            console.log('Distance:', distance, 'Duration:', duration, 'Mode:', routeProfile);
-
-            document.getElementById('routeInfoDuration').textContent = duration;
-            document.getElementById('routeInfoDistance').textContent = distance;
-
-            var modeLabel = {
-                'car': 'Mobil',
-                'bike': 'Motor/Sepeda',
-                'foot': 'Jalan Kaki'
-            };
-            document.getElementById('routeInfoMode').textContent = modeLabel[routeProfile] || routeProfile;
-            document.getElementById('routeInfoPanel').style.display = 'block';
+        // Bersihkan animasi sebelumnya
+        if (animatingMarker) {
+            map.removeLayer(animatingMarker);
+            animatingMarker = null;
         }
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+
+        var coords = route.coordinates;
+        var mode = routeProfile; // car, bike, foot
+
+        // Tentukan icon berdasarkan mode
+        var iconHtml = '';
+        if (mode === 'foot') iconHtml = '<div class="route-anim-marker"><i class="fas fa-walking"></i></div>';
+        else if (mode === 'bike') iconHtml = '<div class="route-anim-marker"><i class="fas fa-motorcycle"></i></div>';
+        else iconHtml = '<div class="route-anim-marker"><i class="fas fa-car"></i></div>';
+
+        var animatedIcon = L.divIcon({
+            className: 'route-anim-icon-wrap',
+            html: iconHtml,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+
+        animatingMarker = L.marker(coords[0], { 
+            icon: animatedIcon, 
+            zIndexOffset: 2000,
+            interactive: false 
+        }).addTo(map);
+
+        var startTime = null;
+        var duration = 3000; // Durasi total animasi (3 detik)
+
+        // Hitung jarak total untuk pergerakan konstan
+        var totalDist = 0;
+        var segments = [];
+        for (var i = 0; i < coords.length - 1; i++) {
+            var d = map.distance(coords[i], coords[i+1]);
+            totalDist += d;
+            segments.push(d);
+        }
+
+        function step(timestamp) {
+            if (!startTime) startTime = timestamp;
+            var elapsed = timestamp - startTime;
+            var progress = Math.min(elapsed / duration, 1);
+
+            // Easing function (easeInOutQuad) untuk kesan lebih premium
+            var easedProgress = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+            
+            var targetDist = totalDist * easedProgress;
+            var currentDist = 0;
+            var pos = coords[0];
+
+            for (var i = 0; i < segments.length; i++) {
+                if (currentDist + segments[i] >= targetDist) {
+                    var segProgress = (targetDist - currentDist) / segments[i];
+                    var p1 = coords[i];
+                    var p2 = coords[i+1];
+                    pos = L.latLng(
+                        p1.lat + (p2.lat - p1.lat) * segProgress,
+                        p1.lng + (p2.lng - p1.lng) * segProgress
+                    );
+                    
+                    break;
+                }
+                currentDist += segments[i];
+                if (i === segments.length - 1) pos = coords[coords.length - 1];
+            }
+
+            animatingMarker.setLatLng(pos);
+
+            if (progress < 1) {
+                animationFrameId = requestAnimationFrame(step);
+            } else {
+                // Selesai, hapus marker dengan fade out
+                var el = animatingMarker.getElement();
+                if (el) el.style.opacity = '0';
+                setTimeout(function() {
+                    if (animatingMarker) {
+                        map.removeLayer(animatingMarker);
+                        animatingMarker = null;
+                    }
+                }, 500);
+            }
+        }
+
+        animationFrameId = requestAnimationFrame(step);
     }
 
-    function onRoutingError(e) {
-        console.error('Routing error:', e);
-        toast('Tidak ada rute ditemukan untuk mode ini');
+    window.selectRoute = function(index) {
+        if (index < 0 || index >= routeLayers.length) return;
+        selectedRouteIndex = index;
+        var currentDuration = calculateEstimatedTime(routesData[index].summary.totalDistance, routeProfile);
+        var mainDuration = calculateEstimatedTime(routesData[0].summary.totalDistance, routeProfile);
+
+        // Update UI List di Panel
+        document.querySelectorAll('.nav-route-item').forEach((item) => {
+            var itemIdx = parseInt(item.getAttribute('data-idx'));
+            item.classList.toggle('active', itemIdx === index);
+        });
+
+        routeLayers.forEach(function(layer, i) {
+            if (!layer) return;
+
+            var el = layer.getElement ? layer.getElement() : null;
+            if (el) el.classList.remove('route-active');
+
+            if (i === index) {
+                layer.setStyle({ color: '#22c55e', weight: 12, opacity: 1 });
+                layer.bringToFront();
+                requestAnimationFrame(function() {
+                    var elNow = layer.getElement();
+                    if (elNow) elNow.classList.add('route-active');
+                });
+            } else {
+                layer.setStyle({ color: '#3b82f6', weight: 9, opacity: 0.5 });
+            }
+
+            // Update Label Konten
+            if (routeLabels[i]) {
+                var duration = calculateEstimatedTime(routesData[i].summary.totalDistance, routeProfile);
+                var labelText = "";
+                
+                if (i === 0) {
+                    labelText = '<b>' + formatDuration(duration) + '</b> (Tercepat)';
+                } else {
+                    var diff = duration - currentDuration;
+                    var diffText = diff > 0 ? "+" + formatDuration(diff) : (diff < 0 ? formatDuration(diff) : "Sama");
+                    labelText = '<b>' + formatDuration(duration) + '</b> (' + (i === index ? 'Terpilih' : diffText) + ')';
+                }
+                routeLabels[i].setContent(labelText);
+            }
+        });
+
+        updateRoutePanel(index);
+        
+        // Jalankan animasi marker bergerak
+        animateRoute(index);
+    };
+
+    function updateRoutePanel(index) {
+        var route = routesData[index];
+        if (!route) return;
+
+        var summary = route.summary;
+        var instructions = route.instructions;
+
+        // Update Summary UI
+        var durationMinutes = calculateEstimatedTime(summary.totalDistance, routeProfile);
+        document.getElementById('navTime').textContent = formatDuration(durationMinutes);
+        document.getElementById('navDist').textContent = formatDistance(summary.totalDistance);
+
+        // Ambil nama jalan utama dari instruksi
+        var mainStreet = 'Jalan Utama';
+        for (var i = 0; i < instructions.length; i++) {
+            if (instructions[i].road) { mainStreet = instructions[i].road; break; }
+        }
+        document.getElementById('navStreet').textContent = 'Lewat ' + mainStreet;
+
+        // Traffic simulation (Simulasi lalu lintas ala Google Maps)
+        var trafficEl = document.getElementById('navTraffic');
+        var trafficChance = 0;
+        if (routeProfile === 'car') trafficChance = 0.4; // 40% kemungkinan padat
+        else if (routeProfile === 'bike') trafficChance = 0.15; // 15% kemungkinan padat untuk motor
+
+        if (routeProfile !== 'foot' && Math.random() < trafficChance && durationMinutes > 2) {
+            trafficEl.textContent = 'Lalu lintas padat';
+            trafficEl.className = 'nav-traffic-slow';
+            // Tambahkan sedikit waktu ekstra pada UI jika macet
+            var extra = Math.ceil(durationMinutes * 0.2);
+            document.getElementById('navTime').textContent = formatDuration(durationMinutes + extra);
+        } else {
+            trafficEl.textContent = 'Lalu lintas lancar';
+            trafficEl.className = 'nav-traffic-fast';
+        }
+
+        // Parse Instructions
+        var stepsHtml = '';
+        instructions.forEach(function(instr) {
+            var icon = getStepIcon(instr.type);
+            stepsHtml += '<div class="nav-step">'
+                + '<div class="nav-step-icon"><i class="' + icon + '"></i></div>'
+                + '<div class="nav-step-text">'
+                + '<div>' + instr.text + '</div>'
+                + '<div class="nav-step-dist">' + formatDistance(instr.distance) + '</div>'
+                + '</div></div>';
+        });
+        document.getElementById('navSteps').innerHTML = stepsHtml;
     }
+
+    function getStepIcon(type) {
+        var icons = {
+            'Straight': 'fas fa-arrow-up',
+            'SlightRight': 'fas fa-location-arrow fa-rotate-45',
+            'Right': 'fas fa-reply fa-rotate-180',
+            'SharpRight': 'fas fa-redo',
+            'TurnAround': 'fas fa-sync-alt',
+            'SharpLeft': 'fas fa-undo',
+            'Left': 'fas fa-share',
+            'SlightLeft': 'fas fa-location-arrow fa-rotate-315',
+            'WaypointReached': 'fas fa-map-marker-alt',
+            'Roundabout': 'fas fa-not-equal', // atau ikon bundaran lain
+            'StartAt': 'fas fa-play',
+            'DestinationReached': 'fas fa-flag-checkered',
+            'EnterAgainstAllowedDirection': 'fas fa-exclamation-triangle',
+            'LeaveAgainstAllowedDirection': 'fas fa-exclamation-triangle'
+        };
+        return icons[type] || 'fas fa-arrow-up';
+    }
+
+    function formatDistance(m) {
+        return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : Math.round(m) + ' m';
+    }
+
+    function showNavPanel() {
+        var p = document.getElementById('navPanel');
+        p.classList.remove('hide');
+    }
+
+    window.toggleNavPanel = function() {
+        document.getElementById('navPanel').classList.add('hide');
+        
+        // Reset Routing
+        if (routingControl) routingControl.setWaypoints([]);
+        
+        // Hapus semua polyline & label route yang digambar manual
+        routeLayers.forEach(function(layer) { if(layer) map.removeLayer(layer); });
+        routeLabels.forEach(function(label) { if(label) map.removeLayer(label); });
+        
+        routeLayers = [];
+        routeLabels = [];
+        routesData = [];
+        
+        if (userMarker) map.removeLayer(userMarker);
+        document.getElementById('btnResetRoute').style.display = 'none';
+        currentCoordinates = { start: null, end: null };
+        routePoints = [];
+        
+        toast('Rute ditutup dan direset');
+    };
+
+    // Tombol Detail Toggle
+    document.getElementById('btnNavDetail').addEventListener('click', function() {
+        var container = document.getElementById('navSteps');
+        var isVisible = container.style.display === 'block';
+        container.style.display = isVisible ? 'none' : 'block';
+        this.innerHTML = isVisible ? '<i class="fas fa-list-ul"></i> Detail' : '<i class="fas fa-chevron-up"></i> Sembunyikan';
+    });
+
+    // Tombol Pratinjau
+    document.getElementById('btnNavPreview').addEventListener('click', function() {
+        if (routeLayers[selectedRouteIndex]) {
+            map.fitBounds(routeLayers[selectedRouteIndex].getBounds(), { padding: [50, 50] });
+        }
+    });
+
+    // Tombol Reset Rute (Topbar)
+    document.getElementById('btnResetRoute').addEventListener('click', function () {
+        toggleNavPanel();
+    });
 
     routingControl = createRoutingControl(routeProfile);
 
-    // Format durasi (detik -> jam:menit:detik atau jam atau menit)
-    function formatDuration(seconds) {
-        if (!seconds) return '-';
+    // KLIK 2 TITIK UNTUK RUTE
+    map.on('click', function (e) {
+        // Abaikan jika sedang klik marker atau UI
+        if (e.originalEvent.target.closest('.leaflet-marker-icon') || 
+            e.originalEvent.target.closest('#navPanel') ||
+            e.originalEvent.target.closest('#topbar')) return;
 
-        var hours = Math.floor(seconds / 3600);
-        var minutes = Math.floor((seconds % 3600) / 60);
-        var secs = Math.floor(seconds % 60);
+        routePoints.push(e.latlng);
 
-        if (hours > 0) {
-            return hours + ' jam ' + minutes + ' menit ' + secs + ' detik';
-        } else if (minutes > 0) {
-            return minutes + ' menit ' + secs + ' detik';
-        } else {
-            return secs + ' detik';
-        }
-    }
-
-    // Format jarak (meter -> km atau meter)
-    function formatDistance(meters) {
-        if (!meters) return '-';
-        if (meters >= 1000) {
-            return (meters / 1000).toFixed(2) + ' km';
-        }
-        return Math.floor(meters) + ' m';
-    }
-
-
-    // Fungsi untuk menentukan tujuan rute
-    window.setRoutingDest = function (lat, lng) {
-
-        // Cek apakah browser mendukung GPS
-        if (navigator.geolocation) {
-
-            // Ambil lokasi user (titik awal)
-            navigator.geolocation.getCurrentPosition(function (pos) {
-
-                var userLat = pos.coords.latitude;
-                var userLng = pos.coords.longitude;
-
-                // Tambahkan marker untuk lokasi user
-                if (userMarker) {
-                    map.removeLayer(userMarker);
-                }
-                userMarker = L.circleMarker([userLat, userLng], {
-                    radius: 8,
-                    fillColor: '#3b82f6',
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map).bindPopup('📍 Lokasi Anda Saat Ini', { closeButton: false });
-
-                // Set titik awal (user) dan tujuan (gedung)
-                currentWaypoints = [
-                    L.latLng(userLat, userLng),
-                    L.latLng(lat, lng)
-                ];
-
-                // Simpan koordinat numerik
-                currentCoordinates.start = { lat: userLat, lng: userLng };
-                currentCoordinates.end = { lat: lat, lng: lng };
-
-                console.log('Setting initial waypoints:', currentWaypoints);
-                console.log('Saved coordinates:', currentCoordinates);
-                console.log('Waypoint 0:', currentWaypoints[0].lat, currentWaypoints[0].lng);
-                console.log('Waypoint 1:', currentWaypoints[1].lat, currentWaypoints[1].lng);
-
-                routingControl.setWaypoints(currentWaypoints);
-
-                // Gunakan direct API call untuk mendapat durasi dan jarak yang akurat
-                calculateRouteDirect(userLat, userLng, lat, lng, routeProfile)
-                    .then(function (routeData) {
-                        console.log('Initial route data received:', routeData);
-
-                        var duration = formatDuration(routeData.duration);
-                        var distance = formatDistance(routeData.distance);
-
-                        document.getElementById('routeInfoDuration').textContent = duration;
-                        document.getElementById('routeInfoDistance').textContent = distance;
-
-                        var modeLabel = {
-                            'car': 'Mobil',
-                            'bike': 'Motor/Sepeda',
-                            'foot': 'Jalan Kaki'
-                        };
-                        document.getElementById('routeInfoMode').textContent = modeLabel[routeProfile] || routeProfile;
-                        document.getElementById('routeInfoPanel').style.display = 'block';
-                        document.getElementById('btnResetRoute').style.display = 'flex';
-                    })
-                    .catch(function (err) {
-                        console.error('Failed to get initial route data:', err);
-                    });
-
-                // Notifikasi ke user
-                toast('Menghitung rute ke lokasi…');
-
-            }, function () {
-
-                // Jika gagal ambil lokasi GPS
-                toast('Gagal mendapatkan lokasi. Menggunakan titik tengah peta.');
-
-                // Gunakan titik tengah peta sebagai titik awal
-                var centerLat = map.getCenter().lat;
-                var centerLng = map.getCenter().lng;
-
-                if (userMarker) {
-                    map.removeLayer(userMarker);
-                }
-                userMarker = L.circleMarker([centerLat, centerLng], {
-                    radius: 8,
-                    fillColor: '#f59e0b',
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map).bindPopup('📍 Lokasi Default (Pusat Peta)', { closeButton: false });
-
-                currentWaypoints = [
-                    L.latLng(centerLat, centerLng),
-                    L.latLng(lat, lng)
-                ];
-
-                // Simpan koordinat numerik
-                currentCoordinates.start = { lat: centerLat, lng: centerLng };
-                currentCoordinates.end = { lat: lat, lng: lng };
-
-                routingControl.setWaypoints(currentWaypoints);
-
-                // Gunakan direct API call untuk mendapat durasi dan jarak yang akurat
-                calculateRouteDirect(centerLat, centerLng, lat, lng, routeProfile)
-                    .then(function (routeData) {
-                        console.log('Fallback route data received:', routeData);
-
-                        var duration = formatDuration(routeData.duration);
-                        var distance = formatDistance(routeData.distance);
-
-                        document.getElementById('routeInfoDuration').textContent = duration;
-                        document.getElementById('routeInfoDistance').textContent = distance;
-
-                        var modeLabel = {
-                            'car': 'Mobil',
-                            'bike': 'Motor/Sepeda',
-                            'foot': 'Jalan Kaki'
-                        };
-                        document.getElementById('routeInfoMode').textContent = modeLabel[routeProfile] || routeProfile;
-                        document.getElementById('routeInfoPanel').style.display = 'block';
-                        document.getElementById('btnResetRoute').style.display = 'flex';
-                    })
-                    .catch(function (err) {
-                        console.error('Failed to get fallback route data:', err);
-                    });
-            });
-
-        } else {
-            // Jika browser tidak support GPS
-
-            var centerLat = map.getCenter().lat;
-            var centerLng = map.getCenter().lng;
-
-            if (userMarker) {
-                map.removeLayer(userMarker);
-            }
-            userMarker = L.circleMarker([centerLat, centerLng], {
-                radius: 8,
-                fillColor: '#f59e0b',
-                color: '#fff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(map).bindPopup('📍 Lokasi Default (Pusat Peta)', { closeButton: false });
-
+        if (routePoints.length === 1) {
+            toast('Titik awal ditentukan. Pilih titik tujuan...');
+            // Tampilkan marker sementara
+            if (userMarker) map.removeLayer(userMarker);
+            userMarker = L.marker(e.latlng, { icon: startIcon }).addTo(map);
+        } 
+        else if (routePoints.length === 2) {
+            if (userMarker) map.removeLayer(userMarker);
+            
             currentWaypoints = [
-                L.latLng(centerLat, centerLng),
-                L.latLng(lat, lng)
+                L.latLng(routePoints[0].lat, routePoints[0].lng),
+                L.latLng(routePoints[1].lat, routePoints[1].lng)
             ];
-
-            // Simpan koordinat numerik
-            currentCoordinates.start = { lat: centerLat, lng: centerLng };
-            currentCoordinates.end = { lat: lat, lng: lng };
+            
+            currentCoordinates.start = routePoints[0];
+            currentCoordinates.end = routePoints[1];
 
             routingControl.setWaypoints(currentWaypoints);
-
-            // Gunakan direct API call untuk mendapat durasi dan jarak yang akurat
-            calculateRouteDirect(centerLat, centerLng, lat, lng, routeProfile)
-                .then(function (routeData) {
-                    console.log('No-GPS route data received:', routeData);
-
-                    var duration = formatDuration(routeData.duration);
-                    var distance = formatDistance(routeData.distance);
-
-                    document.getElementById('routeInfoDuration').textContent = duration;
-                    document.getElementById('routeInfoDistance').textContent = distance;
-
-                    var modeLabel = {
-                        'car': 'Mobil',
-                        'bike': 'Motor/Sepeda',
-                        'foot': 'Jalan Kaki'
-                    };
-                    document.getElementById('routeInfoMode').textContent = modeLabel[routeProfile] || routeProfile;
-                    document.getElementById('routeInfoPanel').style.display = 'block';
-                    document.getElementById('btnResetRoute').style.display = 'flex';
-                })
-                .catch(function (err) {
-                    console.error('Failed to get no-GPS route data:', err);
-                });
+            routePoints = []; // Reset for next pair
         }
+    });
 
-        // Tutup popup setelah klik tombol rute
-        map.closePopup();
+    // Fungsi Rute ke Sini (dari Sidebar)
+    window.setRoutingDest = function (lat, lng) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                var start = L.latLng(pos.coords.latitude, pos.coords.longitude);
+                var end = L.latLng(lat, lng);
+                
+                currentCoordinates.start = start;
+                currentCoordinates.end = end;
+                
+                routingControl.setWaypoints([start, end]);
+                toast('Menghitung rute dari lokasi Anda...');
+            }, function() {
+                toast('Gagal akses lokasi. Klik 2 titik di peta untuk rute.');
+            });
+        }
     };
 
-    // Fungsi untuk mengganti mode transportasi
     window.changeRouteMode = function (mode) {
-        console.log('Changing route mode to:', mode, 'mapped to profile:', profileMap[mode]);
-
-        // Update current profile
         routeProfile = mode;
-
-        // Gunakan simpan koordinat numerik, bukan getWaypoints()
-        if (currentCoordinates.start && currentCoordinates.end) {
-            console.log('Changing mode with saved coordinates:', currentCoordinates);
-
-            // Gunakan direct API call untuk mendapat durasi dan jarak yang akurat
-            var startLat = currentCoordinates.start.lat;
-            var startLng = currentCoordinates.start.lng;
-            var endLat = currentCoordinates.end.lat;
-            var endLng = currentCoordinates.end.lng;
-
-            console.log('Calling calculateRouteDirect with:', {
-                startLat: startLat, startLng: startLng,
-                endLat: endLat, endLng: endLng,
-                profile: mode
-            });
-
-            calculateRouteDirect(startLat, startLng, endLat, endLng, mode)
-                .then(function (routeData) {
-                    console.log('Direct API returned:', routeData);
-
-                    var duration = formatDuration(routeData.duration);
-                    var distance = formatDistance(routeData.distance);
-
-                    console.log('Formatted - Distance:', distance, 'Duration:', duration, 'Mode:', mode);
-
-                    document.getElementById('routeInfoDuration').textContent = duration;
-                    document.getElementById('routeInfoDistance').textContent = distance;
-
-                    var modeLabel = {
-                        'car': 'Mobil',
-                        'bike': 'Motor/Sepeda',
-                        'foot': 'Jalan Kaki'
-                    };
-                    document.getElementById('routeInfoMode').textContent = modeLabel[mode] || mode;
-                    document.getElementById('routeInfoPanel').style.display = 'block';
-                    document.getElementById('btnResetRoute').style.display = 'flex';
-                })
-                .catch(function (err) {
-                    console.error('Failed to calculate route:', err);
-                    toast('Gagal menghitung rute untuk mode ' + mode);
-                });
-
-            var modeMsg = mode === 'car' ? 'Mobil' : mode === 'bike' ? 'Motor/Sepeda' : 'Jalan Kaki';
-            toast('Menghitung rute dengan mode ' + modeMsg + '...');
-        } else {
-            console.warn('No coordinates saved for route calculation');
-            toast('Silakan klik "Rute ke Sini" terlebih dahulu');
-        }
-
-        // Update button styles
-        document.querySelectorAll('.route-mode-btn').forEach(function (btn) {
-            btn.classList.remove('active');
-            btn.style.background = 'rgba(255,255,255,.05)';
-            btn.style.color = 'var(--muted)';
-            btn.style.borderColor = 'var(--border)';
+        
+        // Update UI Active State
+        document.querySelectorAll('.nav-mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
         });
 
-        var activeBtn = document.querySelector('[data-mode="' + mode + '"]');
-        if (activeBtn) {
-            activeBtn.classList.add('active');
-            activeBtn.style.background = 'var(--accent)';
-            activeBtn.style.color = '#fff';
-            activeBtn.style.borderColor = 'var(--accent)';
+        if (currentCoordinates.start && currentCoordinates.end) {
+            // Hapus control lama agar marker tidak menumpuk
+            if (routingControl) map.removeControl(routingControl);
+
+            routingControl = createRoutingControl(mode, [
+                L.latLng(currentCoordinates.start.lat, currentCoordinates.start.lng),
+                L.latLng(currentCoordinates.end.lat, currentCoordinates.end.lng)
+            ]);
         }
     };
-
-
-    // Event tombol reset rute
-    document.getElementById('btnResetRoute').addEventListener('click', function () {
-
-        routingControl.setWaypoints([]);
-        // Menghapus rute dari peta
-
-        currentWaypoints = [];
-        currentCoordinates = { start: null, end: null }; // Clear coordinates
-
-        this.style.display = 'none';
-        // Sembunyikan tombol reset
-
-        document.getElementById('routeInfoPanel').style.display = 'none';
-        // Sembunyikan info panel
-
-        if (userMarker) {
-            map.removeLayer(userMarker);
-            userMarker = null;
-        }
-
-        toast('Rute dihapus');
-        // Tampilkan notifikasi
-    });
 
     /* ── SIDEBAR ──────────────────────────────── */
     var sidebar = document.getElementById('sidebar');

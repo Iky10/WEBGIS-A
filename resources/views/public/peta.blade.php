@@ -130,28 +130,50 @@
 
 <div id="coords">Arahkan mouse ke peta</div>
 
-<div id="routeInfoPanel" style="display:none; position:fixed; bottom:80px; right:16px; z-index:900; background:var(--surface-hi); border:1px solid var(--border-hi); border-radius:var(--radius-md); backdrop-filter:var(--blur); padding:14px; max-width:280px; box-shadow:0 12px 40px rgba(0,0,0,.5);">
-    <div style="font-size:0.78rem; font-weight:800; color:var(--text); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;">Informasi Rute</div>
-    
-    <div style="margin-bottom:12px;">
-        <div style="font-size:0.7rem; color:var(--muted); font-weight:600; margin-bottom:3px;">Durasi Perjalanan</div>
-        <div id="routeInfoDuration" style="font-size:0.9rem; font-weight:800; color:var(--accent);">-</div>
+<!-- PANEL NAVIGASI (G-MAPS STYLE) -->
+<div id="navPanel" class="hide">
+    <div class="nav-header">
+        <div class="nav-modes">
+            <button class="nav-mode-btn active" data-mode="car" onclick="changeRouteMode('car')">
+                <i class="fas fa-car"></i> Mobil
+            </button>
+            <button class="nav-mode-btn" data-mode="bike" onclick="changeRouteMode('bike')">
+                <i class="fas fa-motorcycle"></i> Motor
+            </button>
+            <button class="nav-mode-btn" data-mode="foot" onclick="changeRouteMode('foot')">
+                <i class="fas fa-walking"></i> Jalan
+            </button>
+        </div>
+
+        <div class="nav-summary">
+            <div id="navRouteList" class="nav-route-list">
+                <!-- Daftar rute (Tercepat, Alternatif) akan muncul di sini -->
+            </div>
+            <div class="nav-main-info" id="navMainInfo">
+                <div id="navTime" class="nav-time">-- mnt</div>
+                <div class="nav-dist-traffic">
+                    <span id="navDist">-- km</span> • 
+                    <span id="navTraffic" class="nav-traffic-fast">Lalu lintas lancar</span>
+                </div>
+                <div id="navStreet" class="nav-street">Memuat rute...</div>
+            </div>
+            <button onclick="toggleNavPanel()" style="background:none; border:none; color:#5f6368; cursor:pointer; font-size:1.2rem; margin-left:10px;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     </div>
-    
-    <div style="margin-bottom:12px;">
-        <div style="font-size:0.7rem; color:var(--muted); font-weight:600; margin-bottom:3px;">Jarak</div>
-        <div id="routeInfoDistance" style="font-size:0.9rem; font-weight:800; color:var(--success);">-</div>
+
+    <div class="nav-actions">
+        <button id="btnNavDetail" class="nav-btn nav-btn-secondary">
+            <i class="fas fa-list-ul"></i> Detail
+        </button>
+        <button id="btnNavPreview" class="nav-btn nav-btn-primary">
+            <i class="fas fa-eye"></i> Pratinjau
+        </button>
     </div>
-    
-    <div style="margin-bottom:12px;">
-        <div style="font-size:0.7rem; color:var(--muted); font-weight:600; margin-bottom:3px;">Moda Transportasi</div>
-        <div id="routeInfoMode" style="font-size:0.9rem; font-weight:800; color:var(--text);">-</div>
-    </div>
-    
-    <div style="border-top:1px solid var(--border); padding-top:10px; display:flex; gap:5px; flex-wrap:wrap;">
-        <button class="route-mode-btn active" data-mode="car" onclick="changeRouteMode('car')" style="flex:1; min-width:60px; padding:6px; border-radius:6px; background:var(--accent); color:#fff; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all .2s;">🚗 Mobil</button>
-        <button class="route-mode-btn" data-mode="bike" onclick="changeRouteMode('bike')" style="flex:1; min-width:60px; padding:6px; border-radius:6px; background:rgba(255,255,255,.05); color:var(--muted); border:1px solid var(--border); font-size:0.7rem; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all .2s;">🏍️ Motor</button>
-        <button class="route-mode-btn" data-mode="foot" onclick="changeRouteMode('foot')" style="flex:1; min-width:60px; padding:6px; border-radius:6px; background:rgba(255,255,255,.05); color:var(--muted); border:1px solid var(--border); font-size:0.7rem; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all .2s;">🚶 Jalan</button>
+
+    <div id="navSteps" class="nav-steps-container">
+        <!-- Instruksi langkah demi langkah akan dimasukkan di sini oleh JS -->
     </div>
 </div>
 
@@ -186,14 +208,13 @@
                 <div id="sbName" class="sb-name">Nama Gedung</div>
                 <div class="sb-addr"><i class="fas fa-map-marker-alt"></i> <span id="sbAddr">Alamat Gedung</span></div>
                 
-                <!-- <div class="sb-stats">
+                <div class="sb-stats">
                     <div class="sb-stat"><span id="sbFungsi" class="sb-stat-v">-</span><span class="sb-stat-k">Fungsi</span></div>
                     <div class="sb-stat"><span id="sbKondisi" class="sb-stat-v">-</span><span class="sb-stat-k">Status</span></div>
                     <div class="sb-stat"><span id="sbLantai" class="sb-stat-v">-</span><span class="sb-stat-k">Lantai</span></div>
                     <div class="sb-stat"><span id="sbTahun" class="sb-stat-v">-</span><span class="sb-stat-k">Tahun</span></div>
-                </div> -->
+                </div>
 
-                <!-- Primary Call to Action Buttons -->
                 <div style="margin: 16px 0;">
                     <button id="sbBtnRoute" class="sb-cta-btn" style="background:var(--success); box-shadow:0 6px 20px rgba(34,197,94,.35);"><i class="fas fa-directions"></i> Rute ke Sini</button>
                 </div>
@@ -214,21 +235,15 @@
                         <i class="fas fa-calendar-alt" style="color:var(--accent);"></i> Jadwal Semester
                     </div>
                     
-                    <!-- Info Semester Aktif -->
                     <div id="sbJadwalAktifBadge" style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); color: var(--success); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px;">
                         <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success);"></div>
                         <span id="sbJadwalAktifText">Semester Aktif</span>
                     </div>
 
-                    <!-- Tabs per Semester -->
                     <div id="sbJadwalTabs" class="rp-semester-tabs" style="margin-top:10px;">
                     </div>
 
-                    <!-- Dropdown Tahun Ajaran Dihapus -->
-                    
-                    <!-- Viewer (single preview) -->
                     <div id="sbJadwalViewer" style="margin-top:12px;">
-                        <!-- Rendered by JS: image preview + buttons -->
                     </div>
                 </div>
 
@@ -244,7 +259,7 @@
     window.WEBGIS_URL = '{{ route("webgis.geojson") }}';
     window.WEBGIS_RUANGAN_URL = '{{ route("webgis.geojson.ruangan") }}';
 </script>
-<script src="{{ asset('js/public-peta.js') }}"></script>
+<script src="{{ asset('js/public-peta.js') }}?v={{ time() }}"></script>
 
 </body>
 </html>
