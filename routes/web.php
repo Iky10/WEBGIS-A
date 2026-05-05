@@ -14,15 +14,33 @@ Route::get('/webgis/geojson', [App\Http\Controllers\WebGisController::class, 'ge
 Route::get('/webgis/geojson-ruangan', [App\Http\Controllers\WebGisController::class, 'geojsonRuangan'])->name('webgis.geojson.ruangan');
 Route::get('/webgis/geojson-vegetasi', [App\Http\Controllers\WebGisController::class, 'geojsonVegetasi'])->name('webgis.geojson.vegetasi');
 Route::get('/api/gedung/{id}', [App\Http\Controllers\PublikController::class, 'apiDetail'])->name('api.gedung.detail');
+Route::get('/api/gedung/{id}/jadwal-semester', [App\Http\Controllers\PublikController::class, 'apiJadwalSemester'])->name('api.gedung.jadwal-semester');
 
 // ── AUTH ──────────────────────────────────────────────────────
 Auth::routes();
 
-// ── ADMIN (wajib login) ───────────────────────────────────────
+// ── WAJIB LOGIN (semua user) ──────────────────────────────────
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/home',            [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/admin/dashboard', [App\Http\Controllers\HomeController::class, 'index'])->name('admin.dashboard');
+
+    // Pengajuan Ruangan — route untuk semua user yang login
+    Route::get('pengajuan-ruangan/riwayat', [App\Http\Controllers\PengajuanRuanganController::class, 'riwayat'])->name('pengajuan_ruangans.riwayat');
+    Route::get('pengajuan_ruangans/create', [App\Http\Controllers\PengajuanRuanganController::class, 'create'])->name('pengajuan_ruangans.create');
+    Route::post('pengajuan_ruangans', [App\Http\Controllers\PengajuanRuanganController::class, 'store'])->name('pengajuan_ruangans.store');
+    Route::get('pengajuan_ruangans/{pengajuan_ruangan}', [App\Http\Controllers\PengajuanRuanganController::class, 'show'])->name('pengajuan_ruangans.show');
+
+    // AJAX: live availability check (dipakai di form create)
+    Route::post('pengajuan_ruangans/cek-ketersediaan', [App\Http\Controllers\PengajuanRuanganController::class, 'cekKetersediaan'])->name('pengajuan_ruangans.cek-ketersediaan');
+
+    // User: batalkan pengajuan miliknya (hanya saat status 'diproses')
+    Route::patch('pengajuan_ruangans/{id}/cancel', [App\Http\Controllers\PengajuanRuanganController::class, 'cancel'])->name('pengajuan_ruangans.cancel');
+
+});
+
+// ── ADMIN ONLY (wajib login + role admin) ─────────────────────
+Route::middleware(['auth', 'admin'])->group(function () {
 
     // Hapus foto galeri — harus SEBELUM resource gedungs
     Route::delete('gedungs/foto/{id}', [App\Http\Controllers\GedungController::class, 'destroyFoto'])
@@ -35,6 +53,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('gambar_gedungs', App\Http\Controllers\GambarGedungController::class);
 
     // WebGIS Admin
+    Route::post('gedung_fasilitas/{id}/toggle-bisa-diajukan', [App\Http\Controllers\GedungFasilitasController::class, 'toggleBisaDiajukan'])->name('gedung_fasilitas.toggle-bisa-diajukan');
+    Route::delete('gedung_fasilitas/bulk-delete', [App\Http\Controllers\GedungFasilitasController::class, 'bulkDelete'])->name('gedung_fasilitas.bulk-delete');
     Route::resource('gedung_fasilitas', App\Http\Controllers\GedungFasilitasController::class);
     Route::resource('jadwal_ruangans', App\Http\Controllers\JadwalRuanganController::class);
     Route::resource('jadwal_semester', App\Http\Controllers\JadwalSemesterController::class);
@@ -50,13 +70,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/semester-aktif', [App\Http\Controllers\SemesterAktifController::class, 'index'])->name('semester_aktif.index');
     Route::post('/semester-aktif', [App\Http\Controllers\SemesterAktifController::class, 'update'])->name('semester_aktif.update');
 
+    // Pengajuan Ruangan — route khusus admin
+    Route::get('pengajuan_ruangans', [App\Http\Controllers\PengajuanRuanganController::class, 'index'])->name('pengajuan_ruangans.index');
+    Route::patch('pengajuan_ruangans/{id}/status', [App\Http\Controllers\PengajuanRuanganController::class, 'updateStatus'])->name('pengajuan_ruangans.update-status');
+    Route::delete('pengajuan_ruangans/bulk-delete', [App\Http\Controllers\PengajuanRuanganController::class, 'bulkDelete'])->name('pengajuan_ruangans.bulk-delete');
+    Route::delete('pengajuan_ruangans/{pengajuan_ruangan}', [App\Http\Controllers\PengajuanRuanganController::class, 'destroy'])->name('pengajuan_ruangans.destroy');
+
 });
 
-// API Routes for public/ajax
-Route::get('/api/gedung/{id}/jadwal-semester', [App\Http\Controllers\PublikController::class, 'apiJadwalSemester']);
-Route::get('/api/semester-aktif', [App\Http\Controllers\SemesterAktifController::class, 'apiGetSemesterAktif']);
+// API publik (tanpa login): dipakai untuk peta & dashboard
+Route::get('/api/semester-aktif', [App\Http\Controllers\SemesterAktifController::class, 'apiGetSemesterAktif'])->name('api.semester-aktif');
 
-// YOGMA HADIR
-// Ini Di Origin Main
-// INI BRACH BARU
-// Test 123

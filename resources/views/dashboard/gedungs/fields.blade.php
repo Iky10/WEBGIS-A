@@ -64,6 +64,47 @@
     </div>
 </div>
 
+<!-- Jam Operasional -->
+<div class="form-group col-sm-12">
+    <label><strong>Jam Operasional Gedung:</strong></label>
+    <small class="text-muted d-block mb-2">
+        Atur jam buka dan tutup gedung. Kosongkan jika gedung buka 24 jam.
+    </small>
+    <div class="row">
+        <div class="col-sm-6">
+            {!! Form::label('jam_buka', 'Jam Buka:') !!}
+            {!! Form::time('jam_buka', isset($gedung) ? $gedung->jam_buka_formatted : null, [
+                'class' => 'form-control',
+                'placeholder' => '07:00'
+            ]) !!}
+        </div>
+        <div class="col-sm-6">
+            {!! Form::label('jam_tutup', 'Jam Tutup:') !!}
+            {!! Form::time('jam_tutup', isset($gedung) ? $gedung->jam_tutup_formatted : null, [
+                'class' => 'form-control',
+                'placeholder' => '17:00'
+            ]) !!}
+        </div>
+    </div>
+</div>
+
+<!-- Bisa Diajukan Toggle -->
+<div class="form-group col-sm-12">
+    <div class="custom-control custom-switch">
+        {!! Form::hidden('bisa_diajukan', 0) !!}
+        {!! Form::checkbox('bisa_diajukan', 1, isset($gedung) ? $gedung->bisa_diajukan : true, [
+            'class' => 'custom-control-input',
+            'id' => 'bisa_diajukan'
+        ]) !!}
+        <label class="custom-control-label" for="bisa_diajukan">
+            <strong>Gedung ini bisa diajukan penggunaannya</strong>
+        </label>
+    </div>
+    <small class="text-muted">
+        Nonaktifkan jika gedung ini tidak bisa diajukan (misal: Rektorat, Koperasi, Ruang Dosen, dll).
+    </small>
+</div>
+
 <!-- Foto Galeri Field -->
 <div class="form-group col-sm-12">
     {!! Form::label('foto_gedung', 'Foto Galeri (bisa lebih dari satu):') !!}

@@ -34,6 +34,37 @@
           integrity="sha512-aEe/ZxePawj0+G2R+AaIxgrQuKT68I28qh+wgLrcAJOz3rxCP+TwrK5SPN+E5I+1IQjNtcfvb96HDagwrKRdBw=="
           crossorigin="anonymous"/>
 
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+    <!-- DataTables -->
+    @include('layouts.datatables_css')
+
+    <!-- Admin Custom -->
+    <link rel="stylesheet" href="{{ asset('css/admin-custom.css') }}?v={{ filemtime(public_path('css/admin-custom.css')) }}">
+
+    {{-- Admin User Menu Mobile Fix (dropdown user-menu fit viewport di mobile) --}}
+    <style>
+        @media (max-width: 767.98px) {
+            .user-menu .admin-user-menu,
+            .user-menu .dropdown-menu {
+                position: fixed !important;
+                top: 60px !important;
+                left: 8px !important;
+                right: 8px !important;
+                bottom: auto !important;
+                width: auto !important;
+                min-width: 0 !important;
+                max-width: 360px !important;
+                margin: 0 0 0 auto !important;
+                transform: none !important;
+            }
+        }
+    </style>
+
     @stack('third_party_stylesheets')
 
     @stack('page_css')
@@ -52,12 +83,12 @@
 
         <ul class="navbar-nav ml-auto">
             <li class="nav-item dropdown user-menu">
-                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" data-display="static">
                     <img src="https://assets.infyom.com/logo/blue_logo_150x150.png"
                          class="user-image img-circle elevation-2" alt="User Image">
                     <span class="d-none d-md-inline">{{ Auth::user()->name }}</span>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right admin-user-menu">
                     <!-- User image -->
                     <li class="user-header bg-primary">
                         <img src="https://assets.infyom.com/logo/blue_logo_150x150.png"
@@ -97,12 +128,12 @@
     <!-- Main Footer -->
     <footer class="main-footer">
         <div class="float-right d-none d-sm-block">
-            <b>Version</b> 3.1.0
+            <b>WebGIS</b> v2.0
         </div>
         <strong>
-           Copyright &copy; 2014-2021 <a href="https://adminlte.io">AdminLTE.io</a>.
+           &copy; {{ date('Y') }} <a href="{{ url('/') }}">WebGIS Politeknik Negeri Samarinda</a>.
         </strong>
-        All rights reserved.
+        Sistem Informasi Geografis Gedung.
     </footer>
 </div>
 
@@ -143,7 +174,106 @@
         integrity="sha512-DAc/LqVY2liDbikmJwUS1MSE3pIH0DFprKHZKPcJC7e3TtAOzT55gEMTleegwyuIWgCfOPOM8eLbbvFaG9F/cA=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Toastr -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
 <script src="{{ asset('js/layout-app.js') }}"></script>
+
+{{-- SweetAlert2: Global Confirm Functions --}}
+<script>
+    /**
+     * Konfirmasi hapus data dengan SweetAlert2
+     * @param {HTMLElement} formEl - Form element yang akan di-submit
+     * @param {string} message - Pesan konfirmasi (opsional)
+     */
+    function confirmDelete(formEl, message) {
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: message || 'Data yang dihapus tidak dapat dikembalikan!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> Ya, hapus!',
+            cancelButtonText: '<i class="fas fa-times mr-1"></i> Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                formEl.submit();
+            }
+        });
+    }
+
+    /**
+     * Konfirmasi aksi umum dengan SweetAlert2
+     * @param {HTMLElement} formEl - Form element yang akan di-submit
+     * @param {string} title - Judul dialog
+     * @param {string} message - Pesan konfirmasi
+     * @param {string} icon - Icon SweetAlert2 (warning, question, info)
+     * @param {string} confirmText - Teks tombol konfirmasi
+     */
+    function confirmAction(formEl, title, message, icon, confirmText) {
+        Swal.fire({
+            title: title || 'Apakah Anda yakin?',
+            text: message || '',
+            icon: icon || 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: confirmText || 'Ya, lanjutkan!',
+            cancelButtonText: '<i class="fas fa-times mr-1"></i> Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                formEl.submit();
+            }
+        });
+    }
+</script>
+
+<!-- DataTables -->
+@include('layouts.datatables_js')
+
+{{-- Toastr: Konversi Flash Message → Toast --}}
+<script>
+    $(function () {
+        // Konfigurasi Toastr
+        toastr.options = {
+            closeButton: true,
+            progressBar: true,
+            positionClass: 'toast-top-right',
+            timeOut: 4000,
+            extendedTimeOut: 2000,
+            showEasing: 'swing',
+            hideEasing: 'linear',
+            showMethod: 'fadeIn',
+            hideMethod: 'fadeOut'
+        };
+
+        // Konversi flash message ke toast dan sembunyikan alert aslinya
+        var $flash = $('.alert:not(.alert-danger):not(.alert-important)');
+        if ($flash.length) {
+            $flash.each(function() {
+                var msg = $(this).text().trim();
+                if (msg && msg !== '×') {
+                    if ($(this).hasClass('alert-success')) {
+                        toastr.success(msg);
+                    } else if ($(this).hasClass('alert-warning')) {
+                        toastr.warning(msg);
+                    } else if ($(this).hasClass('alert-info')) {
+                        toastr.info(msg);
+                    } else {
+                        toastr.info(msg);
+                    }
+                    $(this).hide();
+                }
+            });
+        }
+    });
+</script>
 
 @stack('third_party_scripts')
 

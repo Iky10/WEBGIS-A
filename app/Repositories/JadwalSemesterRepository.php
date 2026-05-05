@@ -17,7 +17,7 @@ class JadwalSemesterRepository extends BaseRepository
      * @var array
      */
     protected $fieldSearchable = [
-        'gedung_fasilitas_id',
+        'gedung_id',
         'semester',
         'tahun_ajaran',
         'file_jadwal',

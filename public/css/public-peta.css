@@ -467,6 +467,25 @@ body {
     opacity: 1;
 }
 
+.t-btn-text {
+    width: auto;
+    padding: 0 16px;
+    gap: 8px;
+    font-weight: 800;
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 4px 14px var(--accent-glow) !important;
+}
+.t-btn-text:hover {
+    background: #2563eb !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--accent-glow) !important;
+}
+.t-btn-text .t-btn-tip {
+    display: none;
+}
+
 /* ═══════════════════════════════════════════
    FILTER PANEL (Checkbox List Style)
 ═══════════════════════════════════════════ */
@@ -1514,6 +1533,7 @@ body {
 }
 
 .leaflet-routing-container {
+    display: none !important;
     background: var(--surface-hi) !important;
     border: 1px solid var(--border-hi) !important;
     border-radius: var(--radius-md) !important;
@@ -1950,185 +1970,533 @@ body {
 }
 
 .sb-img-wrap {
-    width: 100%;
-    height: 220px;
-    background: #07101e;
-    position: relative;
-    overflow: hidden;
+            width: 100%;
+            height: 220px;
+            background: #07101e;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Fallback bila carousel tidak digunakan (single foto utama) */
+        .sb-img-wrap > #sbImg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block
+        }
+
+        .sb-main-slides {
+            width: 100%;
+            height: 100%;
+        }
+
+        .sb-main-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity .4s ease-in-out;
+            cursor: pointer;
+        }
+
+        .sb-main-slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+
+        .sb-main-nav {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 12px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .sb-main-nav button {
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 0, 0, .4);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: all;
+            transition: all .2s;
+            backdrop-filter: blur(4px);
+        }
+
+        .sb-main-nav button:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .sb-main-counter {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, .6);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            font-size: .65rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            z-index: 2;
+            letter-spacing: .5px;
+        }
+
+        .sb-info {
+            padding: 20px;
+        }
+
+        .sb-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .sb-addr {
+            font-size: .85rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 6px;
+            line-height: 1.4;
+        }
+
+        .sb-addr i {
+            color: var(--accent);
+            margin-top: 3px;
+        }
+
+        .sb-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 22px;
+        }
+
+        .sb-stat {
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            text-align: center;
+        }
+
+        .sb-stat-v {
+            display: block;
+            font-size: .95rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .sb-stat-k {
+            font-size: .7rem;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        /* Hide empty stat card bila value '-' atau kosong */
+        .sb-stat-empty {
+            display: none;
+        }
+
+        .sb-jam-ops {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: .78rem;
+            color: var(--muted);
+            font-weight: 600;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            margin-bottom: 18px;
+        }
+
+        .sb-jam-ops i {
+            color: #3b82f6;
+            font-size: .75rem;
+        }
+
+        .sb-section {
+            margin-bottom: 22px;
+        }
+
+        .sb-sec-title {
+            font-size: .85rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .sb-sec-title span {
+            font-size: .7rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .sb-sec-text {
+            font-size: .85rem;
+            color: var(--muted);
+            line-height: 1.6
+        }
+
+        .sb-cta-btn {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: .9rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 6px 20px var(--accent-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .sb-cta-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--accent-glow);
+        }
+
+        /* Action Bar (3-button: Rute / Foto / Ajukan) */
+        .sb-action-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .sb-action-btn {
+            position: relative;
+            display: flex;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:.78rem;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .25s cubic-bezier(.4,0,.2,1);
+    text-decoration:none;
+    color:#fff;
+    letter-spacing:.2px;
+}
+.sb-action-btn i { font-size:.82rem; }
+
+/* Rute — Hijau */
+.sb-action-rute {
+    background:linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow:0 4px 14px rgba(34,197,94,.35);
+}
+.sb-action-rute:hover {
+    background:linear-gradient(135deg, #16a34a, #15803d);
+    transform:translateY(-2px);
+    box-shadow:0 8px 22px rgba(34,197,94,.45);
 }
 
-.sb-main-slides {
-    width: 100%;
-    height: 100%;
-    position: relative;
+/* Foto — Slate */
+.sb-action-foto {
+    background:linear-gradient(135deg, #475569, #334155);
+    box-shadow:0 4px 14px rgba(71,85,105,.3);
+}
+.sb-action-foto:hover {
+    background:linear-gradient(135deg, #334155, #1e293b);
+    transform:translateY(-2px);
+    box-shadow:0 8px 22px rgba(71,85,105,.4);
 }
 
-.sb-main-slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0;
-    transition: opacity .4s ease-in-out;
-    cursor: pointer;
+/* Ajukan — Orange / Red (eye-catching CTA) */
+.sb-action-ajukan {
+    background:linear-gradient(135deg, #f97316, #ef4444);
+    box-shadow:0 4px 14px rgba(249,115,22,.35);
+}
+.sb-action-ajukan:hover {
+    background:linear-gradient(135deg, #ea580c, #dc2626);
+    transform:translateY(-2px);
+    box-shadow:0 8px 22px rgba(239,68,68,.45);
+    color:#fff;
 }
 
-.sb-main-slide.active {
-    opacity: 1;
-    z-index: 1;
+/* Tooltip on hover */
+.sb-action-btn[data-tooltip]::after {
+    content:attr(data-tooltip);
+    position:absolute;
+    bottom:calc(100% + 8px);
+    left:50%;
+    transform:translateX(-50%) translateY(4px);
+    background:rgba(15,23,42,.95);
+    color:#e2e8f0;
+    font-size:.7rem;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:8px;
+    white-space:nowrap;
+    pointer-events:none;
+    opacity:0;
+    transition:all .2s ease;
+    border:1px solid rgba(255,255,255,.1);
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    z-index:10;
+}
+.sb-action-btn[data-tooltip]::before {
+    content:'';
+    position:absolute;
+    bottom:calc(100% + 2px);
+    left:50%;
+    transform:translateX(-50%);
+    border:5px solid transparent;
+    border-top-color:rgba(15,23,42,.95);
+    pointer-events:none;
+    opacity:0;
+    transition:all .2s ease;
+    z-index:10;
+}
+.sb-action-btn[data-tooltip]:hover::after {
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+}
+.sb-action-btn[data-tooltip]:hover::before {
+    opacity:1;
 }
 
-.sb-main-nav {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 12px;
-    pointer-events: none;
-    z-index: 2;
+.sb-gallery { margin-top:24px; border-top:1px dashed var(--border); padding-top:20px;}
+.sb-gallery-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.sb-gallery-grid img { width:100%; height:90px; object-fit:cover; border-radius:6px; border:1px solid var(--border); transition:transform .3s;}
+.sb-gallery-grid img:hover { transform:scale(1.05); cursor:pointer;}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+
+/* Tablet & Mobile (≤768px) */
+@media (max-width:768px) {
+    #topbar {
+        padding: 0 12px; height: 64px;
+    }
+    .t-logo-name, .t-logo-sub { display:none; }
+    .t-search { flex: 1 1 auto; max-width: none; min-width: 120px; }
+
+    /* Filter panel jadi bottom sheet di mobile (lebih ergonomis untuk thumb) */
+    #filterPanel {
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important; right: 0 !important;
+        width: 100% !important;
+        max-height: 65vh;
+        border-radius: 16px 16px 0 0;
+        transform-origin: bottom center;
+    }
+    #filterPanel.hide {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    .gis-popup { width: 240px; }
+
+    /* ──────────────────────────────────────────
+       MARKER PREVIEW — hide di mobile (touch tidak hover)
+       Tap marker langsung buka bottom sheet, no popup floating.
+    ────────────────────────────────────────── */
+    .marker-preview {
+        display: none !important;
+    }
+
+    /* ──────────────────────────────────────────
+       BOTTOM SHEET — 3-state pattern Google Maps
+       - peek    : ~14vh (hanya nama gedung visible)
+       - half    : ~52vh (default saat klik marker)
+       - full    : ~92vh (drag up untuk expand)
+    ────────────────────────────────────────── */
+    #sidebar {
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 52vh; /* default = half state */
+        max-height: 92vh;
+        border-right: none !important;
+        border-top: 1px solid var(--border-hi);
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -10px 40px rgba(0,0,0,.6);
+        transform: translateY(100%) !important;
+        transition: transform .35s cubic-bezier(.4,0,.2,1),
+                    height .28s cubic-bezier(.4,0,.2,1);
+    }
+    #sidebar.show {
+        transform: translateY(0) !important;
+    }
+    /* State: peek (minimized — hanya nama gedung visible) */
+    #sidebar.peek {
+        height: 14vh !important;
+    }
+    /* State: half (default) — already set above */
+    #sidebar.half {
+        height: 52vh !important;
+    }
+    /* State: full (expanded) */
+    #sidebar.expanded,
+    #sidebar.full {
+        height: 92vh !important;
+    }
+
+    /* Drag handle area (clickable + draggable) */
+    .sb-drag-area {
+        position: absolute; top: 0; left: 0; right: 0;
+        height: 32px; z-index: 9;
+        cursor: grab;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .sb-drag-area:active { cursor: grabbing; }
+
+    /* Drag knob visual (lebih jelas + animated hover) */
+    #sidebar::before {
+        content: '';
+        position: absolute;
+        top: 10px; left: 50%;
+        transform: translateX(-50%);
+        width: 48px; height: 5px;
+        background: rgba(255,255,255,.35);
+        border-radius: 3px;
+        z-index: 10;
+        pointer-events: none;
+        transition: background .2s, width .2s;
+    }
+    .sb-drag-area:hover ~ * #sidebar::before,
+    #sidebar:hover::before {
+        background: rgba(255,255,255,.55);
+        width: 56px;
+    }
+
+    /* Sb-head: padding adjust + always visible saat peek */
+    .sb-head {
+        padding-top: 26px !important;
+        padding-bottom: 12px !important;
+    }
+
+    /* Saat peek state, tampilkan info ringkas (nama gedung di body) */
+    #sidebar.peek .sb-body {
+        overflow: hidden;
+    }
+
+    /* Foto sb-img-wrap reduce di mobile */
+    .sb-img-wrap { height: 180px !important; }
+
+    /* Hide empty stat cards (.sb-stat-empty class di-add via JS) */
+    .sb-stat.sb-stat-empty { display: none !important; }
+
+    /* Tap area fasilitas/ruangan card — generous untuk thumb (Apple HIG 44px+) */
+    .sb-fas-item {
+        padding: 14px !important;
+        min-height: 64px;
+        transition: background .15s, transform .1s, border-color .15s;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+    .sb-fas-item:active {
+        background: rgba(59,130,246,.18) !important;
+        border-color: var(--accent) !important;
+        transform: scale(.98);
+    }
+    .sb-fas-expand-btn {
+        min-height: 44px !important;
+        font-size: .85rem !important;
+        padding: 10px 14px !important;
+    }
 }
 
-.sb-main-nav button {
-    width: 32px;
-    height: 32px;
-    background: rgba(0, 0, 0, .4);
-    border: none;
-    border-radius: 50%;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    pointer-events: all;
-    transition: all .2s;
-    backdrop-filter: blur(4px);
+/* Mobile (≤600px) */
+@media (max-width:600px) {
+    /* Topbar buttons jadi scroll horizontal untuk space efisien */
+    .t-btns {
+        gap: 4px;
+        max-width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none; /* Firefox */
+    }
+    .t-btns::-webkit-scrollbar { display: none; } /* Webkit */
+    .t-btn {
+        width: 36px; height: 36px; flex-shrink: 0;
+    }
+    .t-btn-text {
+        padding: 0 12px; font-size: .85rem;
+    }
+
+    /* Search bar lebih compact */
+    .t-search {
+        flex: 1 1 100px; min-width: 80px;
+    }
+    .t-search-in { font-size: .85rem; padding-left: 32px !important; }
+    .t-search-mic { display: none; } /* Mic button kurang esensial di mobile */
+
+    /* Zoom box lebih kecil dan posisi adjust */
+    #zoomBox {
+        bottom: 16px; left: 12px;
+    }
+    .z-btn {
+        width: 36px !important; height: 36px !important;
+        font-size: 18px !important;
+    }
+
+    /* Layer btn lebih kecil */
+    #layerBtn {
+        width: 36px; height: 36px; font-size: 14px;
+        top: auto; bottom: 16px; right: 12px;
+    }
+
+    /* Legend di mobile: collapsible / hide by default */
+    #legend {
+        bottom: 64px; right: 12px;
+        font-size: .75rem; padding: 8px 10px;
+        max-width: 180px;
+    }
+    #legend .leg-title {
+        font-size: .7rem;
+    }
+
+    /* Sidebar bottom sheet sudah di-handle di breakpoint 768px (above) */
+
+    /* Popup ruangan / gedung lebih compact */
+    .gis-popup, .ruangan-popup { width: 90vw !important; max-width: 280px !important; }
 }
 
-.sb-main-nav button:hover {
-    background: var(--accent);
-    transform: scale(1.1);
-}
+/* Very small mobile (≤400px) */
+@media (max-width:400px) {
+    /* Hide non-essential elements untuk space lebih */
+    #legend { display: none; }
 
-.sb-main-counter {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    background: rgba(0, 0, 0, .6);
-    backdrop-filter: blur(4px);
-    color: #fff;
-    font-size: .65rem;
-    font-weight: 800;
-    padding: 4px 10px;
-    border-radius: 6px;
-    z-index: 2;
-    letter-spacing: .5px;
-}
-
-.sb-info {
-    padding: 20px;
-}
-
-.sb-name {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--text);
-    line-height: 1.2;
-    margin-bottom: 8px;
-}
-
-.sb-addr {
-    font-size: .85rem;
-    color: var(--muted);
-    margin-bottom: 20px;
-    display: flex;
-    gap: 6px;
-    line-height: 1.4;
-}
-
-.sb-addr i {
-    color: var(--accent);
-    margin-top: 3px;
-}
-
-.sb-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 22px;
-}
-
-.sb-stat {
-    background: rgba(255, 255, 255, .03);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px;
-    text-align: center;
-}
-
-.sb-stat-v {
-    display: block;
-    font-size: .95rem;
-    font-weight: 800;
-    color: var(--text);
-}
-
-.sb-stat-k {
-    font-size: .7rem;
-    color: var(--muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-}
-
-.sb-section {
-    margin-bottom: 22px;
-}
-
-.sb-sec-title {
-    font-size: .85rem;
-    font-weight: 800;
-    color: var(--text);
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-}
-
-.sb-sec-title span {
-    font-size: .7rem;
-    color: var(--muted);
-    font-weight: 600;
-}
-
-.sb-sec-text {
-    font-size: .85rem;
-    color: var(--muted);
-    line-height: 1.6;
-}
-
-.sb-cta-btn {
-    width: 100%;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: 12px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: .9rem;
-    font-weight: 800;
-    cursor: pointer;
-    transition: all .2s;
-    box-shadow: 0 6px 20px var(--accent-glow);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    /* Topbar buttons icon-only, no padding extra */
+    .t-btn-text span { display: none; }
+    .t-btn-text { padding: 0; width: 36px; gap: 0; }
 }
 
 .sb-cta-btn:hover {

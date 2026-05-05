@@ -30,6 +30,21 @@
     {!! Form::textarea('keterangan', null, ['class' => 'form-control', 'rows' => 3, 'placeholder' => 'Keterangan tambahan (opsional)']) !!}
 </div>
 
+<!-- Boleh Diajukan Pengguna Toggle -->
+<div class="form-group col-sm-12">
+    <label>Boleh Diajukan Pengguna:</label>
+    <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-primary">
+        {!! Form::hidden('bisa_diajukan', 0) !!}
+        <input type="checkbox" name="bisa_diajukan" value="1"
+               class="custom-control-input" id="input_bisa_diajukan"
+               {{ isset($gedungFasilitas) && $gedungFasilitas->bisa_diajukan ? 'checked' : '' }}>
+        <label class="custom-control-label" for="input_bisa_diajukan">
+            <span id="label-bisa-diajukan">Ya (user boleh mengajukan penggunaan)</span>
+        </label>
+    </div>
+    <small class="text-muted">Hanya ruangan seperti <em>Auditorium, RKU, Ruang Seminar</em> yang biasanya di-set <strong>Ya</strong>. Kelas reguler biasanya <strong>Tidak</strong> karena sudah dipakai jadwal semester.</small>
+</div>
+
 <!-- Koordinat -->
 <div class="form-group col-sm-6">
     {!! Form::label('latitude', 'Latitude:') !!}
