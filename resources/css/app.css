@@ -1,0 +1,29 @@
+/* Pastikan index peta (Leaflet) tidak menutupi chat */
+#chat-window, #chat-widget-button {
+    font-family: 'Inter', sans-serif;
+}
+
+.chat-bubble-user {
+    background-color: #2563eb;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 12px 12px 0 12px;
+    align-self: flex-end;
+    max-width: 80%;
+}
+
+.chat-bubble-ai {
+    background-color: #f3f4f6;
+    color: #374151;
+    padding: 8px 12px;
+    border-radius: 12px 12px 12px 0;
+    align-self: flex-start;
+    max-width: 80%;
+}
+
+#chat-widget-button {
+    z-index: 9999 !important;
+}
+#chat-window {
+    z-index: 9999 !important;
+}

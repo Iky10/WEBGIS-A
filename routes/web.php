@@ -37,6 +37,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('jadwal_ruangans', App\Http\Controllers\JadwalRuanganController::class);
     Route::get('/webgis', [App\Http\Controllers\WebGisController::class, 'index'])->name('webgis.index');
 
+
 });
 
 // YOGMA HADIR

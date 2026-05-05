@@ -4,6 +4,7 @@
 /* ── MAP INIT ─────────────────────────────── */
 var map = L.map('map',{ zoomControl:false, attributionControl:true })
            .setView([-1.2654, 116.8312], 12);
+window.peta = map;
 
 /* ── TILE LAYERS ──────────────────────────── */
 var light = L.tileLayer(

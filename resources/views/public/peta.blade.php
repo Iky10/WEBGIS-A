@@ -202,6 +202,173 @@
     </div>
 </div>
 
+<main>
+        @yield('content')
+    </main>
+
+    <div id="chat-widget-button" onclick="toggleChat()" style="position: fixed !important; bottom: 20px !important; right: 20px !important; z-index: 999999 !important; background: #2563eb; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+    </div>
+
+    <div id="chat-window" style="position: fixed !important; bottom: 90px !important; right: 20px !important; z-index: 999999 !important; width: 320px; height: 450px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: none; flex-direction: column; border: 1px solid #ddd; overflow: hidden;">
+        <div style="background: #2563eb; padding: 15px; color: white; font-weight: bold; display: flex; justify-content: space-between;">
+            <span>Chatbot Politani</span>
+            <span onclick="toggleChat()" style="cursor:pointer;">&times;</span>
+        </div>
+        <div id="chat-messages" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f9f9f9;">
+             <div style="background: #0d0d0d; padding: 10px; border-radius: 10px; align-self: flex-start; max-width: 80%; font-size: 13px;">Halo! Ada yang bisa saya bantu terkait lokasi gedung?</div>
+        </div>
+        <div style="padding: 10px; border-top: 1px solid #0b0a0a; display: flex; gap: 5px;">
+            <input type="text" id="userInput" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; outline: none;">
+            <button onclick="handleSendMessage()" style="background: #2563eb; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">Kirim</button>
+        </div>
+    </div>
+
+    <script>
+    // Inisialisasi peta dan variabel global
+
+    // Fungsi untuk buka tutup jendela chat
+    function toggleChat() {
+        const chatWin = document.getElementById('chat-window');
+        if (chatWin.style.display === 'none' || chatWin.style.display === '') {
+            chatWin.style.display = 'flex';
+        } else {
+            chatWin.style.display = 'none';
+        }
+    }
+
+    // Fungsi utama untuk mengirim pesan ke Laravel (API Chatbot)
+    async function handleSendMessage() {
+        const input = document.getElementById('userInput');
+        const messageContainer = document.getElementById('chat-messages');
+        const message = input.value.trim();
+
+        if (!message) return;
+
+        // 1. Tampilkan pesan user di chat box (Gunakan insertAdjacentHTML)
+        messageContainer.insertAdjacentHTML('beforeend', `
+    <div style="background: #2563eb; color: #ffffff; padding: 10px 15px; border-radius: 15px 15px 0 15px; align-self: flex-end; max-width: 80%; font-size: 13px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        ${message}
+    </div>
+`);
+        
+        input.value = ''; // Kosongkan input
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+
+        // 2. Tampilkan status loading
+        const loadingId = 'loading-' + Date.now();
+       messageContainer.insertAdjacentHTML('beforeend', `
+    <div id="${loadingId}" style="background: #e5e7eb; color: #374151; padding: 10px 15px; border-radius: 15px 15px 15px 0; align-self: flex-start; max-width: 80%; font-size: 13px; font-style: italic; margin-bottom: 8px;">
+        Sedang mencari...
+    </div>
+`);
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+
+        try {
+            const response = await fetch("{{ url('/api/chat') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            // Cek apakah server error (404, 500, 419)
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error("Error dari Server Laravel:", errText);
+                throw new Error("Server mengembalikan status " + response.status);
+            }
+
+            const data = await response.json();
+
+            // Hapus elemen loading
+            const loadingElem = document.getElementById(loadingId);
+            if (loadingElem) loadingElem.remove();
+
+            // Jika API mengirim error
+            if (data.error) {
+                messageContainer.insertAdjacentHTML('beforeend', `
+                    <div style="background-color: #fee2e2 !important; color: #991b1b !important; padding: 10px 15px; border-radius: 15px 15px 15px 0; align-self: flex-start; max-width: 80%; font-size: 13px; margin-bottom: 8px;">
+                        Error API: ${data.error.message || data.error}
+                    </div>
+                `);
+                return;
+            }
+
+            const aiContent = data.choices[0].message.content;
+
+            try {
+                // Langsung coba parse sebagai JSON. Jika berhasil, berarti AI merespons permintaan lokasi.
+                const parsed = JSON.parse(aiContent);
+                const btnId = "btn-map-" + Date.now();
+
+                messageContainer.insertAdjacentHTML('beforeend', `
+                    <div style="background: #1f2937; color: #ffffff; padding: 12px 15px; border-radius: 15px 15px 15px 0; align-self: flex-start; max-width: 80%; font-size: 13px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        ${parsed.message}
+                        ${(parsed.lat && parsed.lng) ? `
+                            <hr style="border: 0.5px solid #4b5563; margin: 10px 0;">
+                            <button id="${btnId}" style="background: #3b82f6; color: #ffffff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-family: inherit;">
+                                📍 Lihat di Peta
+                            </button>
+                        ` : ''}
+                    </div>
+                `);
+
+                if (parsed.lat && parsed.lng) {
+                    setTimeout(() => {
+                        const mapBtn = document.getElementById(btnId);
+                        if (mapBtn) {
+                            mapBtn.onclick = function() {
+                                const latitude = parseFloat(parsed.lat);
+                                const longitude = parseFloat(parsed.lng);
+                                const myMap = window.peta || peta; 
+
+                                if (myMap) {
+                                    myMap.flyTo([latitude, longitude], 18, { animate: true, duration: 1.5 });
+                                    L.popup()
+                                        .setLatLng([latitude, longitude])
+                                        .setContent(`<div style="color:black; font-weight:bold;">${parsed.message}</div>`)
+                                        .openOn(myMap);
+                                } else {
+                                    alert("Peta tidak merespon. Pastikan variabel peta sudah dimuat.");
+                                }
+                            };
+                        }
+                    }, 50);
+                }
+
+            } catch (e) {
+                // Jika JSON.parse gagal, berarti respons AI adalah teks biasa.
+                messageContainer.insertAdjacentHTML('beforeend', `
+                    <div style="background: #ffffff; color: #1f2937; padding: 10px 15px; border-radius: 15px 15px 15px 0; align-self: flex-start; max-width: 80%; font-size: 13px; border: 1px solid #e5e7eb; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        ${aiContent}
+                    </div>
+                `);
+            }
+            
+        } catch (error) {
+            console.error(error);
+            const loadingElem = document.getElementById(loadingId);
+            if (loadingElem) {
+                loadingElem.innerHTML = "Gagal menghubungi server. Silakan coba lagi.";
+                loadingElem.style.backgroundColor = "#fee2e2";
+                loadingElem.style.color = "#991b1b";
+            }
+        }   
+
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+
+    // Tambahan: Tekan 'Enter' untuk mengirim
+    document.getElementById('userInput').addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            handleSendMessage();
+        }
+    });
+</script>
+</body>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
