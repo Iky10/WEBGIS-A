@@ -76,8 +76,39 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('pengajuan_ruangans/bulk-delete', [App\Http\Controllers\PengajuanRuanganController::class, 'bulkDelete'])->name('pengajuan_ruangans.bulk-delete');
     Route::delete('pengajuan_ruangans/{pengajuan_ruangan}', [App\Http\Controllers\PengajuanRuanganController::class, 'destroy'])->name('pengajuan_ruangans.destroy');
 
+    // Manajemen User & Admin (CRUD; tanpa show karena edit sudah cukup)
+    Route::resource('users', App\Http\Controllers\UserController::class)->except(['show']);
+
 });
 
 // API publik (tanpa login): dipakai untuk peta & dashboard
 Route::get('/api/semester-aktif', [App\Http\Controllers\SemesterAktifController::class, 'apiGetSemesterAktif'])->name('api.semester-aktif');
+
+// ── DEV ONLY: Quick login switcher (testing tanpa form login) ──
+// AKTIF HANYA jika APP_DEBUG=true. Return 404 di production.
+if (config('app.debug')) {
+    Route::get('dev/login-as/{role}', function (string $role) {
+        $email = match ($role) {
+            'admin' => 'admin@webgis.com',
+            'user'  => 'user@webgis.com',
+            default => null,
+        };
+        if (!$email) abort(404);
+
+        $user = \App\Models\User::where('email', $email)->first();
+        if (!$user) {
+            return redirect('/')->with('error', 'User dev belum di-seed. Jalankan: php artisan db:seed --class=UserSeeder');
+        }
+
+        \Illuminate\Support\Facades\Auth::login($user);
+        return redirect()->intended('/')->with('success', 'Login sebagai ' . $user->name . ' (DEV)');
+    })->name('dev.login-as');
+
+    Route::get('dev/logout', function () {
+        \Illuminate\Support\Facades\Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        return redirect('/')->with('success', 'Logout berhasil (DEV)');
+    })->name('dev.logout');
+}
 
