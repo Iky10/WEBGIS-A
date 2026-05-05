@@ -513,3 +513,36 @@
                 margin-top: 12px;
             }
         }
+
+        /* ══ NEED-LOGIN HINT (untuk guest)
+         * Lock icon kecil di samping label "Pengajuan" sebagai hint visual
+         * bahwa fitur butuh login dulu (klik akan tampil konfirmasi).
+         */
+        .navbar-public .nav-link-need-login .nav-lock-badge {
+            font-size: 0.62rem;
+            margin-left: 6px;
+            padding: 2px 5px;
+            border-radius: 999px;
+            background: rgba(245, 158, 11, .85);
+            color: #fff;
+            vertical-align: middle;
+            line-height: 1;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+        }
+        .navbar-public .nav-link-need-login:hover .nav-lock-badge {
+            background: rgba(245, 158, 11, 1);
+        }
+
+        .public-sidebar-menu .side-need-login {
+            position: relative;
+        }
+        .public-sidebar-menu .side-need-login .side-lock-badge {
+            margin-left: auto;
+            font-size: 0.7rem;
+            padding: 3px 6px;
+            border-radius: 999px;
+            background: rgba(245, 158, 11, .85);
+            color: #fff;
+            width: auto;
+            line-height: 1;
+        }

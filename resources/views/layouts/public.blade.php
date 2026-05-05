@@ -54,11 +54,18 @@
                     <i class="fas fa-building mr-1"></i> Daftar Gedung
                 </a>
             </li>
+            {{-- Pengajuan Ruangan: SELALU tampil. Guest akan diminta login dulu via JS handler. --}}
             @auth
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('pengajuan-ruangan*') || Request::is('pengajuan_ruangans*') ? 'active' : '' }}"
                        href="{{ route('pengajuan_ruangans.riwayat') }}">
                         <i class="fas fa-file-alt mr-1"></i> Pengajuan Saya
+                    </a>
+                </li>
+            @else
+                <li class="nav-item">
+                    <a class="nav-link nav-link-need-login" href="{{ route('login') }}" data-need-login="1">
+                        <i class="fas fa-file-alt mr-1"></i> Pengajuan
                     </a>
                 </li>
             @endauth
@@ -192,6 +199,7 @@
                 <span>Daftar Gedung</span>
             </a>
         </li>
+        {{-- Pengajuan Ruangan: SELALU tampil di sidebar mobile. Guest dialihkan ke login via JS. --}}
         @auth
             <li class="{{ Request::is('pengajuan-ruangan*') || Request::is('pengajuan_ruangans*') ? 'active' : '' }}">
                 <a href="{{ route('pengajuan_ruangans.riwayat') }}">
@@ -209,6 +217,12 @@
                 </li>
             @endif
         @else
+            <li>
+                <a href="{{ route('login') }}" data-need-login="1" class="side-need-login">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Pengajuan</span>
+                </a>
+            </li>
             <li class="public-sidebar-divider"></li>
             <li>
                 <a href="{{ route('login') }}">
@@ -313,6 +327,43 @@
     @endforeach
     {{ session()->forget('flash_notification') }}
 @endif
+
+@guest
+{{-- Need-login handler: tampil konfirmasi sebelum redirect ke /login. --}}
+{{-- Guard di @guest supaya tidak load script ini saat user sudah authenticated. --}}
+<script>
+(function () {
+    'use strict';
+    var loginUrl = @json(route('login'));
+    var msg = 'Anda harus login terlebih dahulu untuk mengakses fitur Pengajuan Ruangan.';
+
+    document.querySelectorAll('[data-need-login="1"]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Login Diperlukan',
+                    text: msg,
+                    showCancelButton: true,
+                    confirmButtonText: 'Login Sekarang',
+                    cancelButtonText: 'Nanti Saja',
+                    confirmButtonColor: '#3b82f6',
+                    cancelButtonColor: '#6b7280',
+                    reverseButtons: true,
+                }).then(function (r) {
+                    if (r.isConfirmed) window.location.href = loginUrl;
+                });
+            } else {
+                if (confirm(msg + '\n\nLogin sekarang?')) {
+                    window.location.href = loginUrl;
+                }
+            }
+        });
+    });
+})();
+</script>
+@endguest
 
 @stack('scripts')
 </body>
