@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Gedung;
 use App\Models\GambarGedung;
+use App\Models\PengajuanRuangan;
 
 class HomeController extends Controller
 {
@@ -15,6 +16,11 @@ class HomeController extends Controller
 
     public function index()
     {
+        // User biasa tidak boleh akses dashboard admin
+        if (!auth()->user()->isAdmin()) {
+            return redirect('/');
+        }
+
         // Statistik utama
         $totalGedung    = Gedung::count();
         $totalFoto      = GambarGedung::count();
@@ -30,15 +36,33 @@ class HomeController extends Controller
             }
         }
 
+        // Statistik pengajuan ruangan
+        $totalPengajuan = PengajuanRuangan::count();
+        $pengajuanMenunggu = PengajuanRuangan::where('status', 'diproses')->count();
+        $pengajuanDisetujui = PengajuanRuangan::where('status', 'disetujui')->count();
+        $pengajuanDitolak = PengajuanRuangan::where('status', 'ditolak')->count();
+
         // 5 gedung terbaru
         $gedungTerbaru = Gedung::latest()->take(5)->get();
+
+        // 5 pengajuan terbaru yang menunggu persetujuan
+        $pengajuanTerbaru = PengajuanRuangan::with(['user', 'ruangan.gedung'])
+            ->where('status', 'diproses')
+            ->latest()
+            ->take(5)
+            ->get();
 
         return view('dashboard.home', compact(
             'totalGedung',
             'totalFoto',
             'gedungKosong',
             'gedungDipakai',
-            'gedungTerbaru'
+            'gedungTerbaru',
+            'totalPengajuan',
+            'pengajuanMenunggu',
+            'pengajuanDisetujui',
+            'pengajuanDitolak',
+            'pengajuanTerbaru'
         ));
     }
 }

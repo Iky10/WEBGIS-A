@@ -18,7 +18,9 @@ class WebGisController extends Controller
     }
 
     /**
-     * API: Ambil semua gedung dalam format GeoJSON untuk Leaflet
+     * API: Ambil semua gedung dalam format GeoJSON untuk Leaflet.
+     * Properties yang dikirim ke client (peta publik):
+     *  - status realtime, jam operasional, flag bisa_diajukan, foto utama, link detail
      */
     public function geojson()
     {
@@ -34,17 +36,17 @@ class WebGisController extends Controller
                     'coordinates' => [(float) $gedung->y, (float) $gedung->x], // [lng, lat]
                 ],
                 'properties' => [
-                    'id'           => $gedung->id,
-                    'nama_gedung'  => $gedung->nama_gedung,
-                    'alamat'       => $gedung->alamat,
-                    'fungsi'       => $gedung->fungsi ?? '-',
-                    'jumlah_lantai'=> $gedung->jumlah_lantai ?? '-',
-                    'tahun_berdiri'=> $gedung->tahun_berdiri ?? '-',
-                    'kondisi'      => $gedung->status_dipakai,
-                    'foto_utama'   => $gedung->foto_utama
-                                        ? asset($gedung->foto_utama)
-                                        : null,
-                    'detail_url'   => route('gedungs.show', $gedung->id),
+                    'id'              => $gedung->id,
+                    'nama_gedung'     => $gedung->nama_gedung,
+                    'alamat'          => $gedung->alamat,
+                    'kondisi'         => $gedung->status_dipakai,
+                    'bisa_diajukan'   => (bool) $gedung->bisa_diajukan,
+                    'jam_buka'        => $gedung->jam_buka_formatted,
+                    'jam_tutup'       => $gedung->jam_tutup_formatted,
+                    'foto_utama'      => $gedung->foto_utama
+                                            ? asset($gedung->foto_utama)
+                                            : null,
+                    'detail_url'      => route('publik.gedung.detail', $gedung->id),
                 ],
             ];
         });
@@ -56,7 +58,7 @@ class WebGisController extends Controller
     }
 
     /**
-     * API: Ambil semua ruangan/fasilitas dalam format GeoJSON untuk Leaflet
+     * API: Ambil semua ruangan/fasilitas dalam format GeoJSON untuk Leaflet.
      */
     public function geojsonRuangan()
     {
@@ -70,7 +72,7 @@ class WebGisController extends Controller
                 'type'     => 'Feature',
                 'geometry' => [
                     'type'        => 'Point',
-                    'coordinates' => [(float) $ruangan->longitude, (float) $ruangan->latitude], // [lng, lat]
+                    'coordinates' => [(float) $ruangan->longitude, (float) $ruangan->latitude],
                 ],
                 'properties' => [
                     'id'              => $ruangan->id,
@@ -79,8 +81,8 @@ class WebGisController extends Controller
                     'keterangan'      => $ruangan->keterangan,
                     'nama_gedung'     => optional($ruangan->gedung)->nama_gedung ?? '-',
                     'gedung_id'       => $ruangan->gedung_id,
-                    'is_aktif'        => $ruangan->is_aktif,
                     'status_dipakai'  => $ruangan->status_dipakai,
+                    'is_aktif'        => $ruangan->status_dipakai === 'Sedang Dipakai',
                     'foto_ruangan'    => $ruangan->foto_ruangan
                                             ? asset($ruangan->foto_ruangan)
                                             : null,
@@ -95,7 +97,7 @@ class WebGisController extends Controller
     }
 
     /**
-     * API: Ambil semua vegetasi dalam format GeoJSON untuk Leaflet
+     * API: Ambil semua vegetasi dalam format GeoJSON untuk Leaflet.
      */
     public function geojsonVegetasi()
     {

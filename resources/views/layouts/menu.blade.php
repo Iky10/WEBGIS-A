@@ -7,6 +7,9 @@
     </a>
 </li>
 
+{{-- ═══ Menu Khusus Admin ═══ --}}
+@if(Auth::user()->isAdmin())
+
 {{-- Menu Gedung --}}
 <li class="nav-item">
     <a href="{{ route('gedungs.index') }}"
@@ -15,15 +18,6 @@
         <p>Data Gedung</p>
     </a>
 </li>
-
-<!--
-<li class="nav-item">
-    <a href="{{ route('webgis.index') }}"
-       class="nav-link {{ Request::is('webgis*') ? 'active' : '' }}">
-        <i class="nav-icon fas fa-map-marked-alt"></i>
-        <p>WebGIS Peta</p>
-    </a>
-</li>-->
 
 {{-- Menu Fasilitas & Ruangan --}}
 <li class="nav-item">
@@ -61,6 +55,23 @@
     </a>
 </li>
 
+{{-- Menu Pengajuan Ruangan (Semua Pengajuan) --}}
+@php
+    $pengajuanMenungguCount = \App\Models\PengajuanRuangan::where('status', 'diproses')->count();
+@endphp
+<li class="nav-item">
+    <a href="{{ route('pengajuan_ruangans.index') }}"
+       class="nav-link {{ Request::is('pengajuan_ruangans*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-file-alt"></i>
+        <p>
+            Pengajuan Ruangan
+            @if($pengajuanMenungguCount > 0)
+                <span class="badge badge-danger right">{{ $pengajuanMenungguCount }}</span>
+            @endif
+        </p>
+    </a>
+</li>
+
 {{-- Pengaturan Semester Aktif --}}
 <li class="nav-item">
     <a href="{{ route('semester_aktif.index') }}"
@@ -69,6 +80,11 @@
         <p>Pengaturan Global</p>
     </a>
 </li>
+
+@endif
+
+{{-- ═══ Menu Semua User ═══ --}}
+
 
 {{-- Kembali ke Publik --}}
 <li class="nav-item">

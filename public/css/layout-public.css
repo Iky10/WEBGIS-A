@@ -53,3 +53,463 @@
 
         /* Content */
         .page-content { min-height: calc(100vh - 130px); padding-top: 20px; }
+
+        /* ════════════════════════════════════════
+           MOBILE SIDEBAR DRAWER (AdminLTE pattern)
+           Slide dari kiri 280px, dark gradient bg, item highlight aktif
+        ════════════════════════════════════════ */
+        .public-sidebar {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: 280px;
+            background: linear-gradient(180deg, #1a3c5e 0%, #0f2640 100%);
+            box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+            z-index: 1050;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-overflow-scrolling: touch;
+        }
+        .public-sidebar.show {
+            transform: translateX(0);
+        }
+
+        /* Sidebar Header (logo + close button) */
+        .public-sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            background: rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .public-sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff !important;
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-decoration: none !important;
+        }
+        .public-sidebar-logo i {
+            font-size: 1.4rem;
+            color: #3498db;
+        }
+        .public-sidebar-close {
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: rgba(255,255,255,0.7);
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .public-sidebar-close:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+
+        /* Sidebar Menu */
+        .public-sidebar-menu {
+            list-style: none;
+            margin: 0;
+            padding: 12px 12px 24px;
+        }
+        .public-sidebar-menu li {
+            margin: 2px 0;
+        }
+        .public-sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none !important;
+            border-radius: 8px;
+            transition: all 0.15s;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .public-sidebar-menu li a:hover {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+        .public-sidebar-menu li a i {
+            width: 22px;
+            text-align: center;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.6);
+        }
+        /* Active state: highlight biru gradient (seperti AdminLTE) */
+        .public-sidebar-menu li.active a {
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(52,152,219,0.3);
+        }
+        .public-sidebar-menu li.active a i {
+            color: #fff;
+        }
+        /* Divider line */
+        .public-sidebar-divider {
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin: 10px 8px;
+            list-style: none;
+        }
+
+        /* Backdrop overlay */
+        .public-sidebar-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 1040;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .public-sidebar-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Hide sidebar di desktop (≥992px) — hanya untuk mobile */
+        @media (min-width: 992px) {
+            .public-sidebar,
+            .public-sidebar-backdrop {
+                display: none !important;
+            }
+        }
+
+        /* ════════════════════════════════════════
+           NAVBAR 3-ZONE LAYOUT (AdminLTE Mobile)
+           Mobile: [☰] [Brand WebGIS Gedung]   [👤Avatar]
+           Desktop: [Brand] [Nav links] ...    [Dashboard][👤Name▼]
+        ════════════════════════════════════════ */
+        .navbar-public .navbar-toggler {
+            border-color: rgba(255,255,255,0.4);
+            padding: 4px 10px;
+            flex-shrink: 0; /* prevent shrink in flex */
+        }
+        .navbar-public .user-zone {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-left: auto;
+            flex-shrink: 0; /* avatar tidak boleh shrink */
+            margin-bottom: 0; /* override default ul margin */
+        }
+        .navbar-public .navbar-brand {
+            margin-right: 0;
+        }
+
+        /* ════════════════════════════════════════
+           USER DROPDOWN MENU (AdminLTE-style)
+           Desktop: dropdown overlay; Mobile: inline expanded
+           Avatar inisial colored (consistent per user via name hash)
+        ════════════════════════════════════════ */
+
+        /* Avatar Mini di Trigger (navbar) */
+        .user-avatar-mini {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.78rem;
+            color: #fff;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Trigger Button */
+        .navbar-public .user-dropdown .user-dropdown-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 14px 4px 6px !important;
+            border-radius: 22px;
+            color: #fff !important;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .navbar-public .user-dropdown .user-dropdown-toggle:hover,
+        .navbar-public .user-dropdown.show .user-dropdown-toggle {
+            background: rgba(255,255,255,0.18) !important;
+        }
+        .navbar-public .user-dropdown-toggle::after {
+            margin-left: 6px;
+            transition: transform 0.2s;
+        }
+        .navbar-public .user-dropdown.show .user-dropdown-toggle::after {
+            transform: rotate(180deg);
+        }
+
+        /* Dropdown Menu Container */
+        .navbar-public .user-dropdown-menu {
+            min-width: 280px;
+            max-width: 320px;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+            padding: 0;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        /* ─── HEADER (AdminLTE-style: avatar besar di tengah) ─── */
+        .user-dropdown-header {
+            position: relative;
+            padding: 24px 16px 18px;
+            background: linear-gradient(135deg, #1a3c5e 0%, #2d6a9f 100%);
+            color: #fff;
+            text-align: center;
+            overflow: hidden;
+        }
+        /* Decorative bg pattern */
+        .user-dropdown-header::before {
+            content: '';
+            position: absolute;
+            top: -30px; right: -30px;
+            width: 120px; height: 120px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+            border-radius: 50%;
+        }
+
+        .user-avatar-big {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            border: 3px solid rgba(255,255,255,0.25);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            position: relative; z-index: 1;
+        }
+
+        .user-info-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #fff;
+            line-height: 1.3;
+            position: relative; z-index: 1;
+        }
+        .user-info-email {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.78);
+            margin-top: 2px;
+            position: relative; z-index: 1;
+        }
+        .user-info-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            position: relative; z-index: 1;
+        }
+        .user-info-role {
+            display: inline-block;
+            padding: 3px 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(243, 156, 18, 0.95);
+            color: #fff;
+            border-radius: 10px;
+            letter-spacing: 0.3px;
+        }
+        .user-info-role-user {
+            background: rgba(52, 152, 219, 0.95);
+        }
+        .user-info-since {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.75);
+        }
+        .user-info-since i {
+            margin-right: 3px;
+            font-size: 0.7rem;
+        }
+
+        /* ─── DROPDOWN ITEMS (admin link mobile-only) ─── */
+        .navbar-public .user-dropdown-menu .dropdown-item.user-dropdown-link {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+        }
+        .navbar-public .user-dropdown-menu .dropdown-item.user-dropdown-link:hover {
+            background: #f8f9fa;
+        }
+        .navbar-public .user-dropdown-menu .dropdown-divider {
+            margin: 0;
+            border-color: #ecf0f1;
+        }
+
+        /* ─── FOOTER (2 buttons: Profil + Logout) ─── */
+        .user-dropdown-footer {
+            display: flex;
+            background: #f8f9fa;
+            border-top: 1px solid #ecf0f1;
+        }
+        .user-footer-btn {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2c3e50;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .user-footer-btn:not(:last-child) {
+            border-right: 1px solid #ecf0f1;
+        }
+        .user-footer-btn:hover {
+            background: #ecf0f1;
+            color: #2c3e50;
+            text-decoration: none;
+        }
+        .user-footer-btn i {
+            font-size: 0.85rem;
+        }
+        .user-footer-btn-logout {
+            color: #e74c3c;
+        }
+        .user-footer-btn-logout:hover {
+            background: #fadbd8;
+            color: #c0392b;
+        }
+        .badge-coming-soon {
+            display: inline-block;
+            margin-left: 4px;
+            padding: 1px 6px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            background: #95a5a6;
+            color: #fff;
+            border-radius: 8px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        /* ════════════════════════════════════════
+           MOBILE (< 992px): 3-zone navbar adjustments
+           - User dropdown trigger jadi avatar saja (no text, no caret)
+           - Brand text TETAP VISIBLE (force display)
+           - Dropdown menu positioned di right edge dengan margin
+        ════════════════════════════════════════ */
+        @media (max-width: 991.98px) {
+            /* Brand: smaller font, no max-width clipping */
+            .navbar-public .navbar-brand {
+                font-size: 1rem !important;
+                margin-left: 4px !important;
+                white-space: nowrap;
+            }
+            /* FORCE brand text visible (override any conflicting rule) */
+            .navbar-public .navbar-brand .brand-text {
+                display: inline-block !important;
+                visibility: visible !important;
+                font-weight: 700;
+                color: #fff;
+            }
+
+            /* User dropdown trigger compact: avatar saja, hide nama + caret */
+            .navbar-public .user-dropdown .user-dropdown-toggle {
+                padding: 2px 4px !important;
+                gap: 0;
+            }
+            .navbar-public .user-dropdown .user-dropdown-name {
+                display: none;
+            }
+            .navbar-public .user-dropdown-toggle::after {
+                display: none;
+            }
+            .user-avatar-mini {
+                width: 36px; height: 36px;
+                font-size: 0.85rem;
+            }
+
+            /* Dropdown menu di mobile: pakai data-display=static (no popper)
+               Position absolute relative ke parent .dropdown li.
+               Right: 0 anchor ke kanan parent (avatar trigger). */
+            .navbar-public .user-dropdown-menu {
+                position: absolute !important;
+                top: 100% !important;
+                right: 0 !important;
+                left: auto !important;
+                margin-top: 10px !important;
+                min-width: 280px !important;
+                max-width: calc(100vw - 24px) !important;
+                transform: none !important;
+            }
+            /* Parent <li.dropdown> butuh position relative untuk anchor child absolute */
+            .navbar-public .user-dropdown {
+                position: relative !important;
+            }
+        }
+
+        /* Very small mobile (< 360px): hide brand text, show icon only */
+        @media (max-width: 359.98px) {
+            .navbar-public .navbar-brand .brand-text {
+                display: none;
+            }
+            .navbar-public .navbar-brand i {
+                margin-right: 0 !important;
+                font-size: 1.4rem;
+            }
+            .navbar-public .navbar-brand {
+                max-width: none;
+            }
+        }
+
+        /* ══ MOBILE LAYOUT (≤ 767.98px) ══
+         * Polish global untuk semua halaman public di mobile.
+         * Specific page styling di-handle masing-masing CSS file.
+         */
+        @media (max-width: 767.98px) {
+            .navbar-public {
+                padding: 6px 0;
+            }
+            .navbar-public .navbar-brand {
+                font-size: 1.05rem;
+            }
+            .navbar-public .nav-link {
+                padding: 10px 14px !important; /* lebih besar untuk thumb tap */
+            }
+            .navbar-public .btn-admin {
+                margin-top: 6px;
+                padding: 8px 18px !important;
+                display: inline-block;
+            }
+
+            .page-content {
+                padding-top: 12px;
+                min-height: calc(100vh - 100px);
+            }
+
+            .footer-public {
+                padding: 16px 0;
+                margin-top: 24px;
+                font-size: .8rem;
+                text-align: center;
+            }
+            .footer-public .text-md-right {
+                margin-top: 12px;
+            }
+        }

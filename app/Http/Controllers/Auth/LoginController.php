@@ -22,11 +22,17 @@ class LoginController extends Controller
     use AuthenticatesUsers;
 
     /**
-     * Where to redirect users after login.
-     *
-     * @var string
+     * Redirect user sesuai role setelah login.
+     * Admin → Dashboard admin, User biasa → Halaman publik.
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
+    protected function redirectTo(): string
+    {
+        if (auth()->user()->isAdmin()) {
+            return '/home';
+        }
+
+        return '/';
+    }
 
     /**
      * Create a new controller instance.

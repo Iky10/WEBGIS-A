@@ -54,10 +54,30 @@
             <i class="fas fa-trash-alt"></i>
             <span class="t-btn-tip">Reset Rute</span>
         </button>
-        <a class="t-btn" href="{{ route('login') }}">
-            <i class="fas fa-lock"></i>
-            <span class="t-btn-tip">Admin</span>
-        </a>
+        @auth
+            <a class="t-btn" href="{{ route('pengajuan_ruangans.riwayat') }}">
+                <i class="fas fa-file-alt"></i>
+                <span class="t-btn-tip">Pengajuan Saya</span>
+            </a>
+            @if(Auth::user()->isAdmin())
+                <a class="t-btn" href="{{ route('home') }}">
+                    <i class="fas fa-cogs"></i>
+                    <span class="t-btn-tip">Dashboard</span>
+                </a>
+            @endif
+            <a class="t-btn" href="#" onclick="event.preventDefault(); document.getElementById('logout-form-peta').submit();" style="color:#ef4444;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="t-btn-tip">Logout</span>
+            </a>
+            <form id="logout-form-peta" action="{{ route('logout') }}" method="POST" class="d-none" style="display: none;">
+                @csrf
+            </form>
+        @else
+            <a class="t-btn t-btn-text" href="{{ route('login') }}">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Login</span>
+            </a>
+        @endauth
     </div>
 </div>
 
@@ -99,7 +119,7 @@
             </div>
         </div>
 
-        <!-- Section: Status Pemakaian -->
+        <!-- Section: Status Pemakaian (3 status: Sedang Dipakai / Terbuka / Tutup) -->
         <div class="fp-section">
             <div class="fp-section-header" data-toggle="secKondisi">
                 <span class="fp-label">Status Pemakaian</span>
@@ -121,8 +141,14 @@
                 <label class="fp-check-item">
                     <input type="checkbox" class="fp-checkbox" name="kondisi" value="Kosong" checked>
                     <span class="fp-check-mark"></span>
-                    <span class="fp-check-label">Kosong</span>
+                    <span class="fp-check-label">Terbuka</span>
                     <span class="fp-check-count" id="countKondisiKosong"></span>
+                </label>
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kondisi" value="Tutup" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Tutup</span>
+                    <span class="fp-check-count" id="countKondisiTutup"></span>
                 </label>
             </div>
         </div>
@@ -167,20 +193,15 @@
     <div class="z-btn" id="zOut">−</div>
 </div>
 
-<div class="zoom-indicator">
-    <div class="zoom-level-num" id="zoomLevel">18</div>
-    <div class="zoom-mode-badge mode-gedung" id="zoomModeBadge">🏢 Gedung</div>
-</div>
-
 <div id="legend">
     <button class="leg-toggle" id="legToggle" title="Toggle Legend"><i class="fas fa-chevron-down"></i></button>
     <div class="leg-content" id="legContent">
         <div class="leg-group">
             <div class="leg-title">Status Pemakaian Gedung</div>
             <div class="leg-items">
-                <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Sedang Dipakai</div>
-                <div class="leg-row"><div class="leg-dot" style="background:#6c757d;box-shadow:0 0 5px #6c757d;"></div>Kosong</div>
-                <div class="leg-row"><div class="leg-dot" style="background:#475569;"></div>Tidak diketahui</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></div>Sedang Dipakai</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Terbuka</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#6b7280;"></div>Tutup</div>
             </div>
         </div>
         <div class="leg-divider"></div>
@@ -260,6 +281,8 @@
 
 <!-- SIDEBAR HTML -->
 <div id="sidebar" class="hide">
+    {{-- Drag area untuk bottom sheet di mobile (klik untuk toggle expand) --}}
+    <div class="sb-drag-area" id="sbDragArea" title="Drag untuk expand/collapse"></div>
     <div class="sb-head">
         <button id="sbClose" class="sb-close"><i class="fas fa-times"></i></button>
         <div class="sb-title">Detail Gedung</div>
@@ -270,15 +293,8 @@
             <p style="margin-top:10px; color:var(--muted); font-size:0.85rem;">Memuat data...</p>
         </div>
         <div id="sbContent" style="display:none;">
-            <div class="sb-img-wrap" id="sbMainCarouselWrap">
-                <div id="sbMainSlides" class="sb-main-slides">
-                    <!-- Foto slides inserted here by JS -->
-                </div>
-                <div class="sb-main-nav" id="sbMainNav" style="display:none;">
-                    <button class="sb-main-btn-prev" onclick="sbMainGalleryNav(-1)"><i class="fas fa-chevron-left"></i></button>
-                    <button class="sb-main-btn-next" onclick="sbMainGalleryNav(1)"><i class="fas fa-chevron-right"></i></button>
-                </div>
-                <div class="sb-main-counter" id="sbMainCounter" style="display:none;">1 / 1</div>
+            <div class="sb-img-wrap">
+                <img id="sbImg" src="" alt="Foto Utama">
             </div>
             
             <div class="sb-info">
@@ -292,8 +308,8 @@
                     <div class="sb-stat"><span id="sbTahun" class="sb-stat-v">-</span><span class="sb-stat-k">Tahun</span></div>
                 </div>
 
-                <div style="margin: 16px 0;">
-                    <button id="sbBtnRoute" class="sb-cta-btn" style="background:var(--success); box-shadow:0 6px 20px rgba(34,197,94,.35);"><i class="fas fa-directions"></i> Rute ke Sini</button>
+                <div id="sbJamOps" class="sb-jam-ops" style="display:none;">
+                    <i class="fas fa-clock"></i> <span id="sbJamOpsText">-</span>
                 </div>
 
                 <div class="sb-section">
@@ -311,16 +327,58 @@
                     <div class="sb-sec-title" style="border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:12px;">
                         <i class="fas fa-calendar-alt" style="color:var(--accent);"></i> Jadwal Semester
                     </div>
-                    
-                    <div id="sbJadwalAktifBadge" style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); color: var(--success); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px;">
+
+                    <!-- Badge Semester Aktif (info dari AppSetting global) -->
+                    <div id="sbJadwalAktifBadge" style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); color: var(--success); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; display: none; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px;">
                         <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success);"></div>
                         <span id="sbJadwalAktifText">Semester Aktif</span>
                     </div>
 
-                    <div id="sbJadwalTabs" class="rp-semester-tabs" style="margin-top:10px;">
+                    <!-- Toggle Ganjil / Genap -->
+                    <div class="js-toggle-container">
+                        <button class="js-toggle-btn active" id="btnJadwalGanjil" onclick="toggleJadwalSemester('ganjil')">Semester Ganjil</button>
+                        <button class="js-toggle-btn" id="btnJadwalGenap" onclick="toggleJadwalSemester('genap')">Semester Genap</button>
                     </div>
 
+                    <!-- Tabs per Semester -->
+                    <div id="sbJadwalTabs" class="rp-semester-tabs" style="margin-top:10px;"></div>
+
+                    <!-- Dropdown Tahun Ajaran -->
+                    <div id="sbJadwalDropdownWrap" style="margin-top:10px; display:none;">
+                        <label style="font-size:0.75rem; color:var(--muted); font-weight:600; margin-bottom:4px; display:block;">Tahun Ajaran:</label>
+                        <select id="sbJadwalDropdown" class="sb-jadwal-dropdown" onchange="onJadwalDropdownChange()"></select>
+                    </div>
+
+                    <!-- Viewer (single preview) -->
                     <div id="sbJadwalViewer" style="margin-top:12px;">
+                    </div>
+                </div>
+
+                <div class="sb-action-bar">
+                    <button id="sbBtnRoute" class="sb-action-btn sb-action-rute">
+                        <i class="fas fa-diamond-turn-right"></i> Rute
+                    </button>
+                    <button id="sbBtnPhotos" class="sb-action-btn sb-action-foto">
+                        <i class="fas fa-images"></i> Foto
+                    </button>
+                    <a id="sbBtnPengajuan" href="{{ route('pengajuan_ruangans.create') }}"
+                       class="sb-action-btn sb-action-ajukan"
+                       data-tooltip="Ajukan Penggunaan Ruangan">
+                        <i class="fas fa-file-pen"></i> Ajukan
+                    </a>
+                </div>
+
+                <div id="sbGallery" class="sb-gallery" style="display:none;">
+                    <div class="sb-sec-title">Galeri Foto</div>
+                    <div class="sb-gallery-carousel">
+                        <div id="sbGallerySlides" class="sb-gallery-slides">
+                            <!-- Foto slides inserted here by JS -->
+                        </div>
+                        <div class="sb-gallery-nav" id="sbGalleryNav" style="display:none;">
+                            <button class="rp-carousel-btn" onclick="sbGalleryNav(-1)"><i class="fas fa-chevron-left"></i></button>
+                            <span class="rp-carousel-counter" id="sbGalleryCounter">1 / 1</span>
+                            <button class="rp-carousel-btn" onclick="sbGalleryNav(1)"><i class="fas fa-chevron-right"></i></button>
+                        </div>
                     </div>
                 </div>
 
@@ -343,8 +401,167 @@
 <script>
     window.WEBGIS_URL = '{{ route("webgis.geojson") }}';
     window.WEBGIS_RUANGAN_URL = '{{ route("webgis.geojson.ruangan") }}';
+    window.API_JADWAL_SEMESTER_URL = '{{ url('/api/gedung') }}';
 </script>
 <script src="{{ asset('js/public-peta.js') }}?v={{ time() }}"></script>
+
+{{-- Bottom Sheet 3-State Gesture (mobile only)
+     Pattern Google Maps: peek (14vh) ↔ half (52vh) ↔ full (92vh)
+     - Tap drag handle: cycle state ke atas (peek → half → full → peek)
+     - Drag up: ke state lebih besar
+     - Drag down: ke state lebih kecil
+     - Drag down dari peek: close sidebar
+--}}
+<script>
+(function() {
+    'use strict';
+
+    var sidebar = document.getElementById('sidebar');
+    var dragArea = document.getElementById('sbDragArea');
+    if (!sidebar || !dragArea) return;
+
+    // States dalam urutan dari kecil ke besar
+    var STATES = ['peek', 'half', 'full'];
+    var DEFAULT_STATE = 'half';
+
+    function isMobile() {
+        return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    function getCurrentState() {
+        for (var i = 0; i < STATES.length; i++) {
+            if (sidebar.classList.contains(STATES[i])) return STATES[i];
+        }
+        return DEFAULT_STATE; // fallback
+    }
+
+    function setState(newState) {
+        STATES.forEach(function(s) { sidebar.classList.remove(s); });
+        sidebar.classList.remove('expanded'); // legacy class cleanup
+        sidebar.classList.add(newState);
+    }
+
+    // Tap drag handle: cycle state (peek → half → full → peek)
+    dragArea.addEventListener('click', function(e) {
+        if (!isMobile()) return;
+        var current = getCurrentState();
+        var idx = STATES.indexOf(current);
+        var next = STATES[(idx + 1) % STATES.length];
+        setState(next);
+    });
+
+    // Touch drag gesture
+    var touchStartY = 0;
+    var touchCurrentY = 0;
+    var isDragging = false;
+    var initialHeight = 0;
+
+    dragArea.addEventListener('touchstart', function(e) {
+        if (!isMobile()) return;
+        touchStartY = e.touches[0].clientY;
+        touchCurrentY = touchStartY;
+        isDragging = true;
+        initialHeight = sidebar.offsetHeight;
+        sidebar.style.transition = 'none';
+    }, { passive: true });
+
+    dragArea.addEventListener('touchmove', function(e) {
+        if (!isDragging || !isMobile()) return;
+        touchCurrentY = e.touches[0].clientY;
+        var deltaY = touchCurrentY - touchStartY;
+        // Live drag: ubah height inline (positive deltaY = drag down = shrink)
+        var newHeight = initialHeight - deltaY;
+        // Clamp ke 0–100vh
+        var minH = 0;
+        var maxH = window.innerHeight * 0.92;
+        newHeight = Math.max(minH, Math.min(maxH, newHeight));
+        sidebar.style.height = newHeight + 'px';
+    }, { passive: true });
+
+    dragArea.addEventListener('touchend', function(e) {
+        if (!isDragging || !isMobile()) return;
+        isDragging = false;
+        sidebar.style.transition = ''; // restore transisi
+        sidebar.style.height = ''; // clear inline, biar class CSS yg control
+
+        var deltaY = touchCurrentY - touchStartY;
+        var current = getCurrentState();
+        var idx = STATES.indexOf(current);
+
+        // Threshold: 60px untuk trigger state change
+        if (deltaY < -60) {
+            // Drag UP: state berikutnya yang lebih besar
+            if (idx < STATES.length - 1) {
+                setState(STATES[idx + 1]);
+            }
+        } else if (deltaY > 60) {
+            // Drag DOWN: state sebelumnya yang lebih kecil, atau close kalau sudah peek
+            if (idx > 0) {
+                setState(STATES[idx - 1]);
+            } else {
+                // Sudah di peek state, drag down = close
+                sidebar.classList.remove('show');
+                STATES.forEach(function(s) { sidebar.classList.remove(s); });
+            }
+        }
+        // Kalau delta < threshold, tetap di state sebelumnya (snap back via class)
+    });
+
+    // Klik X close: reset state ke default untuk next open
+    var sbClose = document.getElementById('sbClose');
+    if (sbClose) {
+        sbClose.addEventListener('click', function() {
+            STATES.forEach(function(s) { sidebar.classList.remove(s); });
+        });
+    }
+
+    // Saat sidebar baru open (via openSidebar), set ke default state (half)
+    // Observer untuk detect class 'show' added
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            if (m.attributeName === 'class' && isMobile()) {
+                if (sidebar.classList.contains('show')) {
+                    // Pastikan ada 1 state class
+                    var hasState = STATES.some(function(s) { return sidebar.classList.contains(s); });
+                    if (!hasState) {
+                        sidebar.classList.add(DEFAULT_STATE);
+                    }
+                }
+            }
+        });
+    });
+    observer.observe(sidebar, { attributes: true });
+
+    // ── Hide empty stat cards (FUNGSI/STATUS/LANTAI/TAHUN dengan value '-') ──
+    // Observer untuk detect content changes, lalu cek tiap .sb-stat
+    function hideEmptyStats() {
+        var stats = document.querySelectorAll('.sb-stat');
+        stats.forEach(function(stat) {
+            var valueEl = stat.querySelector('.sb-stat-v');
+            if (!valueEl) return;
+            var v = (valueEl.textContent || '').trim();
+            // Hide kalau empty, '-', '0', atau placeholder
+            if (v === '' || v === '-' || v === 'null') {
+                stat.classList.add('sb-stat-empty');
+            } else {
+                stat.classList.remove('sb-stat-empty');
+            }
+        });
+    }
+
+    // Listen for content updates di sb-content (after AJAX populated data)
+    var sbContent = document.getElementById('sbContent');
+    if (sbContent) {
+        var contentObserver = new MutationObserver(function() {
+            // Debounce sedikit supaya semua field ke-update dulu
+            setTimeout(hideEmptyStats, 50);
+        });
+        contentObserver.observe(sbContent, {
+            childList: true, subtree: true, characterData: true
+        });
+    }
+})();
+</script>
 
 </body>
 </html>

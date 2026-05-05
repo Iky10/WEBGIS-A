@@ -43,14 +43,6 @@ class PublikController extends Controller
             });
         }
 
-        if ($request->filled('fungsi')) {
-            $query->where('fungsi', $request->fungsi);
-        }
-
-        if ($request->filled('kondisi')) {
-            $query->where('kondisi', $request->kondisi);
-        }
-
         $gedungs = $query->latest()->paginate(9);
 
         return view('public.gedung.index', compact('gedungs'));
@@ -68,7 +60,8 @@ class PublikController extends Controller
     }
 
     /**
-     * API untuk mengambil data jadwal semester per gedung (dipanggil via AJAX di popup/sidebar Peta)
+     * API: ambil semua jadwal semester untuk gedung tertentu.
+     * Dipanggil via AJAX dari popup peta / halaman detail gedung.
      */
     public function apiJadwalSemester($id)
     {
@@ -78,12 +71,22 @@ class PublikController extends Controller
             return response()->json(['success' => false, 'message' => 'Gedung tidak ditemukan'], 404);
         }
 
-        // Return array of jadwal semester, sorted by semester number
-        $jadwals = $gedung->jadwalSemester->sortBy('semester')->values();
+        $jadwals = $gedung->jadwalSemester
+            ->sortBy('semester')
+            ->values()
+            ->map(function ($j) {
+                return [
+                    'id'           => $j->id,
+                    'semester'     => $j->semester,
+                    'tahun_ajaran' => $j->tahun_ajaran,
+                    'file_jadwal'  => $j->file_jadwal ? asset($j->file_jadwal) : null,
+                    'keterangan'   => $j->keterangan,
+                ];
+            });
 
         return response()->json([
             'success' => true,
-            'data' => $jadwals
+            'data'    => $jadwals,
         ]);
     }
 
@@ -103,33 +106,8 @@ class PublikController extends Controller
             ];
         });
 
-        // Get fasilitas dengan status jadwal hari ini
+        // Get fasilitas dengan status (mewarisi jam operasional gedung)
         $fasilitas = $gedung->fasilitas()->get()->map(function($f) {
-            // Ambil hari sekarang dalam bahasa Inggris (Sunday-Saturday)
-            $hariIni = strtoupper(Carbon::now()->format('l'));
-            
-            // Mapping hari ke bahasa Indonesia
-            $hariMapping = [
-                'SUNDAY' => 'Minggu',
-                'MONDAY' => 'Senin',
-                'TUESDAY' => 'Selasa',
-                'WEDNESDAY' => 'Rabu',
-                'THURSDAY' => 'Kamis',
-                'FRIDAY' => 'Jumat',
-                'SATURDAY' => 'Sabtu'
-            ];
-            
-            $hariIndonesia = $hariMapping[$hariIni] ?? $hariIni;
-            
-            // Cek jadwal hari ini untuk fasilitas ini
-            $jamSekarang = Carbon::now()->format('H:i:s');
-            
-            $jadwalAktif = JadwalRuangan::where('gedung_fasilitas_id', $f->id)
-                ->where('hari', $hariIndonesia)
-                ->where('jam_mulai', '<=', $jamSekarang)
-                ->where('jam_selesai', '>=', $jamSekarang)
-                ->exists();
-            
             return [
                 'id' => $f->id,
                 'nama_fasilitas' => $f->nama_fasilitas,
@@ -138,12 +116,13 @@ class PublikController extends Controller
                 'latitude' => $f->latitude,
                 'longitude' => $f->longitude,
                 'foto_ruangan' => $f->foto_ruangan ? asset($f->foto_ruangan) : null,
-                'is_aktif' => $jadwalAktif // true = sedang dipakai, false = kosong
+                'status' => $f->status_dipakai, // 'Sedang Dipakai', 'Kosong', atau 'Tutup'
             ];
         });
 
         return response()->json([
             'gedung' => $gedung,
+            'bisa_diajukan' => (bool) $gedung->bisa_diajukan,
             'foto_utama' => $gedung->foto_utama ? asset($gedung->foto_utama) : null,
             'fotos' => $fotosArray,
             'fasilitas' => $fasilitas

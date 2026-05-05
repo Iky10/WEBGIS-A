@@ -1,19 +1,30 @@
-<div class="table-responsive">
     <table class="table" id="gedungFasilitas-table">
         <thead>
         <tr>
+            <th width="40" class="text-center align-middle">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="checkAll">
+                    <label class="custom-control-label" for="checkAll"></label>
+                </div>
+            </th>
             <th>Foto</th>
             <th>Gedung</th>
             <th>Nama Ruangan / Fasilitas</th>
             <th>Kategori</th>
             <th>Koordinat</th>
-            <th>Status</th>
-            <th colspan="3">Action</th>
+            <th>Bisa Diajukan</th>
+            <th>Aksi</th>
         </tr>
         </thead>
         <tbody>
         @foreach($gedungFasilitas as $gf)
             <tr>
+                <td class="text-center align-middle">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input check-row" id="check_{{ $gf->id }}" value="{{ $gf->id }}">
+                        <label class="custom-control-label" for="check_{{ $gf->id }}"></label>
+                    </div>
+                </td>
                 <td width="80">
                     @if($gf->foto_ruangan)
                         <img src="{{ asset($gf->foto_ruangan) }}"
@@ -35,20 +46,21 @@
                     @endif
                 </td>
                 <td>
-                    @if($gf->is_aktif)
-                        <span class="badge badge-success"><i class="fas fa-check-circle"></i> Aktif</span>
-                    @else
-                        <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Tidak Aktif</span>
-                    @endif
+                    <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-primary">
+                        <input type="checkbox" class="custom-control-input toggle-bisa-diajukan" id="bisa_diajukan_{{ $gf->id }}" data-id="{{ $gf->id }}" {{ $gf->bisa_diajukan ? 'checked' : '' }}>
+                        <label class="custom-control-label" for="bisa_diajukan_{{ $gf->id }}">
+                            <span class="bisa-diajukan-label-{{ $gf->id }}">{{ $gf->bisa_diajukan ? 'Ya' : 'Tidak' }}</span>
+                        </label>
+                    </div>
                 </td>
                 <td width="120">
                     {!! Form::open(['route' => ['gedung_fasilitas.destroy', $gf->id], 'method' => 'delete']) !!}
                     <div class='btn-group'>
                         <a href="{{ route('gedung_fasilitas.edit', [$gf->id]) }}"
-                           class='btn btn-default btn-xs'>
+                           class='btn btn-default btn-sm' title="Edit">
                             <i class="far fa-edit"></i>
                         </a>
-                        {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'submit', 'class' => 'btn btn-danger btn-xs', 'onclick' => "return confirm('Are you sure?')"]) !!}
+                        {!! Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'button', 'class' => 'btn btn-danger btn-sm', 'title' => 'Hapus', 'onclick' => 'confirmDelete(this.closest("form"), "Yakin ingin menghapus fasilitas ini?")']) !!}
                     </div>
                     {!! Form::close() !!}
                 </td>
@@ -56,4 +68,3 @@
         @endforeach
         </tbody>
     </table>
-</div>

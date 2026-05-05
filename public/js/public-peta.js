@@ -3,7 +3,7 @@
 
     /* ── MAP INIT ─────────────────────────────── */
     var map = L.map('map', { zoomControl: false, attributionControl: true })
-        .setView([-0.53604774, 117.12357581], 19);
+        .setView([-0.53597801, 117.12345243], 18);
 
     /* ── TILE LAYERS ──────────────────────────── */
     var light = L.tileLayer(
@@ -39,10 +39,14 @@
 
     /* ── HELPERS ──────────────────────────────── */
     function getColor(k) {
-        return k === 'Sedang Dipakai' ? '#22c55e' : k === 'Kosong' ? '#6c757d' : '#475569';
+        if (k === 'Sedang Dipakai') return '#3b82f6';
+        if (k === 'Tutup') return '#6b7280';
+        return '#22c55e'; // Kosong / Terbuka
     }
     function getBadgeClass(k) {
-        return k === 'Sedang Dipakai' ? 'badge-success' : k === 'Kosong' ? 'badge-secondary' : '';
+        if (k === 'Sedang Dipakai') return 'badge-primary';
+        if (k === 'Tutup') return 'badge-secondary';
+        return 'badge-success'; // Kosong / Terbuka
     }
 
     /* ── MARKER ICON ──────────────────────────── */
@@ -120,8 +124,15 @@
         });
 
         document.getElementById('fpCount').textContent = data.length;
-        updateZoomLayers();
+        updateLabels();
     }
+
+    /* ── DYNAMIC LABELS ───────────────────────── */
+    function updateLabels() {
+        if (map.getZoom() >= 16) { if (!map.hasLayer(labelGroup)) labelGroup.addTo(map); }
+        else { if (map.hasLayer(labelGroup)) map.removeLayer(labelGroup); }
+    }
+    map.on('zoomend', updateLabels);
 
     /* ── ZOOM-BASED LAYER SWITCHING (Google Maps Style) ── */
     var ZOOM_THRESHOLD = 20;
@@ -642,7 +653,7 @@
 
             if (allData.length) {
                 var pts = allData.map(function (f) { return [f.geometry.coordinates[1], f.geometry.coordinates[0]]; });
-                // map.fitBounds(L.latLngBounds(pts).pad(0.22));
+                map.fitBounds(L.latLngBounds(pts).pad(0.22));
             }
 
             // Focus on ?id=
@@ -662,11 +673,33 @@
             // Load markers after gedung
             loadRuanganMarkers();
             loadVegetasiMarkers();
+
+            // Auto-refresh status tiap 60 detik (silent — tanpa toast/loader)
+            startStatusAutoRefresh();
         })
         .catch(function () {
             document.getElementById('loading').classList.add('out');
             setTimeout(function () { document.getElementById('loading').style.display = 'none'; }, 400);
         });
+
+    /* ── AUTO-REFRESH STATUS ──────────────────────
+       Reload data GeoJSON tiap 60 detik supaya warna marker tetap sinkron
+       dengan status realtime gedung (Sedang Dipakai → Kosong saat acara berakhir).
+       Hanya update status warna marker, TIDAK reload posisi/zoom map. */
+    function startStatusAutoRefresh() {
+        setInterval(function () {
+            // Skip kalau tab tidak aktif (hemat bandwidth)
+            if (document.hidden) return;
+
+            fetch(window.WEBGIS_URL)
+                .then(function (r) { return r.json(); })
+                .then(function (gj) {
+                    allData = gj.features || [];
+                    renderMarkers(allData);
+                })
+                .catch(function () { /* silent fail — coba lagi 60 detik berikutnya */ });
+        }, 60000);
+    }
 
     /* ══════════════════════════════════════════════════
        RUANGAN MARKERS (Opsi B — sub-marker saat diklik)
@@ -698,13 +731,16 @@
     };
 
     // Buat icon marker ruangan (lebih kecil dari gedung)
-    function makeRuanganIcon(kategori) {
-        var c = kategoriColors[kategori] || '#94a3b8';
+    // status: 'Sedang Dipakai', 'Kosong', 'Tutup'
+    function makeRuanganIcon(kategori, status) {
+        var katColor = kategoriColors[kategori] || '#94a3b8';
+        // Warna marker utama berdasarkan status
+        var c = status === 'Sedang Dipakai' ? '#3b82f6' : status === 'Tutup' ? '#6b7280' : '#22c55e';
         var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">'
             + '<defs><filter id="rds"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="rgba(0,0,0,.4)"/></filter></defs>'
             + '<path filter="url(#rds)" d="M11 1C6.03 1 2 5.03 2 10c0 6.5 9 19 9 19s9-12.5 9-19C20 5.03 15.97 1 11 1z" fill="' + c + '" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/>'
             + '<circle cx="11" cy="10" r="4" fill="rgba(255,255,255,.92)"/>'
-            + '<circle cx="11" cy="10" r="2" fill="' + c + '"/>'
+            + '<circle cx="11" cy="10" r="2" fill="' + katColor + '"/>'
             + '</svg>';
         return L.divIcon({ html: svg, className: '', iconSize: [22, 30], iconAnchor: [11, 30], popupAnchor: [0, -32] });
     }
@@ -713,8 +749,8 @@
     function buildRuanganPopup(p, lat, lng) {
         var c = kategoriColors[p.kategori] || '#94a3b8';
         var emoji = kategoriEmoji[p.kategori] || '📍';
-        var statusColor = p.status_dipakai === 'Sedang Dipakai' ? '#22c55e' : '#6c757d';
         var statusText = p.status_dipakai || 'Kosong';
+        var statusColor = statusText === 'Sedang Dipakai' ? '#3b82f6' : statusText === 'Tutup' ? '#6b7280' : '#22c55e';
 
         var imgHtml = p.foto_ruangan
             ? '<img class="rp-img" src="' + p.foto_ruangan + '" alt="' + p.nama_fasilitas + '">'
@@ -726,7 +762,7 @@
 
         return '<div class="ruangan-popup" id="rpPopup_' + p.id + '">'
             + '<div class="rp-slider step-1" id="rpSlider_' + p.id + '">'
-
+            
             // PANEL 1: Info Singkat (Overview)
             + '<div class="rp-panel rp-panel-1">'
             + '<div class="rp-header">'
@@ -774,13 +810,16 @@
             + '</div>'
             + '<div class="rp-detail-body" id="rpDetailBody_' + p.id + '">'
             + '<div class="rp-carousel" id="rpCarousel_' + p.id + '">'
-            + (p.foto_ruangan
+            + (p.foto_ruangan 
                 ? '<img class="rp-carousel-slide active" src="' + p.foto_ruangan + '" onclick="openLightbox(\'' + p.foto_ruangan + '\')">'
                 : '')
+            + '<img class="rp-carousel-slide' + (p.foto_ruangan ? '' : ' active') + '" src="https://picsum.photos/seed/' + p.id + 'a/400/250" onclick="openLightbox(\'https://picsum.photos/seed/' + p.id + 'a/800/500\')">' 
+            + '<img class="rp-carousel-slide" src="https://picsum.photos/seed/' + p.id + 'b/400/250" onclick="openLightbox(\'https://picsum.photos/seed/' + p.id + 'b/800/500\')">' 
+            + '<img class="rp-carousel-slide" src="https://picsum.photos/seed/' + p.id + 'c/400/250" onclick="openLightbox(\'https://picsum.photos/seed/' + p.id + 'c/800/500\')">'
             + '</div>'
             + '<div class="rp-carousel-nav">'
             + '<button class="rp-carousel-btn" onclick="carouselNav(' + p.id + ', -1)"><i class="fas fa-chevron-left"></i></button>'
-            + '<span class="rp-carousel-counter" id="rpCounter_' + p.id + '">1 / ' + (p.foto_ruangan ? '1' : '0') + '</span>'
+            + '<span class="rp-carousel-counter" id="rpCounter_' + p.id + '">1 / ' + (p.foto_ruangan ? '4' : '3') + '</span>'
             + '<button class="rp-carousel-btn" onclick="carouselNav(' + p.id + ', 1)"><i class="fas fa-chevron-right"></i></button>'
             + '</div>'
             + '<div style="text-align:center; font-size:0.7rem; color:var(--muted); margin-top:6px;"><i class="fas fa-hand-pointer"></i> Klik foto untuk memperbesar</div>'
@@ -793,23 +832,23 @@
     }
 
     // Navigasi Slider Popup (3 Steps)
-    window.goToStep = function (id, step) {
+    window.goToStep = function(id, step) {
         var slider = document.getElementById('rpSlider_' + id);
         if (!slider) return;
-
+        
         // Update class for slide animation
         slider.className = 'rp-slider step-' + step;
     };
 
     // Carousel navigation for gallery photos
-    window.carouselNav = function (id, direction) {
+    window.carouselNav = function(id, direction) {
         var carousel = document.getElementById('rpCarousel_' + id);
         if (!carousel) return;
         var slides = carousel.querySelectorAll('.rp-carousel-slide');
         if (slides.length === 0) return;
 
         var currentIdx = -1;
-        slides.forEach(function (s, i) { if (s.classList.contains('active')) currentIdx = i; });
+        slides.forEach(function(s, i) { if (s.classList.contains('active')) currentIdx = i; });
         if (currentIdx === -1) currentIdx = 0;
 
         // Remove active from current
@@ -824,27 +863,27 @@
         if (counter) counter.textContent = (newIdx + 1) + ' / ' + slides.length;
     };
 
-    // Sidebar main gallery carousel navigation
-    window.sbMainGalleryNav = function (direction) {
-        var container = document.getElementById('sbMainSlides');
+    // Sidebar gallery carousel navigation
+    window.sbGalleryNav = function(direction) {
+        var container = document.getElementById('sbGallerySlides');
         if (!container) return;
-        var slides = container.querySelectorAll('.sb-main-slide');
+        var slides = container.querySelectorAll('.sb-gallery-slide');
         if (slides.length === 0) return;
 
         var currentIdx = -1;
-        slides.forEach(function (s, i) { if (s.classList.contains('active')) currentIdx = i; });
+        slides.forEach(function(s, i) { if (s.classList.contains('active')) currentIdx = i; });
         if (currentIdx === -1) currentIdx = 0;
 
         slides[currentIdx].classList.remove('active');
         var newIdx = (currentIdx + direction + slides.length) % slides.length;
         slides[newIdx].classList.add('active');
 
-        var counter = document.getElementById('sbMainCounter');
+        var counter = document.getElementById('sbGalleryCounter');
         if (counter) counter.textContent = (newIdx + 1) + ' / ' + slides.length;
     };
 
     // Expand/Collapse fasilitas list in sidebar
-    window.toggleFasilitasExpand = function () {
+    window.toggleFasilitasExpand = function() {
         var list = document.getElementById('sbFasilitasList');
         var btn = document.getElementById('sbFasExpandBtn');
         if (!list || !btn) return;
@@ -852,7 +891,7 @@
         var items = list.querySelectorAll('.sb-fas-item');
         var isExpanded = btn.dataset.expanded === 'true';
 
-        items.forEach(function (item, idx) {
+        items.forEach(function(item, idx) {
             if (idx >= 3) {
                 item.style.display = isExpanded ? 'none' : 'block';
             }
@@ -873,7 +912,7 @@
     // Tampilkan data ke sidebar
     function populateSidebar(data) {
         var sbDesc = document.getElementById('sbDesc');
-        sbDesc.innerHTML = data.gedung.deskripsi
+        sbDesc.innerHTML = data.gedung.deskripsi 
             ? data.gedung.deskripsi.replace(/\n/g, '<br>')
             : 'Belum ada deskripsi untuk gedung ini.';
 
@@ -892,13 +931,24 @@
                     currentJadwalGedung = resJadwal.data;
                     sbJadwal.style.display = 'block';
 
-                    var activeType = resSetting.semester_aktif || 'genap'; // ganjil / genap
-                    var taAktif = resSetting.tahun_ajaran_aktif || '-';
-                    
-                    // Set badge text
+                    // Determine active semester: prioritas dari setting global (admin),
+                    // fallback ke auto-detect berdasarkan bulan saat ini.
+                    var activeType;
+                    if (resSetting && resSetting.semester_aktif) {
+                        activeType = resSetting.semester_aktif;
+                    } else {
+                        var currentMonth = new Date().getMonth() + 1; // 1-12
+                        // Aug(8) - Jan(1) = Ganjil. Feb(2) - Jul(7) = Genap.
+                        activeType = (currentMonth >= 8 || currentMonth === 1) ? 'ganjil' : 'genap';
+                    }
+                    var taAktif = (resSetting && resSetting.tahun_ajaran_aktif) || '-';
+
+                    // Set badge text & show badge
                     var labelSemester = activeType === 'ganjil' ? 'Ganjil' : 'Genap';
                     if (sbJadwalAktifText) {
                         sbJadwalAktifText.textContent = 'Semester ' + labelSemester + ' (' + taAktif + ') Aktif';
+                        var badgeEl = document.getElementById('sbJadwalAktifBadge');
+                        if (badgeEl) badgeEl.style.display = 'flex';
                     }
 
                     toggleJadwalSemester(activeType);
@@ -913,15 +963,28 @@
             });
     }
 
-    // Toggle Jadwal Ganjil / Genap
+    // Toggle Jadwal Ganjil / Genap (handle button active state + filter jadwal)
     window.toggleJadwalSemester = function (type) {
+        var btnGanjil = document.getElementById('btnJadwalGanjil');
+        var btnGenap = document.getElementById('btnJadwalGenap');
         var ganjilSemesters = [1, 3, 5, 7];
         var genapSemesters = [2, 4, 6, 8];
 
-        var activeSemesters = type === 'ganjil' ? ganjilSemesters : genapSemesters;
+        // Reset button active state
+        if (btnGanjil) btnGanjil.classList.remove('active');
+        if (btnGenap) btnGenap.classList.remove('active');
+
+        var activeSemesters;
+        if (type === 'ganjil') {
+            if (btnGanjil) btnGanjil.classList.add('active');
+            activeSemesters = ganjilSemesters;
+        } else {
+            if (btnGenap) btnGenap.classList.add('active');
+            activeSemesters = genapSemesters;
+        }
 
         // Filter jadwal yang sesuai tipe ganjil/genap
-        var filteredJadwal = currentJadwalGedung.filter(function (j) {
+        var filteredJadwal = currentJadwalGedung.filter(function(j) {
             return activeSemesters.includes(j.semester);
         });
 
@@ -944,23 +1007,23 @@
 
         // Group jadwals by semester number
         var semesterMap = {};
-        jadwals.forEach(function (j) {
+        jadwals.forEach(function(j) {
             if (!semesterMap[j.semester]) semesterMap[j.semester] = [];
             semesterMap[j.semester].push(j);
         });
 
         // Sort each group by tahun_ajaran descending (newest first)
-        Object.keys(semesterMap).forEach(function (sem) {
-            semesterMap[sem].sort(function (a, b) {
+        Object.keys(semesterMap).forEach(function(sem) {
+            semesterMap[sem].sort(function(a, b) {
                 return (b.tahun_ajaran || '').localeCompare(a.tahun_ajaran || '');
             });
         });
 
-        var semesterKeys = Object.keys(semesterMap).sort(function (a, b) { return a - b; });
+        var semesterKeys = Object.keys(semesterMap).sort(function(a, b) { return a - b; });
 
         // Render Tabs (one per unique semester)
         var htmlTabs = '';
-        semesterKeys.forEach(function (sem, idx) {
+        semesterKeys.forEach(function(sem, idx) {
             var active = idx === 0 ? ' active' : '';
             htmlTabs += '<button class="rp-sem-tab' + active + '" data-sem="' + sem + '" onclick="switchJadwalSemTab(' + sem + ', this)">'
                 + 'Sem ' + sem
@@ -984,6 +1047,22 @@
         if (jadwals.length === 0) {
             document.getElementById('sbJadwalViewer').innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted); font-size:0.8rem;">Tidak ada jadwal untuk semester ini.</div>';
             return;
+        }
+
+        // Tampilkan dropdown TA hanya jika ada >1 jadwal (lookup DOM safely)
+        var dropdownWrap = document.getElementById('sbJadwalDropdownWrap');
+        var dropdown = document.getElementById('sbJadwalDropdown');
+        if (jadwals.length > 1 && dropdownWrap && dropdown) {
+            dropdownWrap.style.display = 'block';
+            var options = '';
+            jadwals.forEach(function (j, idx) {
+                var label = 'TA ' + (j.tahun_ajaran || 'Tidak diketahui');
+                if (idx === 0) label += ' (Terbaru)';
+                options += '<option value="' + j.id + '">' + label + '</option>';
+            });
+            dropdown.innerHTML = options;
+        } else if (dropdownWrap) {
+            dropdownWrap.style.display = 'none';
         }
 
         // Auto-render the first (newest) jadwal
@@ -1021,24 +1100,37 @@
     }
 
     // Tab switching
-    window.switchJadwalSemTab = function (semNum, btnEl) {
+    window.switchJadwalSemTab = function(semNum, btnEl) {
         var tabs = document.getElementById('sbJadwalTabs').querySelectorAll('.rp-sem-tab');
-        tabs.forEach(function (t) { t.classList.remove('active'); });
+        tabs.forEach(function(t) { t.classList.remove('active'); });
         btnEl.classList.add('active');
         populateJadwalDropdown(semNum);
     };
 
-    // Dropdown change dihapus karena sudah tidak digunakan
+    // Dropdown TA change handler
+    window.onJadwalDropdownChange = function () {
+        var dropdown = document.getElementById('sbJadwalDropdown');
+        if (!dropdown) return;
+        var selectedId = parseInt(dropdown.value);
+        // Find the jadwal from the flat list
+        var found = null;
+        Object.keys(window._currentSemMap || {}).forEach(function (sem) {
+            (window._currentSemMap[sem] || []).forEach(function (j) {
+                if (j.id === selectedId) found = j;
+            });
+        });
+        if (found) renderJadwalViewer(found);
+    };
 
     // Lightbox global
-    window.openLightbox = function (src) {
+    window.openLightbox = function(src) {
         var lb = document.getElementById('rkLightbox');
         if (!lb) {
             var div = document.createElement('div');
             div.id = 'rkLightbox';
             div.className = 'rk-lightbox';
             div.innerHTML = '<button class="rk-lightbox-close" onclick="document.getElementById(\'rkLightbox\').classList.remove(\'show\')"><i class="fas fa-times"></i></button>'
-                + '<img id="rkLightboxImg" src="">';
+                          + '<img id="rkLightboxImg" src="">';
             document.body.appendChild(div);
             lb = div;
         }
@@ -1055,7 +1147,7 @@
             var lng = f.geometry.coordinates[0];
             var p = f.properties;
 
-            var m = L.marker([lat, lng], { icon: makeRuanganIcon(p.kategori), title: p.nama_fasilitas });
+            var m = L.marker([lat, lng], { icon: makeRuanganIcon(p.kategori, p.status_dipakai), title: p.nama_fasilitas });
             m.ruanganId = p.id;
 
             m.bindPopup(buildRuanganPopup(p, lat, lng), { maxWidth: 280, closeButton: true });
@@ -1080,8 +1172,8 @@
             .then(function (gj) {
                 allRuanganData = gj.features || [];
                 renderRuanganMarkers(allRuanganData);
-                updateZoomLayers(); // Apply zoom visibility
-                updateFilterCounts(); // Update filter count badges
+                if (typeof updateZoomLayers === 'function') updateZoomLayers(); // Apply zoom visibility
+                if (typeof updateFilterCounts === 'function') updateFilterCounts(); // Update filter count badges
             })
             .catch(function (err) {
                 console.error('Gagal memuat data ruangan:', err);
@@ -1089,7 +1181,7 @@
     }
 
     // Fungsi tambahan untuk merender ruangan milik 1 gedung tertentu
-    window.showRuanganForGedung = function (gedungId) {
+    window.showRuanganForGedung = function(gedungId) {
         var filteredData = allRuanganData.filter(function (f) {
             return f.properties.gedung_id == gedungId;
         });
@@ -1693,6 +1785,7 @@
     /* ── SIDEBAR ──────────────────────────────── */
     var sidebar = document.getElementById('sidebar');
     var sbClose = document.getElementById('sbClose');
+    var sbGallery = document.getElementById('sbGallery');
     var sbLoading = document.getElementById('sbLoading');
     var sbContent = document.getElementById('sbContent');
     var currentGedungLat = null;
@@ -1700,6 +1793,8 @@
 
     sbClose.addEventListener('click', function () {
         sidebar.classList.remove('show');
+        // Bersihkan marker ruangan saat sidebar ditutup (Opsi B)
+        ruanganMarkerGroup.clearLayers();
     });
 
     document.getElementById('sbBtnRoute').addEventListener('click', function () {
@@ -1710,13 +1805,33 @@
         }
     });
 
+    document.getElementById('sbBtnPhotos').addEventListener('click', function () {
+        if (sbGallery.style.display === 'none') {
+            sbGallery.style.display = 'block';
+            this.innerHTML = '<i class="fas fa-chevron-up"></i> Tutup';
+        } else {
+            sbGallery.style.display = 'none';
+            this.innerHTML = '<i class="fas fa-images"></i> Foto';
+        }
+    });
+
     window.openSidebar = function (id) {
         sidebar.classList.add('show');
         sbLoading.style.display = 'block';
         sbContent.style.display = 'none';
-        sbMainIdx = 0; // Reset index carousel
 
-        // Ruangan markers dikelola otomatis oleh zoom level
+        // Reset state untuk pengajaran fresh sidebar
+        sbMainIdx = 0; // Reset carousel index (Roni's foto utama carousel)
+        if (typeof sbGallery !== 'undefined' && sbGallery) {
+            sbGallery.style.display = 'none';
+        }
+        var btnPhotos = document.getElementById('sbBtnPhotos');
+        if (btnPhotos) btnPhotos.innerHTML = '<i class="fas fa-images"></i> Foto';
+
+        // Opsi B: Tampilkan ruangan untuk gedung yang diklik
+        if (window.showRuanganForGedung) {
+            window.showRuanganForGedung(id);
+        }
 
         // Cari data gedung dari allData untuk mendapat koordinat
         var gedungData = allData.find(function (f) { return f.properties.id == id; });
@@ -1733,44 +1848,74 @@
 
                 var p = data.gedung;
 
-                // Kumpulkan semua foto (utama + galeri)
-                var allPhotos = [];
+                var imgEl = document.getElementById('sbImg');
                 if (data.foto_utama) {
-                    allPhotos.push(data.foto_utama);
-                }
-                if (data.fotos && data.fotos.length > 0) {
-                    data.fotos.forEach(function (f) {
-                        allPhotos.push(f.path);
-                    });
-                }
-
-                // Render Carousel Foto Utama
-                var slidesContainer = document.getElementById('sbMainSlides');
-                var mainNav = document.getElementById('sbMainNav');
-                var mainCounter = document.getElementById('sbMainCounter');
-                var carouselWrap = document.getElementById('sbMainCarouselWrap');
-
-                if (allPhotos.length > 0) {
-                    carouselWrap.style.display = 'block';
-                    slidesContainer.innerHTML = allPhotos.map(function (src, idx) {
-                        var activeClass = idx === 0 ? ' active' : '';
-                        return '<img class="sb-main-slide' + activeClass + '" src="' + src + '" alt="Foto Gedung" onclick="openLightbox(\'' + src + '\')">';
-                    }).join('');
-
-                    if (allPhotos.length > 1) {
-                        mainNav.style.display = 'flex';
-                        mainCounter.style.display = 'block';
-                        mainCounter.textContent = '1 / ' + allPhotos.length;
-                    } else {
-                        mainNav.style.display = 'none';
-                        mainCounter.style.display = 'none';
-                    }
+                    imgEl.src = data.foto_utama;
+                    imgEl.closest('.sb-img-wrap').style.display = 'block';
                 } else {
-                    carouselWrap.style.display = 'none';
+                    imgEl.closest('.sb-img-wrap').style.display = 'none';
                 }
 
                 document.getElementById('sbName').textContent = p.nama_gedung;
                 document.getElementById('sbAddr').textContent = p.alamat || '-';
+
+                // Jam Operasional
+                var jamOpsEl = document.getElementById('sbJamOps');
+                var jamOpsText = document.getElementById('sbJamOpsText');
+                if (p.jam_buka && p.jam_tutup) {
+                    var buka = p.jam_buka.substring(0, 5);
+                    var tutup = p.jam_tutup.substring(0, 5);
+                    jamOpsText.textContent = buka + ' - ' + tutup + ' WIB';
+                    jamOpsEl.style.display = 'flex';
+                } else {
+                    jamOpsText.textContent = 'Buka 24 Jam';
+                    jamOpsEl.style.display = 'flex';
+                }
+
+                // Update pengajuan button: hanya tampil jika gedung bisa diajukan
+                var pengajuanBtn = document.getElementById('sbBtnPengajuan');
+                if (pengajuanBtn) {
+                    if (data.bisa_diajukan) {
+                        var baseUrl = pengajuanBtn.getAttribute('href').split('?')[0];
+                        pengajuanBtn.setAttribute('href', baseUrl + '?gedung_id=' + p.id);
+                        pengajuanBtn.style.display = 'flex';
+                    } else {
+                        pengajuanBtn.style.display = 'none';
+                    }
+                }
+
+                // Deskripsi
+                document.getElementById('sbDesc').innerHTML = p.deskripsi || '-';
+
+                // Photos - Carousel
+                var slidesContainer = document.getElementById('sbGallerySlides');
+                var galleryNav = document.getElementById('sbGalleryNav');
+                if (data.fotos && data.fotos.length > 0) {
+                    document.getElementById('sbBtnPhotos').style.display = 'flex';
+                    slidesContainer.innerHTML = data.fotos.map(function (f, idx) {
+                        var activeClass = idx === 0 ? ' active' : '';
+                        return '<img class="sb-gallery-slide' + activeClass + '" src="' + f.path + '" alt="Foto Gedung" onclick="openLightbox(\'' + f.path + '\')">';
+                    }).join('');
+                    if (data.fotos.length > 1) {
+                        galleryNav.style.display = 'flex';
+                        document.getElementById('sbGalleryCounter').textContent = '1 / ' + data.fotos.length;
+                    } else {
+                        galleryNav.style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('sbBtnPhotos').style.display = 'none';
+                    slidesContainer.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:0.8rem; padding:20px;">Belum ada foto galeri</div>';
+                    galleryNav.style.display = 'none';
+                }
+
+                // Update action bar grid columns based on visible buttons
+                var actionBar = document.querySelector('.sb-action-bar');
+                if (actionBar) {
+                    var visibleBtns = actionBar.querySelectorAll('.sb-action-btn');
+                    var visibleCount = 0;
+                    visibleBtns.forEach(function(btn) { if (btn.style.display !== 'none') visibleCount++; });
+                    actionBar.style.gridTemplateColumns = 'repeat(' + visibleCount + ', 1fr)';
+                }
 
                 // Fasilitas
                 var fasEl = document.getElementById('sbFasilitas');
@@ -1779,9 +1924,10 @@
                     var totalFas = data.fasilitas.length;
                     var fasHtml = '<div id="sbFasilitasList" style="display:flex; flex-direction:column; gap:10px;">';
                     data.fasilitas.forEach(function (f, idx) {
-                        var statusColor = f.is_aktif ? 'var(--success)' : 'var(--muted)';
-                        var statusText = f.is_aktif ? 'Sedang Dipakai' : 'Kosong';
-                        var pulseClass = f.is_aktif ? 'pulse-mini' : '';
+                        var statusText = f.status || 'Kosong';
+                        var statusColor = statusText === 'Sedang Dipakai' ? '#3b82f6' : statusText === 'Tutup' ? '#6b7280' : '#22c55e';
+                        var pulseClass = statusText === 'Sedang Dipakai' ? 'pulse-mini' : '';
+                        var glowColor = statusText === 'Sedang Dipakai' ? 'rgba(59,130,246,0.4)' : statusText === 'Tutup' ? 'rgba(107,114,128,0.2)' : 'rgba(34,197,94,0.4)';
                         var hiddenStyle = idx >= maxVisible ? ' style="display:none;"' : '';
 
                         var btnLokasi = (f.latitude && f.longitude) 
@@ -1796,7 +1942,7 @@
                             + (f.keterangan ? '<div style="font-size:0.75rem; color:var(--muted); margin-bottom:8px; line-height:1.4;">' + f.keterangan + '</div>' : '')
                             + '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">'
                             + '<div style="display:flex; align-items:center; gap:8px;">'
-                            + '<div class="status-dot ' + pulseClass + '" style="width:7px; height:7px; border-radius:50%; background:' + statusColor + '; box-shadow:0 0 10px ' + (f.is_aktif ? 'rgba(34,197,94,0.4)' : 'transparent') + '"></div>'
+                            + '<div class="status-dot ' + pulseClass + '" style="width:7px; height:7px; border-radius:50%; background:' + statusColor + '; box-shadow:0 0 10px ' + glowColor + '"></div>'
                             + '<span style="font-size:0.7rem; font-weight:600; color:' + statusColor + '; text-transform:uppercase; letter-spacing:0.5px;">' + statusText + '</span>'
                             + '</div>'
                             + btnLokasi

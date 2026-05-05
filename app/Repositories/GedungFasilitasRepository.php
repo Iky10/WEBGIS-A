@@ -21,7 +21,7 @@ class GedungFasilitasRepository extends BaseRepository
         'nama_fasilitas',
         'kategori',
         'keterangan',
-        'is_aktif',
+        'bisa_diajukan',
         'latitude',
         'longitude',
         'foto_ruangan'
