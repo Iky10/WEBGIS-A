@@ -39,10 +39,14 @@
 
     /* ── HELPERS ──────────────────────────────── */
     function getColor(k) {
-        return k === 'Sedang Dipakai' ? '#22c55e' : k === 'Kosong' ? '#6c757d' : '#475569';
+        if (k === 'Sedang Dipakai') return '#3b82f6';
+        if (k === 'Tutup') return '#6b7280';
+        return '#22c55e'; // Kosong / Terbuka
     }
     function getBadgeClass(k) {
-        return k === 'Sedang Dipakai' ? 'badge-success' : k === 'Kosong' ? 'badge-secondary' : '';
+        if (k === 'Sedang Dipakai') return 'badge-primary';
+        if (k === 'Tutup') return 'badge-secondary';
+        return 'badge-success'; // Kosong / Terbuka
     }
 
     /* ── MARKER ICON ──────────────────────────── */
@@ -70,8 +74,6 @@
     var allData = [];
     var markerGroup = L.layerGroup().addTo(map);
     var labelGroup = L.layerGroup();
-    var filterFungsi = '';
-    var filterKondisi = '';
 
     function renderMarkers(data) {
         markerGroup.clearLayers();
@@ -132,42 +134,303 @@
     }
     map.on('zoomend', updateLabels);
 
-    /* ── FILTER CHIPS ─────────────────────────── */
-    function applyFilter() {
-        renderMarkers(allData.filter(function (f) {
-            var p = f.properties;
-            return (!filterFungsi || p.fungsi === filterFungsi)
-                && (!filterKondisi || p.kondisi === filterKondisi);
-        }));
+    /* ── ZOOM-BASED LAYER SWITCHING (Google Maps Style) ── */
+    var ZOOM_THRESHOLD = 20;
+    var currentMapMode = 'gedung';
+
+    function updateZoomLayers() {
+        var zoom = map.getZoom();
+
+        // Update zoom level indicator
+        var zoomIndicator = document.getElementById('zoomLevel');
+        if (zoomIndicator) zoomIndicator.textContent = zoom;
+
+        // Update mode badge
+        var modeBadge = document.getElementById('zoomModeBadge');
+
+        if (zoom >= ZOOM_THRESHOLD) {
+            // ZOOM IN: Tampilkan ruangan, sembunyikan gedung
+            if (!map.hasLayer(ruanganMarkerGroup)) ruanganMarkerGroup.addTo(map);
+            if (!map.hasLayer(vegetasiMarkerGroup)) vegetasiMarkerGroup.addTo(map);
+
+            if (modeBadge) {
+                modeBadge.textContent = '\uD83C\uDFE0 Ruangan & Vegetasi';
+                modeBadge.className = 'zoom-mode-badge mode-ruangan';
+            }
+            if (currentMapMode !== 'ruangan') {
+                currentMapMode = 'ruangan';
+                toast('\uD83C\uDFE0 Mode Detail (Ruangan & Vegetasi)');
+            }
+        } else {
+            // ZOOM OUT: Tampilkan gedung, sembunyikan ruangan & vegetasi
+            if (!map.hasLayer(markerGroup)) markerGroup.addTo(map);
+            if (map.hasLayer(ruanganMarkerGroup)) map.removeLayer(ruanganMarkerGroup);
+            if (map.hasLayer(vegetasiMarkerGroup)) map.removeLayer(vegetasiMarkerGroup);
+
+            // Labels muncul di zoom >= 16
+            if (zoom >= 16) {
+                if (!map.hasLayer(labelGroup)) labelGroup.addTo(map);
+            } else {
+                if (map.hasLayer(labelGroup)) map.removeLayer(labelGroup);
+            }
+
+            if (modeBadge) {
+                modeBadge.textContent = '\uD83C\uDFE2 Gedung';
+                modeBadge.className = 'zoom-mode-badge mode-gedung';
+            }
+            if (currentMapMode !== 'gedung') {
+                currentMapMode = 'gedung';
+                toast('\uD83C\uDFE2 Mode Gedung');
+            }
+        }
+    }
+    map.on('zoomend', updateZoomLayers);
+
+    /* ── FILTER (Checkbox Multi-Select with OK/Cancel) ── */
+    var activeKategori = [];  // Currently applied kategori ruangan filter
+    var activeKondisi = [];   // Currently applied kondisi gedung filter
+    var showAllKategori = true; // Flag if "Semua" is checked for kategori
+    var showAllKondisi = true;  // Flag if "Semua" is checked for kondisi
+    var showVegetasi = true;  // Whether vegetasi markers are visible
+    var savedCheckboxState = {}; // Snapshot of checkbox states before opening panel
+
+    function getCheckedValues(name) {
+        var values = [];
+        document.querySelectorAll('.fp-checkbox[name="' + name + '"]').forEach(function (cb) {
+            if (cb.checked && cb.value !== '') values.push(cb.value);
+        });
+        return values;
     }
 
-    function setupChips(containerId, onSelect) {
-        document.getElementById(containerId).addEventListener('click', function (e) {
-            var chip = e.target.closest('.chip');
-            if (!chip) return;
-            this.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('on'); });
-            chip.classList.add('on');
-            onSelect(chip.dataset.v);
-            applyFilter();
+    function isAllChecked(name) {
+        var cb = document.querySelector('.fp-checkbox[name="' + name + '"][value=""]');
+        return cb ? cb.checked : false;
+    }
+
+    function applyFilter() {
+        // Filter gedung by kondisi (status pemakaian)
+        var filteredGedung = allData.filter(function (f) {
+            var p = f.properties;
+            if (showAllKondisi) return true;
+            if (activeKondisi.length === 0) return false;
+            return activeKondisi.indexOf(p.kondisi) !== -1;
+        });
+        renderMarkers(filteredGedung);
+
+        // Filter ruangan by kategori
+        var filteredRuangan = allRuanganData.filter(function (f) {
+            var p = f.properties;
+            if (showAllKategori) return true;
+            if (activeKategori.length === 0) return false;
+            return activeKategori.indexOf(p.kategori) !== -1;
+        });
+        renderRuanganMarkers(filteredRuangan);
+
+        // Vegetasi toggle
+        if (showVegetasi) {
+            renderVegetasiMarkers(allVegetasiData);
+        } else {
+            vegetasiMarkerGroup.clearLayers();
+        }
+
+        updateZoomLayers();
+    }
+
+    // Count items per category and update count badges
+    function updateFilterCounts() {
+        // Ruangan kategori counts
+        var kategoriMap = {};
+        var totalRuangan = allRuanganData.length;
+
+        allRuanganData.forEach(function (f) {
+            var p = f.properties;
+            kategoriMap[p.kategori] = (kategoriMap[p.kategori] || 0) + 1;
+        });
+
+        var countKatAll = document.getElementById('countKategoriAll');
+        if (countKatAll) countKatAll.textContent = '(' + totalRuangan + ')';
+
+        // Update each kategori count using slug-based IDs
+        var kategoriList = [
+            'Ruang Kelas', 'Post Penjagaan', 'Ruang Kuliah Umum',
+            'Perpustakaan', 'Kepala Ruangan / Pengurus', 'Ruangan Sekretariatan / Administrasi'
+        ];
+        kategoriList.forEach(function (k) {
+            // Convert to slug (same as Str::slug in blade with '' separator)
+            var slug = k.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').replace(/-/g, '');
+            var el = document.getElementById('countKategori' + slug);
+            if (el) el.textContent = '(' + (kategoriMap[k] || 0) + ')';
+        });
+
+        // Gedung kondisi counts
+        var kondisiMap = {};
+        var totalGedung = allData.length;
+
+        allData.forEach(function (f) {
+            var p = f.properties;
+            kondisiMap[p.kondisi] = (kondisiMap[p.kondisi] || 0) + 1;
+        });
+
+        var countKAll = document.getElementById('countKondisiAll');
+        if (countKAll) countKAll.textContent = '(' + totalGedung + ')';
+
+        var countSD = document.getElementById('countKondisiSedangDipakai');
+        if (countSD) countSD.textContent = '(' + (kondisiMap['Sedang Dipakai'] || 0) + ')';
+
+        var countK = document.getElementById('countKondisiKosong');
+        if (countK) countK.textContent = '(' + (kondisiMap['Kosong'] || 0) + ')';
+
+        // Vegetasi count
+        var countVeg = document.getElementById('countVegetasi');
+        if (countVeg) countVeg.textContent = '(' + allVegetasiData.length + ')';
+    }
+
+    // "Semua" checkbox logic: when "Semua" is toggled, toggle all others
+    function setupSemuaCheckbox(name) {
+        var semuaCb = document.querySelector('.fp-checkbox[name="' + name + '"][value=""]');
+        var otherCbs = document.querySelectorAll('.fp-checkbox[name="' + name + '"]:not([value=""])');
+
+        if (!semuaCb) return;
+
+        semuaCb.addEventListener('change', function () {
+            var checked = this.checked;
+            otherCbs.forEach(function (cb) { cb.checked = checked; });
+        });
+
+        // When individual checkbox changes, update "Semua" state
+        otherCbs.forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                var allChecked = true;
+                otherCbs.forEach(function (c) { if (!c.checked) allChecked = false; });
+                semuaCb.checked = allChecked;
+            });
         });
     }
-    setupChips('chipsFungsi', function (v) { filterFungsi = v; });
-    setupChips('chipsKondisi', function (v) { filterKondisi = v; });
 
-    document.getElementById('fpReset').addEventListener('click', function () {
-        filterFungsi = filterKondisi = '';
-        document.querySelectorAll('#chipsFungsi .chip, #chipsKondisi .chip').forEach(function (c) { c.classList.remove('on'); });
-        document.querySelector('#chipsFungsi .chip[data-v=""]').classList.add('on');
-        document.querySelector('#chipsKondisi .chip[data-v=""]').classList.add('on');
-        renderMarkers(allData);
-        toast('Filter direset');
+    setupSemuaCheckbox('kategori');
+    setupSemuaCheckbox('kondisi');
+
+    // Save current checkbox state (for Cancel)
+    function saveCheckboxState() {
+        savedCheckboxState = {};
+        document.querySelectorAll('.fp-checkbox').forEach(function (cb) {
+            var key = cb.name + '|' + cb.value;
+            savedCheckboxState[key] = cb.checked;
+        });
+    }
+
+    // Restore checkbox state (Cancel button)
+    function restoreCheckboxState() {
+        document.querySelectorAll('.fp-checkbox').forEach(function (cb) {
+            var key = cb.name + '|' + cb.value;
+            if (savedCheckboxState.hasOwnProperty(key)) {
+                cb.checked = savedCheckboxState[key];
+            }
+        });
+    }
+
+    // OK button - apply filters
+    document.getElementById('fpOk').addEventListener('click', function () {
+        // Read kategori ruangan filter
+        showAllKategori = isAllChecked('kategori');
+        activeKategori = getCheckedValues('kategori');
+
+        // Read kondisi filter
+        showAllKondisi = isAllChecked('kondisi');
+        activeKondisi = getCheckedValues('kondisi');
+
+        // Read vegetasi toggle
+        var vegCb = document.querySelector('.fp-checkbox[name="vegetasi"]');
+        showVegetasi = vegCb ? vegCb.checked : true;
+
+        applyFilter();
+
+        // Close panel
+        document.getElementById('filterPanel').classList.add('hide');
+        document.getElementById('btnFilter').classList.remove('on');
+        toast('Filter diterapkan');
+    });
+
+    // Cancel button - restore and close
+    document.getElementById('fpCancel').addEventListener('click', function () {
+        restoreCheckboxState();
+        document.getElementById('filterPanel').classList.add('hide');
+        document.getElementById('btnFilter').classList.remove('on');
+        toast('Filter dibatalkan');
+    });
+
+    // Close button (X) - same as cancel
+    document.getElementById('fpClose').addEventListener('click', function () {
+        restoreCheckboxState();
+        document.getElementById('filterPanel').classList.add('hide');
+        document.getElementById('btnFilter').classList.remove('on');
+    });
+
+    // Collapsible sections
+    document.querySelectorAll('.fp-section-header').forEach(function (header) {
+        header.addEventListener('click', function () {
+            var targetId = this.getAttribute('data-toggle');
+            var body = document.getElementById(targetId);
+            if (!body) return;
+            body.classList.toggle('open');
+            this.classList.toggle('collapsed');
+        });
     });
 
     /* ── FILTER PANEL TOGGLE ──────────────────── */
     document.getElementById('btnFilter').addEventListener('click', function () {
         var p = document.getElementById('filterPanel');
+        var willOpen = p.classList.contains('hide');
+
+        if (willOpen) {
+            saveCheckboxState(); // Save state before user makes changes
+        }
+
         var open = p.classList.toggle('hide');
         this.classList.toggle('on', !open);
+    });
+
+    /* ── LEGEND TOGGLE (Desktop: collapse, Mobile: FAB popover) ── */
+    var legToggleBtn = document.getElementById('legToggle');
+    var legContentEl = document.getElementById('legContent');
+    var legendEl = document.getElementById('legend');
+
+    function isMobileViewport() {
+        return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    // Init: pada mobile, default legend collapsed (cuma FAB visible)
+    function syncLegendCollapsed() {
+        if (isMobileViewport()) {
+            legContentEl.classList.add('collapsed');
+            legToggleBtn.classList.add('collapsed');
+        }
+    }
+    syncLegendCollapsed();
+    window.addEventListener('resize', function () {
+        // Saat resize ke mobile, auto-collapse. Saat ke desktop, expand.
+        if (isMobileViewport()) {
+            legContentEl.classList.add('collapsed');
+            legToggleBtn.classList.add('collapsed');
+        } else {
+            legContentEl.classList.remove('collapsed');
+            legToggleBtn.classList.remove('collapsed');
+        }
+    });
+
+    legToggleBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        legContentEl.classList.toggle('collapsed');
+        legToggleBtn.classList.toggle('collapsed');
+    });
+
+    // Tap di luar legend (di area peta) untuk close popover di mobile
+    document.addEventListener('click', function (e) {
+        if (!isMobileViewport()) return;
+        if (legContentEl.classList.contains('collapsed')) return;
+        if (legendEl.contains(e.target)) return;
+        legContentEl.classList.add('collapsed');
+        legToggleBtn.classList.add('collapsed');
     });
 
     /* ── SEARCH ───────────────────────────────── */
@@ -422,6 +685,7 @@
         .then(function (gj) {
             allData = gj.features || [];
             renderMarkers(allData);
+            updateFilterCounts();
 
             if (allData.length) {
                 var pts = allData.map(function (f) { return [f.geometry.coordinates[1], f.geometry.coordinates[0]]; });
@@ -441,484 +705,1117 @@
             setTimeout(function () { ldr.style.display = 'none'; }, 520);
 
             toast(allData.length + ' gedung dimuat');
+
+            // Load markers after gedung
+            loadRuanganMarkers();
+            loadVegetasiMarkers();
+
+            // Auto-refresh status tiap 60 detik (silent — tanpa toast/loader)
+            startStatusAutoRefresh();
         })
         .catch(function () {
             document.getElementById('loading').classList.add('out');
             setTimeout(function () { document.getElementById('loading').style.display = 'none'; }, 400);
         });
 
+    /* ── AUTO-REFRESH STATUS ──────────────────────
+       Reload data GeoJSON tiap 60 detik supaya warna marker tetap sinkron
+       dengan status realtime gedung (Sedang Dipakai → Kosong saat acara berakhir).
+       Hanya update status warna marker, TIDAK reload posisi/zoom map. */
+    function startStatusAutoRefresh() {
+        setInterval(function () {
+            // Skip kalau tab tidak aktif (hemat bandwidth)
+            if (document.hidden) return;
+
+            fetch(window.WEBGIS_URL)
+                .then(function (r) { return r.json(); })
+                .then(function (gj) {
+                    allData = gj.features || [];
+                    renderMarkers(allData);
+                })
+                .catch(function () { /* silent fail — coba lagi 60 detik berikutnya */ });
+        }, 60000);
+    }
+
+    /* ══════════════════════════════════════════════════
+       RUANGAN MARKERS (Opsi B — sub-marker saat diklik)
+    ══════════════════════════════════════════════════ */
+    var allRuanganData = [];
+    var ruanganMarkerGroup = L.layerGroup().addTo(map);
+
+    var allVegetasiData = [];
+    var vegetasiMarkerGroup = L.layerGroup().addTo(map);
+
+    // Warna per kategori ruangan
+    var kategoriColors = {
+        'Ruang Kelas': '#3b82f6',
+        'Post Penjagaan': '#ef4444',
+        'Ruang Kuliah Umum': '#8b5cf6',
+        'Perpustakaan': '#f59e0b',
+        'Kepala Ruangan / Pengurus': '#10b981',
+        'Ruangan Sekretariatan / Administrasi': '#6366f1'
+    };
+
+    // Emoji/icon per kategori
+    var kategoriEmoji = {
+        'Ruang Kelas': '🏫',
+        'Post Penjagaan': '🛡️',
+        'Ruang Kuliah Umum': '🎓',
+        'Perpustakaan': '📚',
+        'Kepala Ruangan / Pengurus': '👤',
+        'Ruangan Sekretariatan / Administrasi': '📋'
+    };
+
+    // Buat icon marker ruangan (lebih kecil dari gedung)
+    // status: 'Sedang Dipakai', 'Kosong', 'Tutup'
+    function makeRuanganIcon(kategori, status) {
+        var katColor = kategoriColors[kategori] || '#94a3b8';
+        // Warna marker utama berdasarkan status
+        var c = status === 'Sedang Dipakai' ? '#3b82f6' : status === 'Tutup' ? '#6b7280' : '#22c55e';
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">'
+            + '<defs><filter id="rds"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="rgba(0,0,0,.4)"/></filter></defs>'
+            + '<path filter="url(#rds)" d="M11 1C6.03 1 2 5.03 2 10c0 6.5 9 19 9 19s9-12.5 9-19C20 5.03 15.97 1 11 1z" fill="' + c + '" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/>'
+            + '<circle cx="11" cy="10" r="4" fill="rgba(255,255,255,.92)"/>'
+            + '<circle cx="11" cy="10" r="2" fill="' + katColor + '"/>'
+            + '</svg>';
+        return L.divIcon({ html: svg, className: '', iconSize: [22, 30], iconAnchor: [11, 30], popupAnchor: [0, -32] });
+    }
+
+    // Build popup HTML untuk ruangan
+    function buildRuanganPopup(p, lat, lng) {
+        var c = kategoriColors[p.kategori] || '#94a3b8';
+        var emoji = kategoriEmoji[p.kategori] || '📍';
+        var statusText = p.status_dipakai || 'Kosong';
+        var statusColor = statusText === 'Sedang Dipakai' ? '#3b82f6' : statusText === 'Tutup' ? '#6b7280' : '#22c55e';
+
+        var imgHtml = p.foto_ruangan
+            ? '<img class="rp-img" src="' + p.foto_ruangan + '" alt="' + p.nama_fasilitas + '">'
+            : '';
+
+        var keteranganHtml = p.keterangan
+            ? '<div class="rp-keterangan">' + p.keterangan + '</div>'
+            : '';
+
+        return '<div class="ruangan-popup" id="rpPopup_' + p.id + '">'
+            + '<div class="rp-slider step-1" id="rpSlider_' + p.id + '">'
+            
+            // PANEL 1: Info Singkat (Overview)
+            + '<div class="rp-panel rp-panel-1">'
+            + '<div class="rp-header">'
+            + '<div class="rp-icon" style="background:' + c + '20; color:' + c + ';">' + emoji + '</div>'
+            + '<div class="rp-header-text">'
+            + '<div class="rp-name">' + p.nama_fasilitas + '</div>'
+            + '<div class="rp-kategori" style="color:' + c + ';">' + p.kategori + '</div>'
+            + '</div>'
+            + '</div>'
+            + '<div class="rp-body">'
+            + '<div class="rp-gedung"><i class="fas fa-building"></i> ' + p.nama_gedung + '</div>'
+            + imgHtml
+            + '<div class="rp-status">'
+            + '<div class="rp-status-dot" style="background:' + statusColor + '; box-shadow:0 0 6px ' + statusColor + ';"></div>'
+            + '<span class="rp-status-text" style="color:' + statusColor + ';">' + statusText + '</span>'
+            + '</div>'
+            + '<button class="rp-btn-detail" onclick="goToStep(' + p.id + ', 2)"><i class="fas fa-info-circle"></i> Lihat Fasilitas</button>'
+            + '</div>' // rp-body
+            + '</div>' // rp-panel-1
+
+            // PANEL 2: Detail Lengkap
+            + '<div class="rp-panel rp-panel-2">'
+            + '<div class="rp-detail-header">'
+            + '<button class="rp-btn-back" onclick="goToStep(' + p.id + ', 1)"><i class="fas fa-arrow-left"></i></button>'
+            + '<div class="rp-detail-title">Lihat Fasilitas</div>'
+            + '</div>'
+            + '<div class="rp-detail-body">'
+            + '<div class="rp-detail-card">'
+            + '<div class="rp-detail-label">Keterangan</div>'
+            + (p.keterangan ? '<div class="rp-detail-value">' + p.keterangan + '</div>' : '<div class="rp-detail-value text-muted">-</div>')
+            + '</div>'
+            + '<div class="rp-detail-card">'
+            + '<div class="rp-detail-label">Status Saat Ini</div>'
+            + '<div class="rp-detail-value" style="color:' + statusColor + '; font-weight:700;">' + statusText + '</div>'
+            + '</div>'
+            + '<button class="rp-btn-jadwal mt-3" onclick="goToStep(' + p.id + ', 3)"><i class="fas fa-images"></i> Lihat Galeri Foto</button>'
+            + '</div>' // rp-detail-body
+            + '</div>' // rp-panel-2
+
+            // PANEL 3: Galeri Foto
+            + '<div class="rp-panel rp-panel-3">'
+            + '<div class="rp-detail-header">'
+            + '<button class="rp-btn-back" onclick="goToStep(' + p.id + ', 2)"><i class="fas fa-arrow-left"></i></button>'
+            + '<div class="rp-detail-title">Galeri Foto</div>'
+            + '</div>'
+            + '<div class="rp-detail-body" id="rpDetailBody_' + p.id + '">'
+            + '<div class="rp-carousel" id="rpCarousel_' + p.id + '">'
+            + (p.foto_ruangan 
+                ? '<img class="rp-carousel-slide active" src="' + p.foto_ruangan + '" onclick="openLightbox(\'' + p.foto_ruangan + '\')">'
+                : '')
+            + '<img class="rp-carousel-slide' + (p.foto_ruangan ? '' : ' active') + '" src="https://picsum.photos/seed/' + p.id + 'a/400/250" onclick="openLightbox(\'https://picsum.photos/seed/' + p.id + 'a/800/500\')">' 
+            + '<img class="rp-carousel-slide" src="https://picsum.photos/seed/' + p.id + 'b/400/250" onclick="openLightbox(\'https://picsum.photos/seed/' + p.id + 'b/800/500\')">' 
+            + '<img class="rp-carousel-slide" src="https://picsum.photos/seed/' + p.id + 'c/400/250" onclick="openLightbox(\'https://picsum.photos/seed/' + p.id + 'c/800/500\')">'
+            + '</div>'
+            + '<div class="rp-carousel-nav">'
+            + '<button class="rp-carousel-btn" onclick="carouselNav(' + p.id + ', -1)"><i class="fas fa-chevron-left"></i></button>'
+            + '<span class="rp-carousel-counter" id="rpCounter_' + p.id + '">1 / ' + (p.foto_ruangan ? '4' : '3') + '</span>'
+            + '<button class="rp-carousel-btn" onclick="carouselNav(' + p.id + ', 1)"><i class="fas fa-chevron-right"></i></button>'
+            + '</div>'
+            + '<div style="text-align:center; font-size:0.7rem; color:var(--muted); margin-top:6px;"><i class="fas fa-hand-pointer"></i> Klik foto untuk memperbesar</div>'
+            + '</div>'
+            + '</div>' // rp-detail-body
+            + '</div>' // rp-panel-3
+
+            + '</div>' // rp-slider
+            + '</div>'; // ruangan-popup
+    }
+
+    // Navigasi Slider Popup (3 Steps)
+    window.goToStep = function(id, step) {
+        var slider = document.getElementById('rpSlider_' + id);
+        if (!slider) return;
+        
+        // Update class for slide animation
+        slider.className = 'rp-slider step-' + step;
+    };
+
+    // Carousel navigation for gallery photos
+    window.carouselNav = function(id, direction) {
+        var carousel = document.getElementById('rpCarousel_' + id);
+        if (!carousel) return;
+        var slides = carousel.querySelectorAll('.rp-carousel-slide');
+        if (slides.length === 0) return;
+
+        var currentIdx = -1;
+        slides.forEach(function(s, i) { if (s.classList.contains('active')) currentIdx = i; });
+        if (currentIdx === -1) currentIdx = 0;
+
+        // Remove active from current
+        slides[currentIdx].classList.remove('active');
+
+        // Calculate new index (wrap around)
+        var newIdx = (currentIdx + direction + slides.length) % slides.length;
+        slides[newIdx].classList.add('active');
+
+        // Update counter
+        var counter = document.getElementById('rpCounter_' + id);
+        if (counter) counter.textContent = (newIdx + 1) + ' / ' + slides.length;
+    };
+
+    // Sidebar gallery carousel navigation
+    window.sbGalleryNav = function(direction) {
+        var container = document.getElementById('sbGallerySlides');
+        if (!container) return;
+        var slides = container.querySelectorAll('.sb-gallery-slide');
+        if (slides.length === 0) return;
+
+        var currentIdx = -1;
+        slides.forEach(function(s, i) { if (s.classList.contains('active')) currentIdx = i; });
+        if (currentIdx === -1) currentIdx = 0;
+
+        slides[currentIdx].classList.remove('active');
+        var newIdx = (currentIdx + direction + slides.length) % slides.length;
+        slides[newIdx].classList.add('active');
+
+        var counter = document.getElementById('sbGalleryCounter');
+        if (counter) counter.textContent = (newIdx + 1) + ' / ' + slides.length;
+    };
+
+    // Expand/Collapse fasilitas list in sidebar
+    window.toggleFasilitasExpand = function() {
+        var list = document.getElementById('sbFasilitasList');
+        var btn = document.getElementById('sbFasExpandBtn');
+        if (!list || !btn) return;
+
+        var items = list.querySelectorAll('.sb-fas-item');
+        var isExpanded = btn.dataset.expanded === 'true';
+
+        items.forEach(function(item, idx) {
+            if (idx >= 3) {
+                item.style.display = isExpanded ? 'none' : 'block';
+            }
+        });
+
+        if (isExpanded) {
+            btn.innerHTML = '<i class="fas fa-chevron-down"></i> Lihat Semua (' + items.length + ')';
+            btn.dataset.expanded = 'false';
+        } else {
+            btn.innerHTML = '<i class="fas fa-chevron-up"></i> Sembunyikan';
+            btn.dataset.expanded = 'true';
+        }
+    };
+
+    // Global variable to store current fetched jadwal
+    var currentJadwalGedung = [];
+
+    // Tampilkan data ke sidebar
+    function populateSidebar(data) {
+        var sbDesc = document.getElementById('sbDesc');
+        sbDesc.innerHTML = data.gedung.deskripsi 
+            ? data.gedung.deskripsi.replace(/\n/g, '<br>')
+            : 'Belum ada deskripsi untuk gedung ini.';
+
+        var gId = data.gedung.id;
+
+        // Fetch jadwal semester untuk gedung dan setting aktif
+        Promise.all([
+            fetch('/api/gedung/' + gId + '/jadwal-semester').then(res => res.json()),
+            fetch('/api/semester-aktif').then(res => res.json())
+        ])
+            .then(([resJadwal, resSetting]) => {
+                var sbJadwal = document.getElementById('sbJadwalSemester');
+                var sbJadwalAktifText = document.getElementById('sbJadwalAktifText');
+                
+                if (resJadwal.success && resJadwal.data.length > 0) {
+                    currentJadwalGedung = resJadwal.data;
+                    sbJadwal.style.display = 'block';
+
+                    // Determine active semester: prioritas dari setting global (admin),
+                    // fallback ke auto-detect berdasarkan bulan saat ini.
+                    var activeType;
+                    if (resSetting && resSetting.semester_aktif) {
+                        activeType = resSetting.semester_aktif;
+                    } else {
+                        var currentMonth = new Date().getMonth() + 1; // 1-12
+                        // Aug(8) - Jan(1) = Ganjil. Feb(2) - Jul(7) = Genap.
+                        activeType = (currentMonth >= 8 || currentMonth === 1) ? 'ganjil' : 'genap';
+                    }
+                    var taAktif = (resSetting && resSetting.tahun_ajaran_aktif) || '-';
+
+                    // Set badge text & show badge
+                    var labelSemester = activeType === 'ganjil' ? 'Ganjil' : 'Genap';
+                    if (sbJadwalAktifText) {
+                        sbJadwalAktifText.textContent = 'Semester ' + labelSemester + ' (' + taAktif + ') Aktif';
+                        var badgeEl = document.getElementById('sbJadwalAktifBadge');
+                        if (badgeEl) badgeEl.style.display = 'flex';
+                    }
+
+                    toggleJadwalSemester(activeType);
+                } else {
+                    currentJadwalGedung = [];
+                    sbJadwal.style.display = 'none';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('sbJadwalSemester').style.display = 'none';
+            });
+    }
+
+    // Toggle Jadwal Ganjil / Genap (handle button active state + filter jadwal)
+    window.toggleJadwalSemester = function (type) {
+        var btnGanjil = document.getElementById('btnJadwalGanjil');
+        var btnGenap = document.getElementById('btnJadwalGenap');
+        var ganjilSemesters = [1, 3, 5, 7];
+        var genapSemesters = [2, 4, 6, 8];
+
+        // Reset button active state
+        if (btnGanjil) btnGanjil.classList.remove('active');
+        if (btnGenap) btnGenap.classList.remove('active');
+
+        var activeSemesters;
+        if (type === 'ganjil') {
+            if (btnGanjil) btnGanjil.classList.add('active');
+            activeSemesters = ganjilSemesters;
+        } else {
+            if (btnGenap) btnGenap.classList.add('active');
+            activeSemesters = genapSemesters;
+        }
+
+        // Filter jadwal yang sesuai tipe ganjil/genap
+        var filteredJadwal = currentJadwalGedung.filter(function(j) {
+            return activeSemesters.includes(j.semester);
+        });
+
+        renderSidebarJadwal(filteredJadwal, type);
+    };
+
+    function renderSidebarJadwal(jadwals, type) {
+        var tabsContainer = document.getElementById('sbJadwalTabs');
+        var viewer = document.getElementById('sbJadwalViewer');
+
+        if (!jadwals || jadwals.length === 0) {
+            tabsContainer.innerHTML = '';
+            viewer.innerHTML = '<div style="text-align:center; padding:30px 15px; color:#64748b; background:rgba(255,255,255,.02); border:1px dashed var(--border); border-radius:8px;">'
+                + '<i class="fas fa-calendar-times" style="font-size:24px; margin-bottom:10px; display:block;"></i>'
+                + 'Belum ada jadwal semester ' + type + '.'
+                + '<div style="font-size:0.7rem; margin-top:8px;">Coba klik toggle lainnya</div>'
+                + '</div>';
+            return;
+        }
+
+        // Group jadwals by semester number
+        var semesterMap = {};
+        jadwals.forEach(function(j) {
+            if (!semesterMap[j.semester]) semesterMap[j.semester] = [];
+            semesterMap[j.semester].push(j);
+        });
+
+        // Sort each group by tahun_ajaran descending (newest first)
+        Object.keys(semesterMap).forEach(function(sem) {
+            semesterMap[sem].sort(function(a, b) {
+                return (b.tahun_ajaran || '').localeCompare(a.tahun_ajaran || '');
+            });
+        });
+
+        var semesterKeys = Object.keys(semesterMap).sort(function(a, b) { return a - b; });
+
+        // Render Tabs (one per unique semester)
+        var htmlTabs = '';
+        semesterKeys.forEach(function(sem, idx) {
+            var active = idx === 0 ? ' active' : '';
+            htmlTabs += '<button class="rp-sem-tab' + active + '" data-sem="' + sem + '" onclick="switchJadwalSemTab(' + sem + ', this)">'
+                + 'Sem ' + sem
+                + '</button>';
+        });
+        tabsContainer.innerHTML = htmlTabs;
+
+        // Store semesterMap globally for dropdown interaction
+        window._currentSemMap = semesterMap;
+
+        // Auto-select first semester tab
+        if (semesterKeys.length > 0) {
+            populateJadwalDropdown(semesterKeys[0]);
+        }
+    }
+
+    // Populate dropdown for a specific semester
+    function populateJadwalDropdown(semNum) {
+        var jadwals = window._currentSemMap[semNum] || [];
+
+        if (jadwals.length === 0) {
+            document.getElementById('sbJadwalViewer').innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted); font-size:0.8rem;">Tidak ada jadwal untuk semester ini.</div>';
+            return;
+        }
+
+        // Tampilkan dropdown TA hanya jika ada >1 jadwal (lookup DOM safely)
+        var dropdownWrap = document.getElementById('sbJadwalDropdownWrap');
+        var dropdown = document.getElementById('sbJadwalDropdown');
+        if (jadwals.length > 1 && dropdownWrap && dropdown) {
+            dropdownWrap.style.display = 'block';
+            var options = '';
+            jadwals.forEach(function (j, idx) {
+                var label = 'TA ' + (j.tahun_ajaran || 'Tidak diketahui');
+                if (idx === 0) label += ' (Terbaru)';
+                options += '<option value="' + j.id + '">' + label + '</option>';
+            });
+            dropdown.innerHTML = options;
+        } else if (dropdownWrap) {
+            dropdownWrap.style.display = 'none';
+        }
+
+        // Auto-render the first (newest) jadwal
+        renderJadwalViewer(jadwals[0]);
+    }
+
+    // Render single jadwal preview
+    function renderJadwalViewer(jadwal) {
+        var viewer = document.getElementById('sbJadwalViewer');
+        if (!jadwal) {
+            viewer.innerHTML = '';
+            return;
+        }
+
+        var ext = jadwal.file_jadwal.split('.').pop().toLowerCase();
+        var isPdf = ext === 'pdf';
+        var fileUrl = '/' + jadwal.file_jadwal;
+
+        var html = '';
+        if (isPdf) {
+            html += '<div style="padding:30px; background:rgba(0,0,0,.15); border-radius:8px; text-align:center; border:1px solid var(--border);">'
+                + '<i class="fas fa-file-pdf" style="font-size:36px; color:#ef4444; margin-bottom:10px;"></i>'
+                + '<div style="font-size:0.8rem; color:var(--muted);">Format PDF</div>'
+                + '</div>';
+        } else {
+            html += '<img src="' + fileUrl + '" onclick="openLightbox(\'' + fileUrl + '\')" style="width:100%; border-radius:8px; border:1px solid var(--border); cursor:zoom-in;">';
+        }
+
+        html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">'
+            + '<button onclick="openLightbox(\'' + fileUrl + '\')" style="padding:8px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.78rem; font-weight:600; cursor:pointer; font-family:inherit;"><i class="fas fa-search-plus"></i> Perbesar</button>'
+            + '<a href="' + fileUrl + '" target="_blank" style="display:block; text-align:center; padding:8px; background:var(--accent); color:#fff; border-radius:6px; font-size:0.78rem; font-weight:700; text-decoration:none;"><i class="fas fa-download"></i> Download</a>'
+            + '</div>';
+
+        viewer.innerHTML = html;
+    }
+
+    // Tab switching
+    window.switchJadwalSemTab = function(semNum, btnEl) {
+        var tabs = document.getElementById('sbJadwalTabs').querySelectorAll('.rp-sem-tab');
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        btnEl.classList.add('active');
+        populateJadwalDropdown(semNum);
+    };
+
+    // Dropdown TA change handler
+    window.onJadwalDropdownChange = function () {
+        var dropdown = document.getElementById('sbJadwalDropdown');
+        if (!dropdown) return;
+        var selectedId = parseInt(dropdown.value);
+        // Find the jadwal from the flat list
+        var found = null;
+        Object.keys(window._currentSemMap || {}).forEach(function (sem) {
+            (window._currentSemMap[sem] || []).forEach(function (j) {
+                if (j.id === selectedId) found = j;
+            });
+        });
+        if (found) renderJadwalViewer(found);
+    };
+
+    // Lightbox global
+    window.openLightbox = function(src) {
+        var lb = document.getElementById('rkLightbox');
+        if (!lb) {
+            var div = document.createElement('div');
+            div.id = 'rkLightbox';
+            div.className = 'rk-lightbox';
+            div.innerHTML = '<button class="rk-lightbox-close" onclick="document.getElementById(\'rkLightbox\').classList.remove(\'show\')"><i class="fas fa-times"></i></button>'
+                          + '<img id="rkLightboxImg" src="">';
+            document.body.appendChild(div);
+            lb = div;
+        }
+        document.getElementById('rkLightboxImg').src = src;
+        lb.classList.add('show');
+    };
+
+    // Render marker ruangan
+    function renderRuanganMarkers(data) {
+        ruanganMarkerGroup.clearLayers();
+
+        data.forEach(function (f) {
+            var lat = f.geometry.coordinates[1];
+            var lng = f.geometry.coordinates[0];
+            var p = f.properties;
+
+            var m = L.marker([lat, lng], { icon: makeRuanganIcon(p.kategori, p.status_dipakai), title: p.nama_fasilitas });
+            m.ruanganId = p.id;
+
+            m.bindPopup(buildRuanganPopup(p, lat, lng), { maxWidth: 280, closeButton: true });
+
+            // Tampilkan tooltip hanya saat hover
+            m.bindTooltip(p.nama_fasilitas, {
+                direction: 'top',
+                offset: [0, -30],
+                className: 'ruangan-tooltip'
+            });
+
+            ruanganMarkerGroup.addLayer(m);
+        });
+    }
+
+    // Load data ruangan
+    function loadRuanganMarkers() {
+        if (!window.WEBGIS_RUANGAN_URL) return;
+
+        fetch(window.WEBGIS_RUANGAN_URL)
+            .then(function (r) { return r.json(); })
+            .then(function (gj) {
+                allRuanganData = gj.features || [];
+                renderRuanganMarkers(allRuanganData);
+                if (typeof updateZoomLayers === 'function') updateZoomLayers(); // Apply zoom visibility
+                if (typeof updateFilterCounts === 'function') updateFilterCounts(); // Update filter count badges
+            })
+            .catch(function (err) {
+                console.error('Gagal memuat data ruangan:', err);
+            });
+    }
+
+    // Fungsi tambahan untuk merender ruangan milik 1 gedung tertentu
+    window.showRuanganForGedung = function(gedungId) {
+        var filteredData = allRuanganData.filter(function (f) {
+            return f.properties.gedung_id == gedungId;
+        });
+        renderRuanganMarkers(filteredData);
+    };
+
     /* ── LEAFLET ROUTING MACHINE ───────────────── */
-    var routeProfile = 'car'; // default profile: car, bike, foot
+    var routeProfile = 'car';
     var routingControl = null;
     var currentWaypoints = [];
-    var currentCoordinates = { start: null, end: null }; // Simpan koordinat numerik
-    var userMarker = null;
+    var currentCoordinates = { start: null, end: null };
+    var userMarker = null; // Ini untuk marker Start (titik biru)
+    var routePoints = [];      // Untuk tracking klik user
+    var routesData = [];         // Semua data route dari OSRM
+    var routeLayers = [];        // Semua polyline layer yang digambar
+    var routeLabels = [];        // Tooltip label pada rute (misal: +5 mnt)
+    var selectedRouteIndex = 0;  // Index route yang sedang aktif
+    var animationFrameId = null; // ID untuk requestAnimationFrame
+    var animatingMarker = null;  // Marker yang bergerak
 
-    // Map user-friendly names to OSRM profiles
+    // Profile mapping
     var profileMap = {
         'car': 'driving',
-        'bike': 'cycling',
-        'foot': 'walking',
-        'driving': 'driving',
-        'cycling': 'cycling',
-        'walking': 'walking'
+        'bike': 'driving', // Motor di Indonesia menggunakan rute mobil (OSRM driving)
+        'foot': 'walking'
     };
+
+    // Kecepatan rata-rata (km/jam) untuk estimasi waktu ala Google Maps
+    var averageSpeeds = {
+        'car': 30,    // Rata-rata mobil di perkotaan (incl. traffic ringan)
+        'bike': 40,   // Rata-rata motor di perkotaan (lebih lincah)
+        'foot': 5     // Rata-rata jalan kaki (standard Google Maps)
+    };
+
+    function calculateEstimatedTime(distanceInMeters, mode) {
+        var speedKmh = averageSpeeds[mode] || 30;
+        var timeInHours = (distanceInMeters / 1000) / speedKmh;
+        var timeInMinutes = Math.round(timeInHours * 60);
+        
+        // Minimal 1 menit jika jarak sangat dekat
+        return Math.max(1, timeInMinutes);
+    }
+
+    function formatDuration(minutes) {
+        if (minutes < 60) return minutes + ' mnt';
+        
+        var d = Math.floor(minutes / 1440);
+        var h = Math.floor((minutes % 1440) / 60);
+        var m = minutes % 60;
+        
+        if (d > 0) {
+            var res = d + ' hari';
+            if (h > 0) res += ' ' + h + ' jam';
+            return res;
+        }
+        
+        var res = h + ' jam';
+        if (m > 0) res += ' ' + m + ' mnt';
+        return res;
+    }
+
+    // Icons
+    var startIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: '<div class="marker-start-dot"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+
+    var endIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: '<div class="marker-end-pin"><i class="fas fa-map-marker-alt" style="font-size: 26px;"></i></div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 30]
+    });
 
     function createRoutingControl(profile, waypoints) {
         var osrmProfile = profileMap[profile || routeProfile] || 'driving';
 
-        // Hapus control lama jika ada
         if (routingControl) {
-            try {
-                map.removeControl(routingControl);
-            } catch (e) {
-                console.log('Old control removal error:', e);
-            }
+            map.removeControl(routingControl);
             routingControl = null;
         }
 
-        console.log('Creating routing with profile:', osrmProfile, 'waypoints:', waypoints);
-
         var control = L.Routing.control({
-            waypoints: (waypoints && waypoints.length >= 2) ? waypoints : [],
-            routeWhileDragging: false,
+            waypoints: waypoints || [],
+            show: false,
+            showAlternatives: true,
             addWaypoints: false,
+            draggableWaypoints: false,
+            routeWhileDragging: false,
             fitSelectedRoutes: true,
             router: L.Routing.osrmv1({
                 serviceUrl: 'https://router.project-osrm.org/route/v1',
-                profile: osrmProfile,
-                timeout: 10000,
-                stepInterpolation: true,
-                exclude: [],
-                // Add timestamp to prevent caching
+                profile: (osrmProfile === 'foot' ? 'walking' : 'driving'),
+                timeout: 15000,
+                alternatives: true, // Beritahu LRM bahwa kita mau alternatif
                 urlParameters: {
-                    '_t': Date.now()
-                }
+                    alternatives: '3', // Minta hingga 3 rute ke server OSRM
+                    steps: 'true',
+                    overview: 'full',
+                    continue_straight: 'false'
+                },
+                useHints: false
             }),
-            lineOptions: {
-                styles: [{
-                    color: '#3b82f6',
-                    opacity: 0.8,
-                    weight: 6
-                }]
+            // Matikan renderer bawaan LRM – kita gambar polyline sendiri
+            lineOptions: { addWaypoints: false, styles: [] },
+            createMarker: function (i, wp) {
+                if (i === 0) return L.marker(wp.latLng, { icon: startIcon });
+                return L.marker(wp.latLng, { icon: endIcon });
             },
-            createMarker: function () {
-                return null;
-            }
+            // Minta semua alternatif route dari OSRM
+            plan: L.Routing.plan(waypoints || [], { createMarker: function(i, wp) {
+                if (i === 0) return L.marker(wp.latLng, { icon: startIcon });
+                return L.marker(wp.latLng, { icon: endIcon });
+            }, routeWhileDragging: false })
         }).addTo(map);
 
-        // Attach event listeners
-        attachRoutingEvents(control);
+        control.on('routesfound', onRouteFound);
+        control.on('routingerror', function() {
+            toast('Rute tidak ditemukan');
+            toggleNavPanel();
+        });
 
         return control;
     }
 
-    function attachRoutingEvents(control) {
-        control.on('routesfound', onRouteFound);
-        control.on('routingerror', onRoutingError);
-    }
-
-    // Fungsi untuk fetch durasi dan jarak dari OSRM secara langsung
-    function calculateRouteDirect(startLat, startLng, endLat, endLng, profile) {
-        var osrmProfile = profileMap[profile] || 'driving';
-
-        // Pastikan koordinat adalah numerik
-        startLat = parseFloat(startLat);
-        startLng = parseFloat(startLng);
-        endLat = parseFloat(endLat);
-        endLng = parseFloat(endLng);
-
-        // Validasi koordinat
-        if (isNaN(startLat) || isNaN(startLng) || isNaN(endLat) || isNaN(endLng)) {
-            console.error('Invalid coordinates:', { startLat, startLng, endLat, endLng });
-            return Promise.reject(new Error('Invalid coordinates'));
-        }
-
-        // OSRM API: /route/v1/{profile}/{lon1},{lat1};{lon2},{lat2}
-        var url = 'https://router.project-osrm.org/route/v1/' + osrmProfile + '/' +
-            startLng + ',' + startLat + ';' + endLng + ',' + endLat +
-            '?overview=false&_t=' + Date.now(); // Cache buster
-
-        console.log('Fetching route from OSRM:');
-        console.log('  URL:', url);
-        console.log('  Profile:', osrmProfile);
-        console.log('  Start:', startLat, startLng);
-        console.log('  End:', endLat, endLng);
-
-        return fetch(url)
-            .then(function (response) {
-                console.log('OSRM Response status:', response.status);
-                if (!response.ok) throw new Error('OSRM response not ok: ' + response.status);
-                return response.json();
-            })
-            .then(function (data) {
-                console.log('OSRM Direct Response:', data);
-
-                if (data.routes && data.routes[0]) {
-                    var route = data.routes[0];
-                    var duration = route.duration; // seconds
-                    var distance = route.distance; // meters
-
-                    console.log('Direct API - Duration: ' + duration + 's, Distance: ' + distance + 'm, Profile: ' + osrmProfile);
-
-                    return {
-                        duration: duration,
-                        distance: distance,
-                        profile: osrmProfile
-                    };
-                } else {
-                    throw new Error('No routes found in response');
-                }
-            })
-            .catch(function (err) {
-                console.error('OSRM Direct API error:', err);
-                throw err;
-            });
-    }
-
     function onRouteFound(e) {
-        console.log('Route found! Event triggered:', e);
+        // Hapus polyline & label lama
+        routeLayers.forEach(function(layer) { if(layer) map.removeLayer(layer); });
+        routeLabels.forEach(function(label) { if(label) map.removeLayer(label); });
+        routeLayers = [];
+        routeLabels = [];
+
+        // Simpan maksimal 2 rute (Tercepat & Alternatif)
+        routesData = e.routes.slice(0, 2);
+        selectedRouteIndex = 0;
+        
+        if (routesData.length < 2) {
+            toast('Rute terbaik ditemukan. Tidak ada jalur alternatif yang signifikan.');
+        } else {
+            toast('Ditemukan ' + routesData.length + ' opsi rute untuk perbandingan.');
+        }
+        
+        var mainDuration = calculateEstimatedTime(routesData[0].summary.totalDistance, routeProfile);
+
+        // ── Gambar rute alternatif dulu agar rute utama di atas ──
+        var drawOrder = routesData.length > 1 ? [1, 0] : [0];
+
+        var routeListHtml = '';
+        if (routesData.length < 2) {
+            routeListHtml = '<div class="nav-route-item active" data-idx="0">'
+                + '<span class="nav-route-item-title">Rute Tunggal</span>'
+                + '<span class="nav-route-item-time">' + formatDuration(calculateEstimatedTime(routesData[0].summary.totalDistance, routeProfile)) + '</span>'
+                + '</div>';
+        } else {
+            drawOrder.forEach(function(idx) {
+                var route = routesData[idx];
+                var duration = calculateEstimatedTime(route.summary.totalDistance, routeProfile);
+                var isActive = (idx === selectedRouteIndex);
+                var title = idx === 0 ? 'Tercepat' : 'Alternatif';
+                
+                routeListHtml += '<div class="nav-route-item ' + (isActive ? 'active' : '') + '" data-idx="' + idx + '" onclick="selectRoute(' + idx + ')">'
+                    + '<span class="nav-route-item-title">' + title + '</span>'
+                    + '<span class="nav-route-item-time">' + formatDuration(duration) + '</span>'
+                    + '</div>';
+            });
+        }
+        document.getElementById('navRouteList').innerHTML = routeListHtml;
+
+        drawOrder.forEach(function(idx) {
+            var route = routesData[idx];
+            var isActive = (idx === selectedRouteIndex);
+
+            var polyline = L.polyline(route.coordinates, {
+                color:   isActive ? '#22c55e' : '#3b82f6', // Gunakan Biru untuk rute alternatif agar kontras
+                weight:  isActive ? 12 : 9,               // Lebih tebal lagi
+                opacity: isActive ? 1  : 0.5,
+                lineCap:  'round',
+                lineJoin: 'round',
+                interactive: true,
+                bubblingMouseEvents: false
+            }).addTo(map);
+
+            polyline._routeIndex = idx;
+
+            // Tambahkan Label untuk rute
+            var duration = calculateEstimatedTime(route.summary.totalDistance, routeProfile);
+            var labelText = "";
+            
+            if (idx === 0) {
+                labelText = '<b>' + formatDuration(duration) + '</b> (Tercepat)';
+            } else {
+                var diff = duration - mainDuration;
+                var diffText = diff > 0 ? "+" + formatDuration(diff) : (diff < 0 ? formatDuration(diff) : "Sama");
+                labelText = '<span style="color:#1a73e8"><b>' + formatDuration(duration) + '</b> (' + diffText + ')</span>';
+            }
+            
+            // Titik tengah rute untuk label (geser sedikit jika rute tumpang tindih)
+            var coordIdx = Math.floor(route.coordinates.length * (0.3 + (idx * 0.2)));
+            var labelPoint = route.coordinates[coordIdx];
+            var label = L.tooltip({
+                permanent: true,
+                direction: 'center',
+                className: 'route-label'
+            })
+            .setContent(labelText)
+            .setLatLng(labelPoint)
+            .addTo(map);
+            
+            // Buat label bisa diklik
+            label.on('add', function() {
+                var el = this.getElement();
+                if (el) {
+                    el.addEventListener('click', function(ev) {
+                        ev.stopPropagation();
+                        selectRoute(idx);
+                    });
+                }
+            });
+            
+            routeLabels[idx] = label;
+
+            if (isActive) {
+                requestAnimationFrame(function() {
+                    var el = polyline.getElement();
+                    if (el) el.classList.add('route-active');
+                });
+            }
+
+            polyline.on('click', function(ev) { 
+                L.DomEvent.stopPropagation(ev);
+                selectRoute(idx); 
+            });
+
+            polyline.on('mouseover', function() {
+                if (idx !== selectedRouteIndex) {
+                    this.setStyle({ color: '#6b7280', weight: 7, opacity: 0.85 });
+                }
+            });
+            polyline.on('mouseout', function() {
+                if (idx !== selectedRouteIndex) {
+                    this.setStyle({ color: '#9ca3af', weight: 5, opacity: 0.6 });
+                }
+            });
+
+            routeLayers[idx] = polyline;
+        });
+
+        // Update panel dengan route utama
+        updateRoutePanel(selectedRouteIndex);
+        showNavPanel();
+        animateRoute(selectedRouteIndex);
         document.getElementById('btnResetRoute').style.display = 'flex';
 
-        if (e.routes && e.routes[0]) {
-            var route = e.routes[0];
-            console.log('Route summary full:', route.summary);
-            console.log('Route summary totalTime:', route.summary.totalTime);
-            console.log('Route summary totalDistance:', route.summary.totalDistance);
+        // Bounding box gabungan semua rute
+        var bounds = routeLayers[0].getBounds();
+        routeLayers.forEach(function(l) { if (l) bounds.extend(l.getBounds()); });
+        map.fitBounds(bounds.pad(0.12));
+    }
 
-            var duration = formatDuration(route.summary.totalTime);
-            var distance = formatDistance(route.summary.totalDistance);
+    function animateRoute(index) {
+        var route = routesData[index];
+        if (!route || !route.coordinates) return;
 
-            console.log('Distance:', distance, 'Duration:', duration, 'Mode:', routeProfile);
-
-            document.getElementById('routeInfoDuration').textContent = duration;
-            document.getElementById('routeInfoDistance').textContent = distance;
-
-            var modeLabel = {
-                'car': 'Mobil',
-                'bike': 'Motor/Sepeda',
-                'foot': 'Jalan Kaki'
-            };
-            document.getElementById('routeInfoMode').textContent = modeLabel[routeProfile] || routeProfile;
-            document.getElementById('routeInfoPanel').style.display = 'block';
+        // Bersihkan animasi sebelumnya
+        if (animatingMarker) {
+            map.removeLayer(animatingMarker);
+            animatingMarker = null;
         }
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+
+        var coords = route.coordinates;
+        var mode = routeProfile; // car, bike, foot
+
+        // Tentukan icon berdasarkan mode
+        var iconHtml = '';
+        if (mode === 'foot') iconHtml = '<div class="route-anim-marker"><i class="fas fa-walking"></i></div>';
+        else if (mode === 'bike') iconHtml = '<div class="route-anim-marker"><i class="fas fa-motorcycle"></i></div>';
+        else iconHtml = '<div class="route-anim-marker"><i class="fas fa-car"></i></div>';
+
+        var animatedIcon = L.divIcon({
+            className: 'route-anim-icon-wrap',
+            html: iconHtml,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+
+        animatingMarker = L.marker(coords[0], { 
+            icon: animatedIcon, 
+            zIndexOffset: 2000,
+            interactive: false 
+        }).addTo(map);
+
+        var startTime = null;
+        var duration = 3000; // Durasi total animasi (3 detik)
+
+        // Hitung jarak total untuk pergerakan konstan
+        var totalDist = 0;
+        var segments = [];
+        for (var i = 0; i < coords.length - 1; i++) {
+            var d = map.distance(coords[i], coords[i+1]);
+            totalDist += d;
+            segments.push(d);
+        }
+
+        function step(timestamp) {
+            if (!startTime) startTime = timestamp;
+            var elapsed = timestamp - startTime;
+            var progress = Math.min(elapsed / duration, 1);
+
+            // Easing function (easeInOutQuad) untuk kesan lebih premium
+            var easedProgress = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+            
+            var targetDist = totalDist * easedProgress;
+            var currentDist = 0;
+            var pos = coords[0];
+
+            for (var i = 0; i < segments.length; i++) {
+                if (currentDist + segments[i] >= targetDist) {
+                    var segProgress = (targetDist - currentDist) / segments[i];
+                    var p1 = coords[i];
+                    var p2 = coords[i+1];
+                    pos = L.latLng(
+                        p1.lat + (p2.lat - p1.lat) * segProgress,
+                        p1.lng + (p2.lng - p1.lng) * segProgress
+                    );
+                    
+                    break;
+                }
+                currentDist += segments[i];
+                if (i === segments.length - 1) pos = coords[coords.length - 1];
+            }
+
+            animatingMarker.setLatLng(pos);
+
+            if (progress < 1) {
+                animationFrameId = requestAnimationFrame(step);
+            } else {
+                // Selesai, hapus marker dengan fade out
+                var el = animatingMarker.getElement();
+                if (el) el.style.opacity = '0';
+                setTimeout(function() {
+                    if (animatingMarker) {
+                        map.removeLayer(animatingMarker);
+                        animatingMarker = null;
+                    }
+                }, 500);
+            }
+        }
+
+        animationFrameId = requestAnimationFrame(step);
     }
 
-    function onRoutingError(e) {
-        console.error('Routing error:', e);
-        toast('Tidak ada rute ditemukan untuk mode ini');
+    window.selectRoute = function(index) {
+        if (index < 0 || index >= routeLayers.length) return;
+        selectedRouteIndex = index;
+        var currentDuration = calculateEstimatedTime(routesData[index].summary.totalDistance, routeProfile);
+        var mainDuration = calculateEstimatedTime(routesData[0].summary.totalDistance, routeProfile);
+
+        // Update UI List di Panel
+        document.querySelectorAll('.nav-route-item').forEach((item) => {
+            var itemIdx = parseInt(item.getAttribute('data-idx'));
+            item.classList.toggle('active', itemIdx === index);
+        });
+
+        routeLayers.forEach(function(layer, i) {
+            if (!layer) return;
+
+            var el = layer.getElement ? layer.getElement() : null;
+            if (el) el.classList.remove('route-active');
+
+            if (i === index) {
+                layer.setStyle({ color: '#22c55e', weight: 12, opacity: 1 });
+                layer.bringToFront();
+                requestAnimationFrame(function() {
+                    var elNow = layer.getElement();
+                    if (elNow) elNow.classList.add('route-active');
+                });
+            } else {
+                layer.setStyle({ color: '#3b82f6', weight: 9, opacity: 0.5 });
+            }
+
+            // Update Label Konten
+            if (routeLabels[i]) {
+                var duration = calculateEstimatedTime(routesData[i].summary.totalDistance, routeProfile);
+                var labelText = "";
+                
+                if (i === 0) {
+                    labelText = '<b>' + formatDuration(duration) + '</b> (Tercepat)';
+                } else {
+                    var diff = duration - currentDuration;
+                    var diffText = diff > 0 ? "+" + formatDuration(diff) : (diff < 0 ? formatDuration(diff) : "Sama");
+                    labelText = '<b>' + formatDuration(duration) + '</b> (' + (i === index ? 'Terpilih' : diffText) + ')';
+                }
+                routeLabels[i].setContent(labelText);
+            }
+        });
+
+        updateRoutePanel(index);
+        
+        // Jalankan animasi marker bergerak
+        animateRoute(index);
+    };
+
+    function updateRoutePanel(index) {
+        var route = routesData[index];
+        if (!route) return;
+
+        var summary = route.summary;
+        var instructions = route.instructions;
+
+        // Update Summary UI
+        var durationMinutes = calculateEstimatedTime(summary.totalDistance, routeProfile);
+        document.getElementById('navTime').textContent = formatDuration(durationMinutes);
+        document.getElementById('navDist').textContent = formatDistance(summary.totalDistance);
+
+        // Ambil nama jalan utama dari instruksi
+        var mainStreet = 'Jalan Utama';
+        for (var i = 0; i < instructions.length; i++) {
+            if (instructions[i].road) { mainStreet = instructions[i].road; break; }
+        }
+        document.getElementById('navStreet').textContent = 'Lewat ' + mainStreet;
+
+        // Traffic simulation (Simulasi lalu lintas ala Google Maps)
+        var trafficEl = document.getElementById('navTraffic');
+        var trafficChance = 0;
+        if (routeProfile === 'car') trafficChance = 0.4; // 40% kemungkinan padat
+        else if (routeProfile === 'bike') trafficChance = 0.15; // 15% kemungkinan padat untuk motor
+
+        if (routeProfile !== 'foot' && Math.random() < trafficChance && durationMinutes > 2) {
+            trafficEl.textContent = 'Lalu lintas padat';
+            trafficEl.className = 'nav-traffic-slow';
+            // Tambahkan sedikit waktu ekstra pada UI jika macet
+            var extra = Math.ceil(durationMinutes * 0.2);
+            document.getElementById('navTime').textContent = formatDuration(durationMinutes + extra);
+        } else {
+            trafficEl.textContent = 'Lalu lintas lancar';
+            trafficEl.className = 'nav-traffic-fast';
+        }
+
+        // Parse Instructions
+        var stepsHtml = '';
+        instructions.forEach(function(instr) {
+            var icon = getStepIcon(instr.type);
+            stepsHtml += '<div class="nav-step">'
+                + '<div class="nav-step-icon"><i class="' + icon + '"></i></div>'
+                + '<div class="nav-step-text">'
+                + '<div>' + instr.text + '</div>'
+                + '<div class="nav-step-dist">' + formatDistance(instr.distance) + '</div>'
+                + '</div></div>';
+        });
+        document.getElementById('navSteps').innerHTML = stepsHtml;
     }
+
+    function getStepIcon(type) {
+        var icons = {
+            'Straight': 'fas fa-arrow-up',
+            'SlightRight': 'fas fa-location-arrow fa-rotate-45',
+            'Right': 'fas fa-reply fa-rotate-180',
+            'SharpRight': 'fas fa-redo',
+            'TurnAround': 'fas fa-sync-alt',
+            'SharpLeft': 'fas fa-undo',
+            'Left': 'fas fa-share',
+            'SlightLeft': 'fas fa-location-arrow fa-rotate-315',
+            'WaypointReached': 'fas fa-map-marker-alt',
+            'Roundabout': 'fas fa-not-equal', // atau ikon bundaran lain
+            'StartAt': 'fas fa-play',
+            'DestinationReached': 'fas fa-flag-checkered',
+            'EnterAgainstAllowedDirection': 'fas fa-exclamation-triangle',
+            'LeaveAgainstAllowedDirection': 'fas fa-exclamation-triangle'
+        };
+        return icons[type] || 'fas fa-arrow-up';
+    }
+
+    function formatDistance(m) {
+        return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : Math.round(m) + ' m';
+    }
+
+    function showNavPanel() {
+        var p = document.getElementById('navPanel');
+        p.classList.remove('hide');
+    }
+
+    window.toggleNavPanel = function() {
+        document.getElementById('navPanel').classList.add('hide');
+        
+        // Reset Routing
+        if (routingControl) routingControl.setWaypoints([]);
+        
+        // Hapus semua polyline & label route yang digambar manual
+        routeLayers.forEach(function(layer) { if(layer) map.removeLayer(layer); });
+        routeLabels.forEach(function(label) { if(label) map.removeLayer(label); });
+        
+        routeLayers = [];
+        routeLabels = [];
+        routesData = [];
+        
+        if (userMarker) map.removeLayer(userMarker);
+        document.getElementById('btnResetRoute').style.display = 'none';
+        currentCoordinates = { start: null, end: null };
+        routePoints = [];
+        
+        toast('Rute ditutup dan direset');
+    };
+
+    // Tombol Detail Toggle
+    document.getElementById('btnNavDetail').addEventListener('click', function() {
+        var container = document.getElementById('navSteps');
+        var isVisible = container.style.display === 'block';
+        container.style.display = isVisible ? 'none' : 'block';
+        this.innerHTML = isVisible ? '<i class="fas fa-list-ul"></i> Detail' : '<i class="fas fa-chevron-up"></i> Sembunyikan';
+    });
+
+    // Tombol Pratinjau
+    document.getElementById('btnNavPreview').addEventListener('click', function() {
+        if (routeLayers[selectedRouteIndex]) {
+            map.fitBounds(routeLayers[selectedRouteIndex].getBounds(), { padding: [50, 50] });
+        }
+    });
+
+    // Tombol Reset Rute (Topbar)
+    document.getElementById('btnResetRoute').addEventListener('click', function () {
+        toggleNavPanel();
+    });
 
     routingControl = createRoutingControl(routeProfile);
 
-    // Format durasi (detik -> jam:menit:detik atau jam atau menit)
-    function formatDuration(seconds) {
-        if (!seconds) return '-';
+    // KLIK 2 TITIK UNTUK RUTE
+    map.on('click', function (e) {
+        // Abaikan jika sedang klik marker atau UI
+        if (e.originalEvent.target.closest('.leaflet-marker-icon') || 
+            e.originalEvent.target.closest('#navPanel') ||
+            e.originalEvent.target.closest('#topbar')) return;
 
-        var hours = Math.floor(seconds / 3600);
-        var minutes = Math.floor((seconds % 3600) / 60);
-        var secs = Math.floor(seconds % 60);
+        routePoints.push(e.latlng);
 
-        if (hours > 0) {
-            return hours + ' jam ' + minutes + ' menit ' + secs + ' detik';
-        } else if (minutes > 0) {
-            return minutes + ' menit ' + secs + ' detik';
-        } else {
-            return secs + ' detik';
-        }
-    }
-
-    // Format jarak (meter -> km atau meter)
-    function formatDistance(meters) {
-        if (!meters) return '-';
-        if (meters >= 1000) {
-            return (meters / 1000).toFixed(2) + ' km';
-        }
-        return Math.floor(meters) + ' m';
-    }
-
-
-    // Fungsi untuk menentukan tujuan rute
-    window.setRoutingDest = function (lat, lng) {
-
-        // Cek apakah browser mendukung GPS
-        if (navigator.geolocation) {
-
-            // Ambil lokasi user (titik awal)
-            navigator.geolocation.getCurrentPosition(function (pos) {
-
-                var userLat = pos.coords.latitude;
-                var userLng = pos.coords.longitude;
-
-                // Tambahkan marker untuk lokasi user
-                if (userMarker) {
-                    map.removeLayer(userMarker);
-                }
-                userMarker = L.circleMarker([userLat, userLng], {
-                    radius: 8,
-                    fillColor: '#3b82f6',
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map).bindPopup('📍 Lokasi Anda Saat Ini', { closeButton: false });
-
-                // Set titik awal (user) dan tujuan (gedung)
-                currentWaypoints = [
-                    L.latLng(userLat, userLng),
-                    L.latLng(lat, lng)
-                ];
-
-                // Simpan koordinat numerik
-                currentCoordinates.start = { lat: userLat, lng: userLng };
-                currentCoordinates.end = { lat: lat, lng: lng };
-
-                console.log('Setting initial waypoints:', currentWaypoints);
-                console.log('Saved coordinates:', currentCoordinates);
-                console.log('Waypoint 0:', currentWaypoints[0].lat, currentWaypoints[0].lng);
-                console.log('Waypoint 1:', currentWaypoints[1].lat, currentWaypoints[1].lng);
-
-                routingControl.setWaypoints(currentWaypoints);
-
-                // Gunakan direct API call untuk mendapat durasi dan jarak yang akurat
-                calculateRouteDirect(userLat, userLng, lat, lng, routeProfile)
-                    .then(function (routeData) {
-                        console.log('Initial route data received:', routeData);
-
-                        var duration = formatDuration(routeData.duration);
-                        var distance = formatDistance(routeData.distance);
-
-                        document.getElementById('routeInfoDuration').textContent = duration;
-                        document.getElementById('routeInfoDistance').textContent = distance;
-
-                        var modeLabel = {
-                            'car': 'Mobil',
-                            'bike': 'Motor/Sepeda',
-                            'foot': 'Jalan Kaki'
-                        };
-                        document.getElementById('routeInfoMode').textContent = modeLabel[routeProfile] || routeProfile;
-                        document.getElementById('routeInfoPanel').style.display = 'block';
-                        document.getElementById('btnResetRoute').style.display = 'flex';
-                    })
-                    .catch(function (err) {
-                        console.error('Failed to get initial route data:', err);
-                    });
-
-                // Notifikasi ke user
-                toast('Menghitung rute ke lokasi…');
-
-            }, function () {
-
-                // Jika gagal ambil lokasi GPS
-                toast('Gagal mendapatkan lokasi. Menggunakan titik tengah peta.');
-
-                // Gunakan titik tengah peta sebagai titik awal
-                var centerLat = map.getCenter().lat;
-                var centerLng = map.getCenter().lng;
-
-                if (userMarker) {
-                    map.removeLayer(userMarker);
-                }
-                userMarker = L.circleMarker([centerLat, centerLng], {
-                    radius: 8,
-                    fillColor: '#f59e0b',
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map).bindPopup('📍 Lokasi Default (Pusat Peta)', { closeButton: false });
-
-                currentWaypoints = [
-                    L.latLng(centerLat, centerLng),
-                    L.latLng(lat, lng)
-                ];
-
-                // Simpan koordinat numerik
-                currentCoordinates.start = { lat: centerLat, lng: centerLng };
-                currentCoordinates.end = { lat: lat, lng: lng };
-
-                routingControl.setWaypoints(currentWaypoints);
-
-                // Gunakan direct API call untuk mendapat durasi dan jarak yang akurat
-                calculateRouteDirect(centerLat, centerLng, lat, lng, routeProfile)
-                    .then(function (routeData) {
-                        console.log('Fallback route data received:', routeData);
-
-                        var duration = formatDuration(routeData.duration);
-                        var distance = formatDistance(routeData.distance);
-
-                        document.getElementById('routeInfoDuration').textContent = duration;
-                        document.getElementById('routeInfoDistance').textContent = distance;
-
-                        var modeLabel = {
-                            'car': 'Mobil',
-                            'bike': 'Motor/Sepeda',
-                            'foot': 'Jalan Kaki'
-                        };
-                        document.getElementById('routeInfoMode').textContent = modeLabel[routeProfile] || routeProfile;
-                        document.getElementById('routeInfoPanel').style.display = 'block';
-                        document.getElementById('btnResetRoute').style.display = 'flex';
-                    })
-                    .catch(function (err) {
-                        console.error('Failed to get fallback route data:', err);
-                    });
-            });
-
-        } else {
-            // Jika browser tidak support GPS
-
-            var centerLat = map.getCenter().lat;
-            var centerLng = map.getCenter().lng;
-
-            if (userMarker) {
-                map.removeLayer(userMarker);
-            }
-            userMarker = L.circleMarker([centerLat, centerLng], {
-                radius: 8,
-                fillColor: '#f59e0b',
-                color: '#fff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(map).bindPopup('📍 Lokasi Default (Pusat Peta)', { closeButton: false });
-
+        if (routePoints.length === 1) {
+            toast('Titik awal ditentukan. Pilih titik tujuan...');
+            // Tampilkan marker sementara
+            if (userMarker) map.removeLayer(userMarker);
+            userMarker = L.marker(e.latlng, { icon: startIcon }).addTo(map);
+        } 
+        else if (routePoints.length === 2) {
+            if (userMarker) map.removeLayer(userMarker);
+            
             currentWaypoints = [
-                L.latLng(centerLat, centerLng),
-                L.latLng(lat, lng)
+                L.latLng(routePoints[0].lat, routePoints[0].lng),
+                L.latLng(routePoints[1].lat, routePoints[1].lng)
             ];
-
-            // Simpan koordinat numerik
-            currentCoordinates.start = { lat: centerLat, lng: centerLng };
-            currentCoordinates.end = { lat: lat, lng: lng };
+            
+            currentCoordinates.start = routePoints[0];
+            currentCoordinates.end = routePoints[1];
 
             routingControl.setWaypoints(currentWaypoints);
-
-            // Gunakan direct API call untuk mendapat durasi dan jarak yang akurat
-            calculateRouteDirect(centerLat, centerLng, lat, lng, routeProfile)
-                .then(function (routeData) {
-                    console.log('No-GPS route data received:', routeData);
-
-                    var duration = formatDuration(routeData.duration);
-                    var distance = formatDistance(routeData.distance);
-
-                    document.getElementById('routeInfoDuration').textContent = duration;
-                    document.getElementById('routeInfoDistance').textContent = distance;
-
-                    var modeLabel = {
-                        'car': 'Mobil',
-                        'bike': 'Motor/Sepeda',
-                        'foot': 'Jalan Kaki'
-                    };
-                    document.getElementById('routeInfoMode').textContent = modeLabel[routeProfile] || routeProfile;
-                    document.getElementById('routeInfoPanel').style.display = 'block';
-                    document.getElementById('btnResetRoute').style.display = 'flex';
-                })
-                .catch(function (err) {
-                    console.error('Failed to get no-GPS route data:', err);
-                });
+            routePoints = []; // Reset for next pair
         }
+    });
 
-        // Tutup popup setelah klik tombol rute
-        map.closePopup();
+    // Fungsi Rute ke Sini (dari Sidebar)
+    window.setRoutingDest = function (lat, lng) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                var start = L.latLng(pos.coords.latitude, pos.coords.longitude);
+                var end = L.latLng(lat, lng);
+                
+                currentCoordinates.start = start;
+                currentCoordinates.end = end;
+                
+                routingControl.setWaypoints([start, end]);
+                toast('Menghitung rute dari lokasi Anda...');
+            }, function() {
+                toast('Gagal akses lokasi. Klik 2 titik di peta untuk rute.');
+            });
+        }
     };
 
-    // Fungsi untuk mengganti mode transportasi
     window.changeRouteMode = function (mode) {
-        console.log('Changing route mode to:', mode, 'mapped to profile:', profileMap[mode]);
-
-        // Update current profile
         routeProfile = mode;
-
-        // Gunakan simpan koordinat numerik, bukan getWaypoints()
-        if (currentCoordinates.start && currentCoordinates.end) {
-            console.log('Changing mode with saved coordinates:', currentCoordinates);
-
-            // Gunakan direct API call untuk mendapat durasi dan jarak yang akurat
-            var startLat = currentCoordinates.start.lat;
-            var startLng = currentCoordinates.start.lng;
-            var endLat = currentCoordinates.end.lat;
-            var endLng = currentCoordinates.end.lng;
-
-            console.log('Calling calculateRouteDirect with:', {
-                startLat: startLat, startLng: startLng,
-                endLat: endLat, endLng: endLng,
-                profile: mode
-            });
-
-            calculateRouteDirect(startLat, startLng, endLat, endLng, mode)
-                .then(function (routeData) {
-                    console.log('Direct API returned:', routeData);
-
-                    var duration = formatDuration(routeData.duration);
-                    var distance = formatDistance(routeData.distance);
-
-                    console.log('Formatted - Distance:', distance, 'Duration:', duration, 'Mode:', mode);
-
-                    document.getElementById('routeInfoDuration').textContent = duration;
-                    document.getElementById('routeInfoDistance').textContent = distance;
-
-                    var modeLabel = {
-                        'car': 'Mobil',
-                        'bike': 'Motor/Sepeda',
-                        'foot': 'Jalan Kaki'
-                    };
-                    document.getElementById('routeInfoMode').textContent = modeLabel[mode] || mode;
-                    document.getElementById('routeInfoPanel').style.display = 'block';
-                    document.getElementById('btnResetRoute').style.display = 'flex';
-                })
-                .catch(function (err) {
-                    console.error('Failed to calculate route:', err);
-                    toast('Gagal menghitung rute untuk mode ' + mode);
-                });
-
-            var modeMsg = mode === 'car' ? 'Mobil' : mode === 'bike' ? 'Motor/Sepeda' : 'Jalan Kaki';
-            toast('Menghitung rute dengan mode ' + modeMsg + '...');
-        } else {
-            console.warn('No coordinates saved for route calculation');
-            toast('Silakan klik "Rute ke Sini" terlebih dahulu');
-        }
-
-        // Update button styles
-        document.querySelectorAll('.route-mode-btn').forEach(function (btn) {
-            btn.classList.remove('active');
-            btn.style.background = 'rgba(255,255,255,.05)';
-            btn.style.color = 'var(--muted)';
-            btn.style.borderColor = 'var(--border)';
+        
+        // Update UI Active State
+        document.querySelectorAll('.nav-mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
         });
 
-        var activeBtn = document.querySelector('[data-mode="' + mode + '"]');
-        if (activeBtn) {
-            activeBtn.classList.add('active');
-            activeBtn.style.background = 'var(--accent)';
-            activeBtn.style.color = '#fff';
-            activeBtn.style.borderColor = 'var(--accent)';
+        if (currentCoordinates.start && currentCoordinates.end) {
+            // Hapus control lama agar marker tidak menumpuk
+            if (routingControl) map.removeControl(routingControl);
+
+            routingControl = createRoutingControl(mode, [
+                L.latLng(currentCoordinates.start.lat, currentCoordinates.start.lng),
+                L.latLng(currentCoordinates.end.lat, currentCoordinates.end.lng)
+            ]);
         }
     };
-
-
-    // Event tombol reset rute
-    document.getElementById('btnResetRoute').addEventListener('click', function () {
-
-        routingControl.setWaypoints([]);
-        // Menghapus rute dari peta
-
-        currentWaypoints = [];
-        currentCoordinates = { start: null, end: null }; // Clear coordinates
-
-        this.style.display = 'none';
-        // Sembunyikan tombol reset
-
-        document.getElementById('routeInfoPanel').style.display = 'none';
-        // Sembunyikan info panel
-
-        if (userMarker) {
-            map.removeLayer(userMarker);
-            userMarker = null;
-        }
-
-        toast('Rute dihapus');
-        // Tampilkan notifikasi
-    });
 
     /* ── SIDEBAR ──────────────────────────────── */
     var sidebar = document.getElementById('sidebar');
@@ -931,6 +1828,8 @@
 
     sbClose.addEventListener('click', function () {
         sidebar.classList.remove('show');
+        // Bersihkan marker ruangan saat sidebar ditutup (Opsi B)
+        ruanganMarkerGroup.clearLayers();
     });
 
     document.getElementById('sbBtnRoute').addEventListener('click', function () {
@@ -944,10 +1843,10 @@
     document.getElementById('sbBtnPhotos').addEventListener('click', function () {
         if (sbGallery.style.display === 'none') {
             sbGallery.style.display = 'block';
-            this.innerHTML = '<i class="fas fa-chevron-up"></i> Sembunyikan Foto';
+            this.innerHTML = '<i class="fas fa-chevron-up"></i> Tutup';
         } else {
             sbGallery.style.display = 'none';
-            this.innerHTML = '<i class="fas fa-images"></i> Lihat Foto';
+            this.innerHTML = '<i class="fas fa-images"></i> Foto';
         }
     });
 
@@ -955,8 +1854,19 @@
         sidebar.classList.add('show');
         sbLoading.style.display = 'block';
         sbContent.style.display = 'none';
-        sbGallery.style.display = 'none';
-        document.getElementById('sbBtnPhotos').innerHTML = '<i class="fas fa-images"></i> Lihat Foto';
+
+        // Reset state untuk pengajaran fresh sidebar
+        sbMainIdx = 0; // Reset carousel index (Roni's foto utama carousel)
+        if (typeof sbGallery !== 'undefined' && sbGallery) {
+            sbGallery.style.display = 'none';
+        }
+        var btnPhotos = document.getElementById('sbBtnPhotos');
+        if (btnPhotos) btnPhotos.innerHTML = '<i class="fas fa-images"></i> Foto';
+
+        // Opsi B: Tampilkan ruangan untuk gedung yang diklik
+        if (window.showRuanganForGedung) {
+            window.showRuanganForGedung(id);
+        }
 
         // Cari data gedung dari allData untuk mendapat koordinat
         var gedungData = allData.find(function (f) { return f.properties.id == id; });
@@ -984,53 +1894,309 @@
                 document.getElementById('sbName').textContent = p.nama_gedung;
                 document.getElementById('sbAddr').textContent = p.alamat || '-';
 
+                // Jam Operasional
+                var jamOpsEl = document.getElementById('sbJamOps');
+                var jamOpsText = document.getElementById('sbJamOpsText');
+                if (p.jam_buka && p.jam_tutup) {
+                    var buka = p.jam_buka.substring(0, 5);
+                    var tutup = p.jam_tutup.substring(0, 5);
+                    jamOpsText.textContent = buka + ' - ' + tutup + ' WIB';
+                    jamOpsEl.style.display = 'flex';
+                } else {
+                    jamOpsText.textContent = 'Buka 24 Jam';
+                    jamOpsEl.style.display = 'flex';
+                }
+
+                // Update pengajuan button: hanya tampil jika gedung bisa diajukan
+                var pengajuanBtn = document.getElementById('sbBtnPengajuan');
+                if (pengajuanBtn) {
+                    if (data.bisa_diajukan) {
+                        var baseUrl = pengajuanBtn.getAttribute('href').split('?')[0];
+                        pengajuanBtn.setAttribute('href', baseUrl + '?gedung_id=' + p.id);
+                        pengajuanBtn.style.display = 'flex';
+                    } else {
+                        pengajuanBtn.style.display = 'none';
+                    }
+                }
 
                 // Deskripsi
                 document.getElementById('sbDesc').innerHTML = p.deskripsi || '-';
 
-                // Photos
-                var grid = document.getElementById('sbGalleryGrid');
+                // Photos - Carousel
+                var slidesContainer = document.getElementById('sbGallerySlides');
+                var galleryNav = document.getElementById('sbGalleryNav');
                 if (data.fotos && data.fotos.length > 0) {
                     document.getElementById('sbBtnPhotos').style.display = 'flex';
-                    grid.innerHTML = data.fotos.map(function (f) {
-                        return '<a href="' + f.path + '" target="_blank"><img src="' + f.path + '" alt="Foto"></a>';
+                    slidesContainer.innerHTML = data.fotos.map(function (f, idx) {
+                        var activeClass = idx === 0 ? ' active' : '';
+                        return '<img class="sb-gallery-slide' + activeClass + '" src="' + f.path + '" alt="Foto Gedung" onclick="openLightbox(\'' + f.path + '\')">';
                     }).join('');
+                    if (data.fotos.length > 1) {
+                        galleryNav.style.display = 'flex';
+                        document.getElementById('sbGalleryCounter').textContent = '1 / ' + data.fotos.length;
+                    } else {
+                        galleryNav.style.display = 'none';
+                    }
                 } else {
                     document.getElementById('sbBtnPhotos').style.display = 'none';
-                    grid.innerHTML = '<div style="grid-column:1/3; color:var(--muted); font-size:0.8rem; text-align:center;">Belum ada foto galeri</div>';
+                    slidesContainer.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:0.8rem; padding:20px;">Belum ada foto galeri</div>';
+                    galleryNav.style.display = 'none';
+                }
+
+                // Update action bar grid columns based on visible buttons
+                var actionBar = document.querySelector('.sb-action-bar');
+                if (actionBar) {
+                    var visibleBtns = actionBar.querySelectorAll('.sb-action-btn');
+                    var visibleCount = 0;
+                    visibleBtns.forEach(function(btn) { if (btn.style.display !== 'none') visibleCount++; });
+                    actionBar.style.gridTemplateColumns = 'repeat(' + visibleCount + ', 1fr)';
                 }
 
                 // Fasilitas
                 var fasEl = document.getElementById('sbFasilitas');
                 if (data.fasilitas && data.fasilitas.length > 0) {
-                    var fasHtml = '<div style="display:flex; flex-direction:column; gap:10px;">';
-                    data.fasilitas.forEach(function (f) {
-                        var statusColor = f.is_aktif ? 'var(--success)' : 'var(--muted)';
-                        var statusText = f.is_aktif ? 'Sedang Dipakai' : 'Kosong';
-                        var pulseClass = f.is_aktif ? 'pulse-mini' : '';
+                    var maxVisible = 3;
+                    var totalFas = data.fasilitas.length;
+                    var fasHtml = '<div id="sbFasilitasList" style="display:flex; flex-direction:column; gap:10px;">';
+                    data.fasilitas.forEach(function (f, idx) {
+                        var statusText = f.status || 'Kosong';
+                        var statusColor = statusText === 'Sedang Dipakai' ? '#3b82f6' : statusText === 'Tutup' ? '#6b7280' : '#22c55e';
+                        var pulseClass = statusText === 'Sedang Dipakai' ? 'pulse-mini' : '';
+                        var glowColor = statusText === 'Sedang Dipakai' ? 'rgba(59,130,246,0.4)' : statusText === 'Tutup' ? 'rgba(107,114,128,0.2)' : 'rgba(34,197,94,0.4)';
+                        var hiddenStyle = idx >= maxVisible ? ' style="display:none;"' : '';
 
-                        fasHtml += '<div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:12px; transition:all 0.3s ease;">'
-                            + '<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:4px;">'
-                            + '<strong style="font-size:0.9rem; color:var(--text);">' + f.nama_fasilitas + '</strong>'
-                            + (f.kategori ? '<span style="font-size:0.65rem; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border:1px solid var(--accent-dim); padding:2px 8px; border-radius:100px; background:var(--accent-dim);">' + f.kategori + '</span>' : '')
+                        var btnLokasi = (f.latitude && f.longitude) 
+                            ? '<button onclick="zoomToRuangan(' + f.id + ', ' + f.latitude + ', ' + f.longitude + ')" style="background:#3b82f6; border:1px solid #3b82f6; color:#ffffff; padding:4px 12px; border-radius:100px; font-size:0.65rem; font-weight:700; cursor:pointer; transition:all 0.2s; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-search-location" style="margin-right:4px;"></i> Lihat Detail</button>'
+                            : '';
+
+                        fasHtml += '<div class="sb-fas-item"' + hiddenStyle + '>'
+                            + '<div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">'
+                            + '<strong style="font-size:0.95rem; color:var(--text); flex:1; min-width:140px;">' + f.nama_fasilitas + '</strong>'
+                            + (f.kategori ? '<span style="font-size:0.6rem; color:var(--accent); font-weight:800; text-transform:uppercase; letter-spacing:0.8px; border:1px solid var(--accent-dim); padding:3px 10px; border-radius:100px; background:var(--accent-dim); white-space:normal; text-align:center; max-width:180px;">' + f.kategori + '</span>' : '')
                             + '</div>'
                             + (f.keterangan ? '<div style="font-size:0.75rem; color:var(--muted); margin-bottom:8px; line-height:1.4;">' + f.keterangan + '</div>' : '')
+                            + '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">'
                             + '<div style="display:flex; align-items:center; gap:8px;">'
-                            + '<div class="status-dot ' + pulseClass + '" style="width:7px; height:7px; border-radius:50%; background:' + statusColor + '; box-shadow:0 0 10px ' + (f.is_aktif ? 'rgba(34,197,94,0.4)' : 'transparent') + '"></div>'
+                            + '<div class="status-dot ' + pulseClass + '" style="width:7px; height:7px; border-radius:50%; background:' + statusColor + '; box-shadow:0 0 10px ' + glowColor + '"></div>'
                             + '<span style="font-size:0.7rem; font-weight:600; color:' + statusColor + '; text-transform:uppercase; letter-spacing:0.5px;">' + statusText + '</span>'
+                            + '</div>'
+                            + btnLokasi
                             + '</div>'
                             + '</div>';
                     });
                     fasHtml += '</div>';
+
+                    // Add expand button if more than maxVisible
+                    if (totalFas > maxVisible) {
+                        fasHtml += '<button class="sb-fas-expand-btn" id="sbFasExpandBtn" onclick="toggleFasilitasExpand()">'
+                            + '<i class="fas fa-chevron-down"></i> Lihat Semua (' + totalFas + ')'
+                            + '</button>';
+                    }
+
                     fasEl.innerHTML = fasHtml;
                 } else {
                     fasEl.innerHTML = '<div style="background:rgba(255,255,255,0.03); border:1px dashed var(--border); border-radius:12px; padding:16px; text-align:center; color:var(--muted); font-size:0.8rem;">Informasi fasilitas & kelas pada gedung ini belum tersedia saat ini.</div>';
                 }
 
+                // Call populateSidebar to fetch jadwal semester
+                populateSidebar(data);
+
             })
             .catch(function (err) {
                 console.error(err);
                 toast('Gagal mengambil data gedung');
+            });
+    }
+    window.zoomToRuangan = function (id, lat, lng) {
+        if (!lat || !lng) {
+            toast('Koordinat ruangan tidak tersedia');
+            return;
+        }
+        
+        map.flyTo([lat, lng], 21, { duration: 1.5 });
+        
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.remove('show');
+        }
+        
+        setTimeout(function() {
+            var found = false;
+            ruanganMarkerGroup.eachLayer(function(m) {
+                if (m.ruanganId === id) {
+                    m.openPopup();
+                    found = true;
+                }
+            });
+            
+            if(!found) {
+                setTimeout(function() {
+                    ruanganMarkerGroup.eachLayer(function(m) {
+                        if (m.ruanganId === id) m.openPopup();
+                    });
+                }, 500);
+            }
+        }, 1600);
+    };
+
+    /* ── LIGHTBOX LOGIC ── */
+    window.openLightbox = function (src) {
+        var lb = document.getElementById('lightbox');
+        var img = document.getElementById('lightboxImg');
+        if (!lb || !img) return;
+
+        img.src = src;
+        lb.style.display = 'flex';
+        setTimeout(function () {
+            lb.classList.add('show');
+        }, 10);
+    };
+
+    window.closeLightbox = function () {
+        var lb = document.getElementById('lightbox');
+        if (!lb) return;
+
+        lb.classList.remove('show');
+        setTimeout(function () {
+            lb.style.display = 'none';
+        }, 300);
+    };
+
+    /* ── SIDEBAR CAROUSEL LOGIC ── */
+    var sbMainIdx = 0;
+    window.sbMainGalleryNav = function (dir) {
+        var slides = document.querySelectorAll('.sb-main-slide');
+        if (slides.length <= 1) return;
+
+        slides[sbMainIdx].classList.remove('active');
+        sbMainIdx = (sbMainIdx + dir + slides.length) % slides.length;
+        slides[sbMainIdx].classList.add('active');
+
+        var counter = document.getElementById('sbMainCounter');
+        if (counter) {
+            counter.textContent = (sbMainIdx + 1) + ' / ' + slides.length;
+        }
+    };
+
+    /* ══════════════════════════════════════════════════
+       VEGETASI MARKERS
+    ══════════════════════════════════════════════════ */
+    function makeVegetasiIcon(kategori) {
+        var c = '#064e3b'; // Hijau Tua
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">'
+            + '<defs><filter id="vds"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="rgba(0,0,0,.4)"/></filter></defs>'
+            + '<path filter="url(#vds)" d="M11 1C6.03 1 2 5.03 2 10c0 6.5 9 19 9 19s9-12.5 9-19C20 5.03 15.97 1 11 1z" fill="' + c + '" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/>'
+            + '<circle cx="11" cy="10" r="4" fill="rgba(255,255,255,.92)"/>'
+            + '<circle cx="11" cy="10" r="2" fill="' + c + '"/>'
+            + '</svg>';
+        return L.divIcon({ html: svg, className: '', iconSize: [22, 30], iconAnchor: [11, 30], popupAnchor: [0, -32] });
+    }
+
+    function buildVegetasiPopup(p) {
+        var id = 'veg_' + p.id;
+        var imgHtml = p.foto_utama
+            ? '<img class="rp-img" src="' + p.foto_utama + '" alt="' + p.nama_vegetasi + '" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:12px; border:1px solid var(--border);">'
+            : '<div style="width:100%; height:140px; background:rgba(255,255,255,0.03); border-radius:10px; margin-bottom:12px; border:1px dashed var(--border); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:0.75rem;">Tidak ada foto utama</div>';
+
+        // Persiapkan data foto gabungan untuk galeri
+        var allPhotos = [];
+        if (p.foto_utama) allPhotos.push(p.foto_utama);
+        if (p.foto_tambahan) allPhotos = allPhotos.concat(p.foto_tambahan);
+
+        var slidesHtml = allPhotos.map(function (src, idx) {
+            var activeClass = idx === 0 ? ' active' : '';
+            return '<img class="rp-carousel-slide' + activeClass + '" src="' + src + '" onclick="openLightbox(\'' + src + '\')">';
+        }).join('');
+
+        return '<div class="ruangan-popup" id="rpPopup_' + id + '">'
+            + '<div class="rp-slider step-1" id="rpSlider_' + id + '">'
+
+            // PANEL 1: Info Singkat (Overview)
+            + '<div class="rp-panel rp-panel-1">'
+            + '<div class="rp-header" style="background:rgba(34,197,94,0.05);">'
+            + '<div class="rp-icon" style="background:rgba(34,197,94,0.15); color:#4ade80;">🌳</div>'
+            + '<div class="rp-header-text">'
+            + '<div class="rp-name">' + p.nama_vegetasi + '</div>'
+            + '<div class="rp-kategori" style="color:#4ade80;">' + p.kategori + '</div>'
+            + '</div>'
+            + '</div>'
+            + '<div class="rp-body">'
+            + '<div class="rp-gedung"><i class="fas fa-building" style="color:var(--accent);"></i> ' + p.nama_gedung + '</div>'
+            + imgHtml
+            + '<button class="rp-btn-detail" onclick="goToStep(\'' + id + '\', 2)"><i class="fas fa-info-circle"></i> Lihat Detail</button>'
+            + '</div>'
+            + '</div>'
+
+            // PANEL 2: Detail Lengkap
+            + '<div class="rp-panel rp-panel-2">'
+            + '<div class="rp-detail-header">'
+            + '<button class="rp-btn-back" onclick="goToStep(\'' + id + '\', 1)"><i class="fas fa-arrow-left"></i></button>'
+            + '<div class="rp-detail-title">Detail Vegetasi</div>'
+            + '</div>'
+            + '<div class="rp-detail-body">'
+            + '<div class="rp-detail-card">'
+            + '<div class="rp-detail-label">Keterangan</div>'
+            + (p.keterangan ? '<div class="rp-detail-value">' + p.keterangan + '</div>' : '<div class="rp-detail-value text-muted">-</div>')
+            + '</div>'
+            + '<button class="rp-btn-jadwal mt-3" onclick="goToStep(\'' + id + '\', 3)"><i class="fas fa-images"></i> Galeri Foto (' + allPhotos.length + ')</button>'
+            + '</div>'
+            + '</div>'
+
+            // PANEL 3: Galeri Foto
+            + '<div class="rp-panel rp-panel-3">'
+            + '<div class="rp-detail-header">'
+            + '<button class="rp-btn-back" onclick="goToStep(\'' + id + '\', 2)"><i class="fas fa-arrow-left"></i></button>'
+            + '<div class="rp-detail-title">Galeri Foto</div>'
+            + '</div>'
+            + '<div class="rp-detail-body">'
+            + '<div class="rp-carousel" id="rpCarousel_' + id + '">'
+            + (slidesHtml || '<div style="color:var(--muted); font-size:0.8rem; text-align:center; padding:40px 0;">Tidak ada foto</div>')
+            + '</div>'
+            + (allPhotos.length > 0 ?
+                '<div class="rp-carousel-nav">'
+                + '<button class="rp-carousel-btn" onclick="carouselNav(\'' + id + '\', -1)"><i class="fas fa-chevron-left"></i></button>'
+                + '<span class="rp-carousel-counter" id="rpCounter_' + id + '">1 / ' + allPhotos.length + '</span>'
+                + '<button class="rp-carousel-btn" onclick="carouselNav(\'' + id + '\', 1)"><i class="fas fa-chevron-right"></i></button>'
+                + '</div>'
+                + '<div style="text-align:center; font-size:0.7rem; color:var(--muted); margin-top:6px;"><i class="fas fa-hand-pointer"></i> Klik foto untuk memperbesar</div>'
+                : '')
+            + '</div>'
+            + '</div>'
+
+            + '</div>' // rp-slider
+            + '</div>'; // ruangan-popup
+    }
+
+    function renderVegetasiMarkers(data) {
+        vegetasiMarkerGroup.clearLayers();
+        data.forEach(function (f) {
+            var lat = f.geometry.coordinates[1];
+            var lng = f.geometry.coordinates[0];
+            var p = f.properties;
+
+            var m = L.marker([lat, lng], { icon: makeVegetasiIcon(p.kategori), title: p.nama_vegetasi });
+            m.bindPopup(buildVegetasiPopup(p), { maxWidth: 250 });
+            
+            m.bindTooltip(p.nama_vegetasi, {
+                direction: 'top',
+                offset: [0, -30],
+                className: 'ruangan-tooltip'
+            });
+
+            vegetasiMarkerGroup.addLayer(m);
+        });
+    }
+
+    function loadVegetasiMarkers() {
+        fetch('/webgis/geojson-vegetasi')
+            .then(function (r) { return r.json(); })
+            .then(function (gj) {
+                allVegetasiData = gj.features || [];
+                renderVegetasiMarkers(allVegetasiData);
+                updateZoomLayers();
+                updateFilterCounts(); // Update filter count badges
+            })
+            .catch(function (err) {
+                console.error('Gagal memuat data vegetasi:', err);
             });
     }
 })();
