@@ -3008,6 +3008,42 @@ body {
     text-transform: uppercase;
 }
 
+/* Tombol "Lihat Semua / Sembunyikan" untuk expand list ruangan/fasilitas
+   di sidebar detail gedung. Style konsisten dengan dark theme + tombol lain
+   di sidebar (lihat .rp-btn-jadwal). */
+.sb-fas-expand-btn {
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, .04);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, transform .1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.sb-fas-expand-btn:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+}
+
+.sb-fas-expand-btn:active {
+    transform: scale(.98);
+}
+
+.sb-fas-expand-btn i {
+    font-size: 0.72rem;
+    color: var(--accent);
+}
+
 .sb-main-carousel {
     position: relative;
     width: 100%;

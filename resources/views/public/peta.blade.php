@@ -385,11 +385,8 @@
                         <span id="sbJadwalAktifText">Semester Aktif</span>
                     </div>
 
-                    <!-- Toggle Ganjil / Genap -->
-                    <div class="js-toggle-container">
-                        <button class="js-toggle-btn active" id="btnJadwalGanjil" onclick="toggleJadwalSemester('ganjil')">Semester Ganjil</button>
-                        <button class="js-toggle-btn" id="btnJadwalGenap" onclick="toggleJadwalSemester('genap')">Semester Genap</button>
-                    </div>
+                    {{-- Toggle Semester Ganjil/Genap dihilangkan: badge di atas sudah informasikan
+                         semester aktif, dan filter jadwal otomatis ikut setting global. --}}
 
                     <!-- Tabs per Semester -->
                     <div id="sbJadwalTabs" class="rp-semester-tabs" style="margin-top:10px;"></div>
