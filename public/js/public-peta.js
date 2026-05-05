@@ -390,11 +390,47 @@
         this.classList.toggle('on', !open);
     });
 
-    /* ── LEGEND TOGGLE ────────────────────────── */
-    document.getElementById('legToggle').addEventListener('click', function () {
-        var content = document.getElementById('legContent');
-        content.classList.toggle('collapsed');
-        this.classList.toggle('collapsed');
+    /* ── LEGEND TOGGLE (Desktop: collapse, Mobile: FAB popover) ── */
+    var legToggleBtn = document.getElementById('legToggle');
+    var legContentEl = document.getElementById('legContent');
+    var legendEl = document.getElementById('legend');
+
+    function isMobileViewport() {
+        return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    // Init: pada mobile, default legend collapsed (cuma FAB visible)
+    function syncLegendCollapsed() {
+        if (isMobileViewport()) {
+            legContentEl.classList.add('collapsed');
+            legToggleBtn.classList.add('collapsed');
+        }
+    }
+    syncLegendCollapsed();
+    window.addEventListener('resize', function () {
+        // Saat resize ke mobile, auto-collapse. Saat ke desktop, expand.
+        if (isMobileViewport()) {
+            legContentEl.classList.add('collapsed');
+            legToggleBtn.classList.add('collapsed');
+        } else {
+            legContentEl.classList.remove('collapsed');
+            legToggleBtn.classList.remove('collapsed');
+        }
+    });
+
+    legToggleBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        legContentEl.classList.toggle('collapsed');
+        legToggleBtn.classList.toggle('collapsed');
+    });
+
+    // Tap di luar legend (di area peta) untuk close popover di mobile
+    document.addEventListener('click', function (e) {
+        if (!isMobileViewport()) return;
+        if (legContentEl.classList.contains('collapsed')) return;
+        if (legendEl.contains(e.target)) return;
+        legContentEl.classList.add('collapsed');
+        legToggleBtn.classList.add('collapsed');
     });
 
     /* ── SEARCH ───────────────────────────────── */
@@ -1310,7 +1346,6 @@
     }
 
     function onRouteFound(e) {
-        console.log("Jumlah rute ditemukan:", e.routes.length);
         // Hapus polyline & label lama
         routeLayers.forEach(function(layer) { if(layer) map.removeLayer(layer); });
         routeLabels.forEach(function(label) { if(label) map.removeLayer(label); });

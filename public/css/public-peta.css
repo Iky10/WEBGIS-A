@@ -2196,19 +2196,30 @@ body {
             margin-bottom: 16px;
         }
 
-        .sb-action-btn {
-            position: relative;
-            display: flex;
-    font-family:'Plus Jakarta Sans',sans-serif;
-    font-size:.78rem;
-    font-weight:700;
-    cursor:pointer;
-    transition:all .25s cubic-bezier(.4,0,.2,1);
-    text-decoration:none;
-    color:#fff;
-    letter-spacing:.2px;
+.sb-action-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: .92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .25s cubic-bezier(.4, 0, .2, 1);
+    text-decoration: none;
+    color: #fff;
+    letter-spacing: .2px;
+    line-height: 1;
 }
-.sb-action-btn i { font-size:.82rem; }
+
+.sb-action-btn i {
+    font-size: 1rem;
+}
 
 /* Rute — Hijau */
 .sb-action-rute {
@@ -2473,14 +2484,103 @@ body {
         top: auto; bottom: 16px; right: 12px;
     }
 
-    /* Legend di mobile: collapsible / hide by default */
+    /* ──────────────────────────────────────────
+       LEGEND (mobile) — FAB pattern Google Maps style
+       Default state: only icon button visible (FAB)
+       Tap FAB → expand sebagai popover di atas FAB
+    ────────────────────────────────────────── */
     #legend {
-        bottom: 64px; right: 12px;
-        font-size: .75rem; padding: 8px 10px;
-        max-width: 180px;
+        bottom: 80px;
+        right: 12px;
+        left: auto;
+        top: auto;
+        transform: none;
+        max-width: none;
+        width: auto;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        backdrop-filter: none;
+        padding: 0;
+        z-index: 950;
     }
+
+    /* FAB toggle button — larger, prominent, always visible */
+    #legend .leg-toggle {
+        position: relative;
+        top: 0;
+        right: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(15, 23, 42, 0.92);
+        border: 1px solid var(--border-hi);
+        color: var(--text);
+        font-size: 1rem;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+        backdrop-filter: var(--blur);
+    }
+
+    #legend .leg-toggle:hover,
+    #legend .leg-toggle:active {
+        background: var(--accent);
+        color: #fff;
+    }
+
+    /* Legend content sebagai popover di atas FAB */
+    #legend .leg-content {
+        position: absolute;
+        bottom: calc(100% + 10px);
+        right: 0;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 16px;
+        background: rgba(10, 15, 30, 0.92);
+        border: 1px solid var(--border-hi);
+        border-radius: var(--radius-md);
+        backdrop-filter: var(--blur);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, .45);
+        min-width: 220px;
+        max-width: 260px;
+        max-height: 50vh;
+        overflow-y: auto;
+        transition: opacity .25s ease, transform .25s ease, max-height .25s ease;
+    }
+
+    /* Default collapsed state (set via JS on mobile init) */
+    #legend .leg-content.collapsed {
+        max-height: 0;
+        padding: 0 16px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(8px);
+        border-color: transparent;
+        box-shadow: none;
+    }
+
+    /* Stack groups vertically pakai divider tipis di antara group */
+    #legend .leg-divider {
+        height: 1px;
+        width: 100%;
+        background: var(--border);
+        margin: 0;
+    }
+
+    #legend .leg-group {
+        width: 100%;
+    }
+
     #legend .leg-title {
-        font-size: .7rem;
+        font-size: .68rem;
+        margin-bottom: 6px;
+    }
+
+    #legend .leg-items {
+        gap: 6px;
+    }
+
+    #legend .leg-row {
+        font-size: .78rem;
     }
 
     /* Sidebar bottom sheet sudah di-handle di breakpoint 768px (above) */
@@ -2491,8 +2591,12 @@ body {
 
 /* Very small mobile (≤400px) */
 @media (max-width:400px) {
-    /* Hide non-essential elements untuk space lebih */
-    #legend { display: none; }
+    /* Legend FAB tetap visible (icon doang, tidak makan tempat) */
+    /* Tapi narrowkan popover supaya muat di layar sangat kecil */
+    #legend .leg-content {
+        min-width: 200px;
+        max-width: calc(100vw - 24px);
+    }
 
     /* Topbar buttons icon-only, no padding extra */
     .t-btn-text span { display: none; }
@@ -3006,4 +3110,188 @@ body {
     #sidebar {
         width: 100%;
     }
+}
+
+/* ═══════════════════════════════════════════
+   DEV QUICK LOGIN SWITCHER (APP_DEBUG only)
+   Floating button + dropdown di topbar peta
+═══════════════════════════════════════════ */
+.t-btn-dev-wrap {
+    position: relative;
+}
+
+.t-btn-dev {
+    background: linear-gradient(135deg, #f59e0b, #ef4444) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, .35);
+}
+
+.t-btn-dev:hover {
+    background: linear-gradient(135deg, #ea580c, #dc2626) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, .5);
+}
+
+.t-btn-dev::after {
+    content: 'DEV';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: #fff;
+    font-size: .55rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    letter-spacing: .5px;
+    pointer-events: none;
+}
+
+.t-btn-dev-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 260px;
+    background: rgba(15, 23, 42, 0.96);
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius-md);
+    backdrop-filter: var(--blur);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+    overflow: hidden;
+    z-index: 1500;
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+.t-btn-dev-dropdown.hide {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+}
+
+.dev-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, .15), rgba(239, 68, 68, .15));
+    border-bottom: 1px solid var(--border);
+    color: #f59e0b;
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.dev-dropdown-header i {
+    font-size: .9rem;
+}
+
+.dev-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    color: var(--text);
+    text-decoration: none;
+    transition: background .15s;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.dev-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dev-dropdown-item:hover {
+    background: rgba(59, 130, 246, .1);
+    color: var(--text);
+}
+
+.dev-dropdown-item > i:first-child {
+    font-size: 1.2rem;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.dev-item-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.dev-item-title {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.dev-item-sub {
+    font-size: .7rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.dev-item-active {
+    color: #22c55e;
+    font-size: .9rem;
+}
+
+.dev-dropdown-sep {
+    height: 1px;
+    background: var(--border);
+    margin: 0;
+}
+
+.dev-dropdown-danger {
+    color: #ef4444 !important;
+}
+
+.dev-dropdown-danger:hover {
+    background: rgba(239, 68, 68, .1) !important;
+}
+
+.dev-dropdown-danger .dev-item-title {
+    color: #ef4444;
+}
+
+/* Mobile: dropdown fit viewport */
+@media (max-width: 768px) {
+    .t-btn-dev-dropdown {
+        min-width: 240px;
+        max-width: calc(100vw - 24px);
+    }
+}
+
+/* ═══════════════════════════════════════════
+   NEED-LOGIN BADGE (untuk guest)
+   Lock icon kecil di pojok kanan-atas tombol Pengajuan,
+   sebagai hint visual bahwa fitur butuh login dulu.
+═══════════════════════════════════════════ */
+.t-btn-need-login {
+    position: relative;
+}
+
+.t-btn-lock-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    font-size: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid rgba(15, 23, 42, 0.95);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+    pointer-events: none;
+    line-height: 1;
+}
+
+.t-btn-lock-badge i {
+    font-size: 7px;
 }

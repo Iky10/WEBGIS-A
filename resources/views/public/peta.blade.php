@@ -54,6 +54,7 @@
             <i class="fas fa-trash-alt"></i>
             <span class="t-btn-tip">Reset Rute</span>
         </button>
+        {{-- Pengajuan Ruangan: SELALU tampil. Guest akan diminta login dulu via JS handler. --}}
         @auth
             <a class="t-btn" href="{{ route('pengajuan_ruangans.riwayat') }}">
                 <i class="fas fa-file-alt"></i>
@@ -73,11 +74,61 @@
                 @csrf
             </form>
         @else
+            {{-- Guest: tombol Pengajuan tetap muncul, click → konfirmasi login dulu --}}
+            <a class="t-btn t-btn-need-login" href="{{ route('login') }}" data-need-login="1">
+                <i class="fas fa-file-alt"></i>
+                <span class="t-btn-tip">Pengajuan</span>
+            </a>
             <a class="t-btn t-btn-text" href="{{ route('login') }}">
                 <i class="fas fa-sign-in-alt"></i>
                 <span>Login</span>
             </a>
         @endauth
+
+        @if(config('app.debug'))
+            {{-- DEV ONLY: Quick login switcher (admin/user/logout) tanpa form. Hanya muncul saat APP_DEBUG=true --}}
+            @php
+                $devRole = Auth::check() ? (Auth::user()->isAdmin() ? 'admin' : 'user') : 'guest';
+            @endphp
+            <div class="t-btn-dev-wrap">
+                <button class="t-btn t-btn-dev" id="btnDevSwitch" type="button" title="DEV: Quick Login Switcher">
+                    <i class="fas fa-code"></i>
+                    <span class="t-btn-tip">DEV ({{ $devRole }})</span>
+                </button>
+                <div class="t-btn-dev-dropdown hide" id="devSwitchDropdown">
+                    <div class="dev-dropdown-header">
+                        <i class="fas fa-flask"></i>
+                        Development Mode
+                    </div>
+                    <a href="{{ route('dev.login-as', 'admin') }}" class="dev-dropdown-item">
+                        <i class="fas fa-user-shield" style="color:#22c55e;"></i>
+                        <div class="dev-item-text">
+                            <div class="dev-item-title">Login as Admin</div>
+                            <div class="dev-item-sub">admin@webgis.com</div>
+                        </div>
+                        @auth @if(Auth::user()->isAdmin())<i class="fas fa-check dev-item-active"></i>@endif @endauth
+                    </a>
+                    <a href="{{ route('dev.login-as', 'user') }}" class="dev-dropdown-item">
+                        <i class="fas fa-user" style="color:#3b82f6;"></i>
+                        <div class="dev-item-text">
+                            <div class="dev-item-title">Login as User</div>
+                            <div class="dev-item-sub">user@webgis.com</div>
+                        </div>
+                        @auth @if(!Auth::user()->isAdmin())<i class="fas fa-check dev-item-active"></i>@endif @endauth
+                    </a>
+                    @auth
+                        <div class="dev-dropdown-sep"></div>
+                        <a href="{{ route('dev.logout') }}" class="dev-dropdown-item dev-dropdown-danger">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <div class="dev-item-text">
+                                <div class="dev-item-title">Logout</div>
+                                <div class="dev-item-sub">Sekarang: {{ Auth::user()->name }}</div>
+                            </div>
+                        </a>
+                    @endauth
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 
@@ -562,6 +613,76 @@
     }
 })();
 </script>
+
+@if(config('app.debug'))
+{{-- DEV SWITCHER toggle: hanya di-load saat APP_DEBUG=true --}}
+<script>
+(function () {
+    'use strict';
+    var btn = document.getElementById('btnDevSwitch');
+    var dropdown = document.getElementById('devSwitchDropdown');
+    if (!btn || !dropdown) return;
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('hide');
+    });
+
+    // Tap di luar dropdown untuk close
+    document.addEventListener('click', function (e) {
+        if (dropdown.classList.contains('hide')) return;
+        if (btn.contains(e.target) || dropdown.contains(e.target)) return;
+        dropdown.classList.add('hide');
+    });
+
+    // Escape key untuk close
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !dropdown.classList.contains('hide')) {
+            dropdown.classList.add('hide');
+        }
+    });
+})();
+</script>
+@endif
+
+@guest
+{{-- Need-login handler: tampil konfirmasi sebelum redirect ke /login. --}}
+{{-- Guard di @guest supaya tidak load script ini saat user sudah authenticated. --}}
+<script>
+(function () {
+    'use strict';
+    var loginUrl = @json(route('login'));
+    var msg = 'Anda harus login terlebih dahulu untuk mengakses fitur Pengajuan Ruangan.';
+
+    document.querySelectorAll('[data-need-login="1"]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            e.preventDefault();
+            // Pakai SweetAlert kalau tersedia (di public.blade.php sudah load),
+            // fallback ke confirm() native untuk halaman peta yg belum load Swal.
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Login Diperlukan',
+                    text: msg,
+                    showCancelButton: true,
+                    confirmButtonText: 'Login Sekarang',
+                    cancelButtonText: 'Nanti Saja',
+                    confirmButtonColor: '#3b82f6',
+                    cancelButtonColor: '#6b7280',
+                    reverseButtons: true,
+                }).then(function (r) {
+                    if (r.isConfirmed) window.location.href = loginUrl;
+                });
+            } else {
+                if (confirm(msg + '\n\nLogin sekarang?')) {
+                    window.location.href = loginUrl;
+                }
+            }
+        });
+    });
+})();
+</script>
+@endguest
 
 </body>
 </html>
