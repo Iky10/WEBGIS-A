@@ -50,16 +50,27 @@ class GedungFasilitasController extends AppBaseController
             'gedung_id' => 'required|exists:gedungs,id',
             'nama_fasilitas' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
-            'keterangan' => 'nullable|string'
+            'keterangan' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'foto_ruangan' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
         ], [
             'gedung_id.required' => 'Gedung harus dipilih.',
             'nama_fasilitas.required' => 'Nama fasilitas / ruangan wajib diisi.',
             'kategori.required' => 'Kategori wajib dipilih.'
         ]);
 
-        $input = $request->all();
-        // Handle checkbox for is_aktif
-        $input['is_aktif'] = $request->has('is_aktif') ? true : false;
+        $input = $request->except(['foto_ruangan']);
+        // Handle checkbox field (hidden field trick: value=0 hidden + value=1 checkbox)
+        $input['bisa_diajukan'] = $request->boolean('bisa_diajukan');
+
+        // Upload foto ruangan jika ada
+        if ($request->hasFile('foto_ruangan')) {
+            $file = $request->file('foto_ruangan');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('images/ruangan'), $filename);
+            $input['foto_ruangan'] = 'images/ruangan/' . $filename;
+        }
 
         $gedungFasilitas = $this->gedungFasilitasRepository->create($input);
 
@@ -112,7 +123,10 @@ class GedungFasilitasController extends AppBaseController
             'gedung_id' => 'required|exists:gedungs,id',
             'nama_fasilitas' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
-            'keterangan' => 'nullable|string'
+            'keterangan' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'foto_ruangan' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
         ], [
             'gedung_id.required' => 'Gedung harus dipilih.',
             'nama_fasilitas.required' => 'Nama fasilitas / ruangan wajib diisi.',
@@ -127,8 +141,20 @@ class GedungFasilitasController extends AppBaseController
             return redirect(route('gedung_fasilitas.index'));
         }
 
-        $input = $request->all();
-        $input['is_aktif'] = $request->has('is_aktif') ? true : false;
+        $input = $request->except(['foto_ruangan']);
+        $input['bisa_diajukan'] = $request->boolean('bisa_diajukan');
+
+        // Upload foto ruangan jika ada file baru
+        if ($request->hasFile('foto_ruangan')) {
+            // Hapus foto lama jika ada
+            if ($gedungFasilitas->foto_ruangan && file_exists(public_path($gedungFasilitas->foto_ruangan))) {
+                unlink(public_path($gedungFasilitas->foto_ruangan));
+            }
+            $file = $request->file('foto_ruangan');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('images/ruangan'), $filename);
+            $input['foto_ruangan'] = 'images/ruangan/' . $filename;
+        }
 
         $gedungFasilitas = $this->gedungFasilitasRepository->update($input, $id);
 
@@ -150,10 +176,68 @@ class GedungFasilitasController extends AppBaseController
             return redirect(route('gedung_fasilitas.index'));
         }
 
+        // Hapus foto ruangan dari storage
+        if ($gedungFasilitas->foto_ruangan && file_exists(public_path($gedungFasilitas->foto_ruangan))) {
+            unlink(public_path($gedungFasilitas->foto_ruangan));
+        }
+
         $this->gedungFasilitasRepository->delete($id);
 
         Flash::success('Fasilitas / Ruangan berhasil dihapus.');
 
         return redirect(route('gedung_fasilitas.index'));
+    }
+
+    /**
+     * Toggle the bisa_diajukan flag of the specified GedungFasilitas.
+     * Flag 'bisa_diajukan' = ruangan boleh diajukan user untuk penggunaan ad-hoc.
+     */
+    public function toggleBisaDiajukan($id)
+    {
+        $gedungFasilitas = $this->gedungFasilitasRepository->find($id);
+
+        if (empty($gedungFasilitas)) {
+            return response()->json(['success' => false, 'message' => 'Fasilitas tidak ditemukan'], 404);
+        }
+
+        $gedungFasilitas->bisa_diajukan = !$gedungFasilitas->bisa_diajukan;
+        $gedungFasilitas->save();
+
+        $label = $gedungFasilitas->bisa_diajukan ? 'Ya' : 'Tidak';
+        return response()->json([
+            'success' => true,
+            'message' => 'Status "Bisa Diajukan" berhasil diubah menjadi ' . $label,
+            'bisa_diajukan' => $gedungFasilitas->bisa_diajukan
+        ]);
+    }
+
+    /**
+     * Remove multiple GedungFasilitas from storage.
+     */
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->ids;
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada data yang dipilih'], 400);
+        }
+
+        $deletedCount = 0;
+        foreach ($ids as $id) {
+            $gedungFasilitas = $this->gedungFasilitasRepository->find($id);
+            if ($gedungFasilitas) {
+                // Hapus foto ruangan dari storage
+                if ($gedungFasilitas->foto_ruangan && file_exists(public_path($gedungFasilitas->foto_ruangan))) {
+                    unlink(public_path($gedungFasilitas->foto_ruangan));
+                }
+                $this->gedungFasilitasRepository->delete($id);
+                $deletedCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $deletedCount . ' data fasilitas berhasil dihapus.'
+        ]);
     }
 }

@@ -2,15 +2,102 @@
 
 @section('title', $gedung->nama_gedung . ' - Detail Gedung')
 
+@push('styles')
+<style>
+    .gedung-detail-header {
+        background: linear-gradient(135deg,#1a3c5e,#2d6a9f);
+        color: #fff;
+        padding: 30px 0 20px;
+    }
+    .gedung-detail-header .back-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: rgba(255,255,255,.8); text-decoration: none;
+        font-size: .85rem; padding: 6px 10px; border-radius: 6px;
+        background: rgba(255,255,255,.08); transition: all .2s;
+    }
+    .gedung-detail-header .back-link:hover {
+        background: rgba(255,255,255,.18); color: #fff; text-decoration: none;
+    }
+    .gedung-detail-header h2 {
+        font-weight: 700; margin: 12px 0 4px;
+    }
+    .gedung-detail-header .header-meta {
+        opacity: .85; margin: 0; font-size: .9rem;
+        word-break: break-word;
+    }
+
+    /* Info table styling */
+    .info-gedung-table td:first-child {
+        width: 40%; color: #6c757d; font-weight: 500; font-size: .9rem;
+    }
+
+    /* ══ MOBILE LAYOUT (< 768px) ══ */
+    @media (max-width: 767.98px) {
+        .gedung-detail-header { padding: 20px 0 16px; }
+        .gedung-detail-header h2 { font-size: 1.3rem; line-height: 1.3; }
+        .gedung-detail-header .header-meta {
+            font-size: .82rem; line-height: 1.5;
+        }
+
+        /* Container py-4 di mobile reduce */
+        .container.py-4 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+
+        /* Foto utama tinggi reduce di mobile */
+        .card-img-top {
+            max-height: 220px !important;
+        }
+
+        /* Info table jadi key-value layout (td:first-child = label, td:last-child = value) */
+        .info-gedung-table {
+            display: flex; flex-direction: column; gap: 0;
+        }
+        .info-gedung-table tbody { display: contents; }
+        .info-gedung-table tr {
+            display: flex; flex-direction: column; gap: 2px;
+            padding: 10px 12px; border-bottom: 1px solid #f1f3f5;
+            background: transparent !important;
+        }
+        .info-gedung-table tr:last-child { border-bottom: none; }
+        .info-gedung-table td {
+            display: block; width: 100% !important;
+            padding: 0 !important; border: none;
+        }
+        .info-gedung-table td:first-child {
+            font-size: .72rem; text-transform: uppercase;
+            letter-spacing: .05em; color: #95a5a6;
+            font-weight: 500; padding-left: 0 !important;
+        }
+        .info-gedung-table td:last-child {
+            font-size: .92rem; color: #2c3e50;
+        }
+
+        /* Foto galeri: 3 kolom rapat di mobile */
+        .gallery-grid .col-4 {
+            padding-left: 4px; padding-right: 4px;
+        }
+        .gallery-grid img {
+            height: 80px !important;
+        }
+
+        /* Card spacing di mobile */
+        .card-header {
+            padding: 10px 14px;
+            font-size: .9rem;
+        }
+        .card-header strong { font-size: .9rem; }
+    }
+</style>
+@endpush
+
 @section('content')
 
-<div style="background: linear-gradient(135deg,#1a3c5e,#2d6a9f); color:#fff; padding: 30px 0 20px;">
+<div class="gedung-detail-header">
     <div class="container">
-        <a href="{{ route('publik.gedung') }}" class="text-white-50 small">
-            <i class="fas fa-arrow-left mr-1"></i> Kembali ke Daftar Gedung
+        <a href="{{ route('publik.gedung') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Kembali ke Daftar Gedung
         </a>
-        <h2 class="mt-2 mb-0 font-weight-bold">{{ $gedung->nama_gedung }}</h2>
-        <p class="mb-0 opacity-75">
+        <h2>{{ $gedung->nama_gedung }}</h2>
+        <p class="header-meta">
             @if($gedung->fungsi)
                 <span class="badge badge-light mr-1">{{ $gedung->fungsi }}</span>
             @endif
@@ -46,18 +133,17 @@
                     <strong><i class="fas fa-info-circle mr-1"></i> Informasi Gedung</strong>
                 </div>
                 <div class="card-body p-0">
-                    <table class="table table-sm table-borderless mb-0">
-                        <tr>
-                            <td class="text-muted pl-3" width="45%">Fungsi</td>
-                            <td>{{ $gedung->fungsi ?? '-' }}</td>
-                        </tr>
+                    <table class="table table-sm table-borderless mb-0 info-gedung-table">
+
                         <tr class="bg-light">
                             <td class="text-muted pl-3">Status Pemakaian</td>
                             <td>
                                 @if($gedung->status_dipakai == 'Sedang Dipakai')
-                                    <span class="badge badge-success">Sedang Dipakai</span>
+                                    <span class="badge badge-primary">Sedang Dipakai</span>
+                                @elseif($gedung->status_dipakai == 'Tutup')
+                                    <span class="badge badge-secondary">Tutup</span>
                                 @else
-                                    <span class="badge badge-secondary">Kosong</span>
+                                    <span class="badge badge-success">Terbuka</span>
                                 @endif
                             </td>
                         </tr>
@@ -114,7 +200,7 @@
                 </div>
                 <div class="card-body">
                     @if($fotos->count() > 0)
-                        <div class="row">
+                        <div class="row gallery-grid">
                             @foreach($fotos as $foto)
                             <div class="col-4 mb-2">
                                 <a href="{{ asset($foto->path_foto) }}" target="_blank">

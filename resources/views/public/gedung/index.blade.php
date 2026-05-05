@@ -21,24 +21,20 @@
     <div class="filter-bar">
         <form method="GET" action="{{ route('publik.gedung') }}">
             <div class="row align-items-end">
-                <div class="col-md-4 mb-2 mb-md-0">
+                <div class="col-md-9 mb-2 mb-md-0">
                     <label class="small text-muted mb-1">Cari Gedung</label>
-                    <input type="text" name="search" class="form-control"
-                           placeholder="Nama gedung atau alamat..."
-                           value="{{ request('search') }}">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted"></i></span>
+                        </div>
+                        <input type="text" name="search" class="form-control border-left-0"
+                               placeholder="Nama gedung atau alamat..."
+                               value="{{ request('search') }}">
+                    </div>
                 </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <label class="small text-muted mb-1">Fungsi</label>
-                    <select name="fungsi" class="form-control">
-                        <option value="">-- Semua Fungsi --</option>
-                        @foreach(['Perkantoran','Pendidikan','Kesehatan','Komersial','Publik','Lainnya'] as $f)
-                            <option value="{{ $f }}" {{ request('fungsi') == $f ? 'selected' : '' }}>{{ $f }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary btn-block">
-                        <i class="fas fa-search mr-1"></i> Cari
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary btn-block" style="height: calc(1.5em + .75rem + 2px);">
+                        Cari Gedung
                     </button>
                 </div>
             </div>
@@ -60,14 +56,14 @@
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <h6 class="card-title mb-0 font-weight-bold">{{ $gedung->nama_gedung }}</h6>
                         @if($gedung->status_dipakai == 'Sedang Dipakai')
-                            <span class="badge badge-success ml-1">Sedang Dipakai</span>
+                            <span class="badge badge-primary ml-1">Sedang Dipakai</span>
+                        @elseif($gedung->status_dipakai == 'Tutup')
+                            <span class="badge badge-secondary ml-1">Tutup</span>
                         @else
-                            <span class="badge badge-secondary ml-1">Kosong</span>
+                            <span class="badge badge-success ml-1">Terbuka</span>
                         @endif
                     </div>
-                    @if($gedung->fungsi)
-                        <span class="badge badge-info mb-2">{{ $gedung->fungsi }}</span>
-                    @endif
+
                     <p class="text-muted small mb-3">
                         <i class="fas fa-map-marker-alt mr-1"></i>
                         {{ Str::limit($gedung->alamat, 55) }}
