@@ -641,6 +641,25 @@
             dropdown.classList.add('hide');
         }
     });
+
+    // Auto-close dropdown saat klik item login/logout (sebelum navigation ke server)
+    // dan tampilkan loading toast biar UX terasa responsive.
+    dropdown.querySelectorAll('.dev-dropdown-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+            dropdown.classList.add('hide');
+            if (typeof Swal !== 'undefined') {
+                var title = item.querySelector('.dev-item-title');
+                Swal.fire({
+                    title: title ? title.textContent.trim() + '...' : 'Memproses...',
+                    text: 'Mengalihkan halaman',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: function () { Swal.showLoading(); },
+                });
+            }
+        });
+    });
 })();
 </script>
 @endif

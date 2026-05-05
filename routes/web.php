@@ -97,18 +97,29 @@ if (config('app.debug')) {
 
         $user = \App\Models\User::where('email', $email)->first();
         if (!$user) {
-            return redirect('/')->with('error', 'User dev belum di-seed. Jalankan: php artisan db:seed --class=UserSeeder');
+            \Laracasts\Flash\Flash::error('User dev belum di-seed. Jalankan: php artisan db:seed --class=UserSeeder');
+            return redirect('/');
         }
 
         \Illuminate\Support\Facades\Auth::login($user);
-        return redirect()->intended('/')->with('success', 'Login sebagai ' . $user->name . ' (DEV)');
+
+        // Redirect by role — selaras dengan LoginController::redirectTo()
+        if ($user->isAdmin()) {
+            \Laracasts\Flash\Flash::success('Selamat datang Admin! Anda login sebagai ' . $user->name . ' (DEV)');
+            return redirect()->route('home');
+        }
+
+        \Laracasts\Flash\Flash::success('Login berhasil sebagai User: ' . $user->name . ' (DEV)');
+        return redirect('/');
     })->name('dev.login-as');
 
     Route::get('dev/logout', function () {
+        $name = \Illuminate\Support\Facades\Auth::user()?->name ?? 'User';
         \Illuminate\Support\Facades\Auth::logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
-        return redirect('/')->with('success', 'Logout berhasil (DEV)');
+        \Laracasts\Flash\Flash::success('Logout berhasil. Sampai jumpa, ' . $name . '! (DEV)');
+        return redirect('/');
     })->name('dev.logout');
 }
 
