@@ -1749,36 +1749,9 @@
 
     routingControl = createRoutingControl(routeProfile);
 
-    // KLIK 2 TITIK UNTUK RUTE
-    map.on('click', function (e) {
-        // Abaikan jika sedang klik marker atau UI
-        if (e.originalEvent.target.closest('.leaflet-marker-icon') || 
-            e.originalEvent.target.closest('#navPanel') ||
-            e.originalEvent.target.closest('#topbar')) return;
-
-        routePoints.push(e.latlng);
-
-        if (routePoints.length === 1) {
-            toast('Titik awal ditentukan. Pilih titik tujuan...');
-            // Tampilkan marker sementara
-            if (userMarker) map.removeLayer(userMarker);
-            userMarker = L.marker(e.latlng, { icon: startIcon }).addTo(map);
-        } 
-        else if (routePoints.length === 2) {
-            if (userMarker) map.removeLayer(userMarker);
-            
-            currentWaypoints = [
-                L.latLng(routePoints[0].lat, routePoints[0].lng),
-                L.latLng(routePoints[1].lat, routePoints[1].lng)
-            ];
-            
-            currentCoordinates.start = routePoints[0];
-            currentCoordinates.end = routePoints[1];
-
-            routingControl.setWaypoints(currentWaypoints);
-            routePoints = []; // Reset for next pair
-        }
-    });
+    // KLIK 2 TITIK UNTUK RUTE - DINONAKTIFKAN
+    // Titik biru tidak akan muncul saat klik peta.
+    // Gunakan tombol "Rute" di popup/sidebar untuk navigasi.
 
     // Fungsi Rute ke Sini (dari Sidebar)
     window.setRoutingDest = function (lat, lng) {
