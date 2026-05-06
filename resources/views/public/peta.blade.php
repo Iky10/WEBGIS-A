@@ -611,6 +611,14 @@
     </div>
 </div>
 
+<!-- LIGHTBOX -->
+<div id="lightbox" class="rk-lightbox" onclick="if(event.target === this) closeLightbox()">
+    <div class="rk-lb-content">
+        <button class="rk-lb-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+        <img id="lightboxImg" class="rk-lb-img" src="" alt="Lightbox">
+    </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 <script>

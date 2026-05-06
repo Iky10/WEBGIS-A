@@ -79,7 +79,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Manajemen User & Admin (CRUD; tanpa show karena edit sudah cukup)
     Route::resource('users', App\Http\Controllers\UserController::class)->except(['show']);
 
-
 });
 
 // API publik (tanpa login): dipakai untuk peta & dashboard
