@@ -4,14 +4,13 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Baik', 'Sedang', 'Rusak'],
+                labels: ['Kosong', 'Sedang Dipakai'],
                 datasets: [{
                     data: [
-                        window.CHART_DATA_BAIK || 0, 
-                        window.CHART_DATA_SEDANG || 0, 
-                        window.CHART_DATA_RUSAK || 0
+                        window.CHART_DATA_KOSONG || 0, 
+                        window.CHART_DATA_DIPAKAI || 0 
                     ],
-                    backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                    backgroundColor: ['#6c757d', '#28a745'],
                     borderWidth: 2,
                     borderColor: '#fff',
                 }]

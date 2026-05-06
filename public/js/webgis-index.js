@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     // ── Inisialisasi Peta ────────────────────────────────────────
-    var map = L.map('map').setView([-2.5, 118.0], 5);
+    var map = L.map('map').setView([-0.53597801, 117.12345243], 18);
 
     // Layer OpenStreetMap
     var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

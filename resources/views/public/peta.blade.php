@@ -54,10 +54,81 @@
             <i class="fas fa-trash-alt"></i>
             <span class="t-btn-tip">Reset Rute</span>
         </button>
-        <a class="t-btn" href="{{ route('login') }}">
-            <i class="fas fa-lock"></i>
-            <span class="t-btn-tip">Admin</span>
-        </a>
+        {{-- Pengajuan Ruangan: SELALU tampil. Guest akan diminta login dulu via JS handler. --}}
+        @auth
+            <a class="t-btn" href="{{ route('pengajuan_ruangans.riwayat') }}">
+                <i class="fas fa-file-alt"></i>
+                <span class="t-btn-tip">Pengajuan Saya</span>
+            </a>
+            @if(Auth::user()->isAdmin())
+                <a class="t-btn" href="{{ route('home') }}">
+                    <i class="fas fa-cogs"></i>
+                    <span class="t-btn-tip">Dashboard</span>
+                </a>
+            @endif
+            <a class="t-btn" href="#" onclick="event.preventDefault(); document.getElementById('logout-form-peta').submit();" style="color:#ef4444;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="t-btn-tip">Logout</span>
+            </a>
+            <form id="logout-form-peta" action="{{ route('logout') }}" method="POST" class="d-none" style="display: none;">
+                @csrf
+            </form>
+        @else
+            {{-- Guest: tombol Pengajuan tetap muncul, click → konfirmasi login dulu --}}
+            <a class="t-btn t-btn-need-login" href="{{ route('login') }}" data-need-login="1">
+                <i class="fas fa-file-alt"></i>
+                <span class="t-btn-tip">Pengajuan</span>
+            </a>
+            <a class="t-btn t-btn-text" href="{{ route('login') }}">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Login</span>
+            </a>
+        @endauth
+
+        @if(config('app.debug'))
+            {{-- DEV ONLY: Quick login switcher (admin/user/logout) tanpa form. Hanya muncul saat APP_DEBUG=true --}}
+            @php
+                $devRole = Auth::check() ? (Auth::user()->isAdmin() ? 'admin' : 'user') : 'guest';
+            @endphp
+            <div class="t-btn-dev-wrap">
+                <button class="t-btn t-btn-dev" id="btnDevSwitch" type="button" title="DEV: Quick Login Switcher">
+                    <i class="fas fa-code"></i>
+                    <span class="t-btn-tip">DEV ({{ $devRole }})</span>
+                </button>
+                <div class="t-btn-dev-dropdown hide" id="devSwitchDropdown">
+                    <div class="dev-dropdown-header">
+                        <i class="fas fa-flask"></i>
+                        Development Mode
+                    </div>
+                    <a href="{{ route('dev.login-as', 'admin') }}" class="dev-dropdown-item">
+                        <i class="fas fa-user-shield" style="color:#22c55e;"></i>
+                        <div class="dev-item-text">
+                            <div class="dev-item-title">Login as Admin</div>
+                            <div class="dev-item-sub">admin@webgis.com</div>
+                        </div>
+                        @auth @if(Auth::user()->isAdmin())<i class="fas fa-check dev-item-active"></i>@endif @endauth
+                    </a>
+                    <a href="{{ route('dev.login-as', 'user') }}" class="dev-dropdown-item">
+                        <i class="fas fa-user" style="color:#3b82f6;"></i>
+                        <div class="dev-item-text">
+                            <div class="dev-item-title">Login as User</div>
+                            <div class="dev-item-sub">user@webgis.com</div>
+                        </div>
+                        @auth @if(!Auth::user()->isAdmin())<i class="fas fa-check dev-item-active"></i>@endif @endauth
+                    </a>
+                    @auth
+                        <div class="dev-dropdown-sep"></div>
+                        <a href="{{ route('dev.logout') }}" class="dev-dropdown-item dev-dropdown-danger">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <div class="dev-item-text">
+                                <div class="dev-item-title">Logout</div>
+                                <div class="dev-item-sub">Sekarang: {{ Auth::user()->name }}</div>
+                            </div>
+                        </a>
+                    @endauth
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 
@@ -67,39 +138,103 @@
 
 <div id="filterPanel" class="hide">
     <div class="fp-head">
-        <div class="fp-head-icon"><i class="fas fa-layer-group"></i></div>
-        <div class="fp-head-title">Filter Peta</div>
+        <div class="fp-head-left">
+            <div class="fp-head-icon"><i class="fas fa-layer-group"></i></div>
+            <div class="fp-head-title">Filter Peta</div>
+        </div>
+        <button class="fp-close" id="fpClose"><i class="fas fa-times"></i></button>
     </div>
     <div class="fp-body">
 
-        <span class="fp-label">Fungsi Gedung</span>
-        <div class="fp-chips" id="chipsFungsi">
-            <div class="chip on" data-v="">Semua</div>
-            @foreach(['Perkantoran','Pendidikan','Kesehatan','Komersial','Publik','Lainnya'] as $f)
-            <div class="chip" data-v="{{ $f }}">{{ $f }}</div>
-            @endforeach
+        <!-- Section: Kategori Ruangan -->
+        <div class="fp-section">
+            <div class="fp-section-header" data-toggle="secKategori">
+                <span class="fp-label">Kategori Ruangan</span>
+                <i class="fas fa-chevron-up fp-chevron"></i>
+            </div>
+            <div class="fp-section-body open" id="secKategori">
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kategori" value="" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Semua</span>
+                    <span class="fp-check-count" id="countKategoriAll"></span>
+                </label>
+                @foreach(['Ruang Kelas','Post Penjagaan','Ruang Kuliah Umum','Perpustakaan','Kepala Ruangan / Pengurus','Ruangan Sekretariatan / Administrasi'] as $k)
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kategori" value="{{ $k }}" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">{{ $k }}</span>
+                    <span class="fp-check-count" id="countKategori{{ Str::slug($k,'') }}"></span>
+                </label>
+                @endforeach
+            </div>
         </div>
 
-        <span class="fp-label">Kondisi</span>
-        <div class="fp-chips" id="chipsKondisi">
-            <div class="chip on" data-v="">Semua</div>
-            <div class="chip" data-v="Baik">Baik</div>
-            <div class="chip" data-v="Sedang">Sedang</div>
-            <div class="chip" data-v="Rusak">Rusak</div>
+        <!-- Section: Status Pemakaian (3 status: Sedang Dipakai / Terbuka / Tutup) -->
+        <div class="fp-section">
+            <div class="fp-section-header" data-toggle="secKondisi">
+                <span class="fp-label">Status Pemakaian</span>
+                <i class="fas fa-chevron-up fp-chevron"></i>
+            </div>
+            <div class="fp-section-body open" id="secKondisi">
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kondisi" value="" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Semua</span>
+                    <span class="fp-check-count" id="countKondisiAll"></span>
+                </label>
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kondisi" value="Sedang Dipakai" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Sedang Dipakai</span>
+                    <span class="fp-check-count" id="countKondisiSedangDipakai"></span>
+                </label>
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kondisi" value="Kosong" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Terbuka</span>
+                    <span class="fp-check-count" id="countKondisiKosong"></span>
+                </label>
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="kondisi" value="Tutup" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Tutup</span>
+                    <span class="fp-check-count" id="countKondisiTutup"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Section: Vegetasi -->
+        <div class="fp-section">
+            <div class="fp-section-header" data-toggle="secVegetasi">
+                <span class="fp-label">Vegetasi</span>
+                <i class="fas fa-chevron-up fp-chevron"></i>
+            </div>
+            <div class="fp-section-body open" id="secVegetasi">
+                <label class="fp-check-item">
+                    <input type="checkbox" class="fp-checkbox" name="vegetasi" value="show" checked>
+                    <span class="fp-check-mark"></span>
+                    <span class="fp-check-label">Tampilkan Vegetasi</span>
+                    <span class="fp-check-count" id="countVegetasi"></span>
+                </label>
+            </div>
         </div>
 
         <div class="fp-sep"></div>
 
-        <div class="fp-footer">
-            <div>
-                <div class="fp-count-num" id="fpCount">—</div>
-                <div class="fp-count-lbl">gedung terlihat</div>
-            </div>
-            <button class="fp-reset" id="fpReset">
-                <i class="fas fa-undo"></i> Reset
-            </button>
+        <div class="fp-summary">
+            <div class="fp-count-num" id="fpCount">—</div>
+            <div class="fp-count-lbl">gedung terlihat</div>
         </div>
 
+    </div>
+    <div class="fp-actions">
+        <button class="fp-btn fp-btn-cancel" id="fpCancel">
+            <i class="fas fa-times"></i> Batal
+        </button>
+        <button class="fp-btn fp-btn-ok" id="fpOk">
+            <i class="fas fa-check"></i> OK
+        </button>
     </div>
 </div>
 
@@ -110,37 +245,84 @@
 </div>
 
 <div id="legend">
-    <div class="leg-title">Kondisi Gedung</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Baik</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#f59e0b;box-shadow:0 0 5px #f59e0b;"></div>Sedang</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#ef4444;box-shadow:0 0 5px #ef4444;"></div>Rusak</div>
-    <div class="leg-row"><div class="leg-dot" style="background:#475569;"></div>Tidak diketahui</div>
+    <button class="leg-toggle" id="legToggle" title="Toggle Legend"><i class="fas fa-chevron-down"></i></button>
+    <div class="leg-content" id="legContent">
+        <div class="leg-group">
+            <div class="leg-title">Status Pemakaian Gedung</div>
+            <div class="leg-items">
+                <div class="leg-row"><div class="leg-dot" style="background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></div>Sedang Dipakai</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>Terbuka</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#6b7280;"></div>Tutup</div>
+            </div>
+        </div>
+        <div class="leg-divider"></div>
+        <div class="leg-group">
+            <div class="leg-title">Kategori Ruangan</div>
+            <div class="leg-items">
+                <div class="leg-row"><div class="leg-dot" style="background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></div>Ruang Kelas</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#ef4444;box-shadow:0 0 5px #ef4444;"></div>Post Penjagaan</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#8b5cf6;box-shadow:0 0 5px #8b5cf6;"></div>Ruang Kuliah Umum</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#f59e0b;box-shadow:0 0 5px #f59e0b;"></div>Perpustakaan</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#10b981;box-shadow:0 0 5px #10b981;"></div>Kepala Ruangan</div>
+                <div class="leg-row"><div class="leg-dot" style="background:#6366f1;box-shadow:0 0 5px #6366f1;"></div>Sekretariatan</div>
+            </div>
+        </div>
+        <div class="leg-divider"></div>
+        <div class="leg-group">
+            <div class="leg-title">Vegetasi</div>
+            <div class="leg-items">
+                <div class="leg-row"><div class="leg-dot" style="background:#064e3b;box-shadow:0 0 5px #064e3b;"></div>Vegetasi</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="coords">Arahkan mouse ke peta</div>
 
-<div id="routeInfoPanel" style="display:none; position:fixed; bottom:80px; right:16px; z-index:900; background:var(--surface-hi); border:1px solid var(--border-hi); border-radius:var(--radius-md); backdrop-filter:var(--blur); padding:14px; max-width:280px; box-shadow:0 12px 40px rgba(0,0,0,.5);">
-    <div style="font-size:0.78rem; font-weight:800; color:var(--text); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;">Informasi Rute</div>
-    
-    <div style="margin-bottom:12px;">
-        <div style="font-size:0.7rem; color:var(--muted); font-weight:600; margin-bottom:3px;">Durasi Perjalanan</div>
-        <div id="routeInfoDuration" style="font-size:0.9rem; font-weight:800; color:var(--accent);">-</div>
+<!-- PANEL NAVIGASI (G-MAPS STYLE) -->
+<div id="navPanel" class="hide">
+    <div class="nav-header">
+        <div class="nav-modes">
+            <button class="nav-mode-btn active" data-mode="car" onclick="changeRouteMode('car')">
+                <i class="fas fa-car"></i> Mobil
+            </button>
+            <button class="nav-mode-btn" data-mode="bike" onclick="changeRouteMode('bike')">
+                <i class="fas fa-motorcycle"></i> Motor
+            </button>
+            <button class="nav-mode-btn" data-mode="foot" onclick="changeRouteMode('foot')">
+                <i class="fas fa-walking"></i> Jalan
+            </button>
+        </div>
+
+        <div class="nav-summary">
+            <div id="navRouteList" class="nav-route-list">
+                <!-- Daftar rute (Tercepat, Alternatif) akan muncul di sini -->
+            </div>
+            <div class="nav-main-info" id="navMainInfo">
+                <div id="navTime" class="nav-time">-- mnt</div>
+                <div class="nav-dist-traffic">
+                    <span id="navDist">-- km</span> • 
+                    <span id="navTraffic" class="nav-traffic-fast">Lalu lintas lancar</span>
+                </div>
+                <div id="navStreet" class="nav-street">Memuat rute...</div>
+            </div>
+            <button onclick="toggleNavPanel()" style="background:none; border:none; color:#5f6368; cursor:pointer; font-size:1.2rem; margin-left:10px;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     </div>
-    
-    <div style="margin-bottom:12px;">
-        <div style="font-size:0.7rem; color:var(--muted); font-weight:600; margin-bottom:3px;">Jarak</div>
-        <div id="routeInfoDistance" style="font-size:0.9rem; font-weight:800; color:var(--success);">-</div>
+
+    <div class="nav-actions">
+        <button id="btnNavDetail" class="nav-btn nav-btn-secondary">
+            <i class="fas fa-list-ul"></i> Detail
+        </button>
+        <button id="btnNavPreview" class="nav-btn nav-btn-primary">
+            <i class="fas fa-eye"></i> Pratinjau
+        </button>
     </div>
-    
-    <div style="margin-bottom:12px;">
-        <div style="font-size:0.7rem; color:var(--muted); font-weight:600; margin-bottom:3px;">Moda Transportasi</div>
-        <div id="routeInfoMode" style="font-size:0.9rem; font-weight:800; color:var(--text);">-</div>
-    </div>
-    
-    <div style="border-top:1px solid var(--border); padding-top:10px; display:flex; gap:5px; flex-wrap:wrap;">
-        <button class="route-mode-btn active" data-mode="car" onclick="changeRouteMode('car')" style="flex:1; min-width:60px; padding:6px; border-radius:6px; background:var(--accent); color:#fff; border:none; font-size:0.7rem; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all .2s;">🚗 Mobil</button>
-        <button class="route-mode-btn" data-mode="bike" onclick="changeRouteMode('bike')" style="flex:1; min-width:60px; padding:6px; border-radius:6px; background:rgba(255,255,255,.05); color:var(--muted); border:1px solid var(--border); font-size:0.7rem; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all .2s;">🏍️ Motor</button>
-        <button class="route-mode-btn" data-mode="foot" onclick="changeRouteMode('foot')" style="flex:1; min-width:60px; padding:6px; border-radius:6px; background:rgba(255,255,255,.05); color:var(--muted); border:1px solid var(--border); font-size:0.7rem; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all .2s;">🚶 Jalan</button>
+
+    <div id="navSteps" class="nav-steps-container">
+        <!-- Instruksi langkah demi langkah akan dimasukkan di sini oleh JS -->
     </div>
 </div>
 
@@ -150,6 +332,8 @@
 
 <!-- SIDEBAR HTML -->
 <div id="sidebar" class="hide">
+    {{-- Drag area untuk bottom sheet di mobile (klik untuk toggle expand) --}}
+    <div class="sb-drag-area" id="sbDragArea" title="Drag untuk expand/collapse"></div>
     <div class="sb-head">
         <button id="sbClose" class="sb-close"><i class="fas fa-times"></i></button>
         <div class="sb-title">Detail Gedung</div>
@@ -170,9 +354,13 @@
                 
                 <div class="sb-stats">
                     <div class="sb-stat"><span id="sbFungsi" class="sb-stat-v">-</span><span class="sb-stat-k">Fungsi</span></div>
-                    <div class="sb-stat"><span id="sbKondisi" class="sb-stat-v">-</span><span class="sb-stat-k">Kondisi</span></div>
+                    <div class="sb-stat"><span id="sbKondisi" class="sb-stat-v">-</span><span class="sb-stat-k">Status</span></div>
                     <div class="sb-stat"><span id="sbLantai" class="sb-stat-v">-</span><span class="sb-stat-k">Lantai</span></div>
                     <div class="sb-stat"><span id="sbTahun" class="sb-stat-v">-</span><span class="sb-stat-k">Tahun</span></div>
+                </div>
+
+                <div id="sbJamOps" class="sb-jam-ops" style="display:none;">
+                    <i class="fas fa-clock"></i> <span id="sbJamOpsText">-</span>
                 </div>
 
                 <div class="sb-section">
@@ -185,15 +373,60 @@
                     <div id="sbFasilitas" class="sb-sec-text">Informasi fasilitas & kelas pada gedung ini belum tersedia saat ini.</div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
-                    <button id="sbBtnRoute" class="sb-cta-btn" style="background:var(--success); box-shadow:0 6px 20px rgba(34,197,94,.35);"><i class="fas fa-directions"></i> Rute ke Sini</button>
-                    <button id="sbBtnPhotos" class="sb-cta-btn"><i class="fas fa-images"></i> Lihat Foto</button>
+                <!-- SECTION JADWAL SEMESTER -->
+                <div id="sbJadwalSemester" class="sb-section" style="display:none;">
+                    <div class="sb-sec-title" style="border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:12px;">
+                        <i class="fas fa-calendar-alt" style="color:var(--accent);"></i> Jadwal Semester
+                    </div>
+
+                    <!-- Badge Semester Aktif (info dari AppSetting global) -->
+                    <div id="sbJadwalAktifBadge" style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); color: var(--success); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; display: none; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px;">
+                        <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success);"></div>
+                        <span id="sbJadwalAktifText">Semester Aktif</span>
+                    </div>
+
+                    {{-- Toggle Semester Ganjil/Genap dihilangkan: badge di atas sudah informasikan
+                         semester aktif, dan filter jadwal otomatis ikut setting global. --}}
+
+                    <!-- Tabs per Semester -->
+                    <div id="sbJadwalTabs" class="rp-semester-tabs" style="margin-top:10px;"></div>
+
+                    <!-- Dropdown Tahun Ajaran -->
+                    <div id="sbJadwalDropdownWrap" style="margin-top:10px; display:none;">
+                        <label style="font-size:0.75rem; color:var(--muted); font-weight:600; margin-bottom:4px; display:block;">Tahun Ajaran:</label>
+                        <select id="sbJadwalDropdown" class="sb-jadwal-dropdown" onchange="onJadwalDropdownChange()"></select>
+                    </div>
+
+                    <!-- Viewer (single preview) -->
+                    <div id="sbJadwalViewer" style="margin-top:12px;">
+                    </div>
+                </div>
+
+                <div class="sb-action-bar">
+                    <button id="sbBtnRoute" class="sb-action-btn sb-action-rute">
+                        <i class="fas fa-diamond-turn-right"></i> Rute
+                    </button>
+                    <button id="sbBtnPhotos" class="sb-action-btn sb-action-foto">
+                        <i class="fas fa-images"></i> Foto
+                    </button>
+                    <a id="sbBtnPengajuan" href="{{ route('pengajuan_ruangans.create') }}"
+                       class="sb-action-btn sb-action-ajukan"
+                       data-tooltip="Ajukan Penggunaan Ruangan">
+                        <i class="fas fa-file-pen"></i> Ajukan
+                    </a>
                 </div>
 
                 <div id="sbGallery" class="sb-gallery" style="display:none;">
                     <div class="sb-sec-title">Galeri Foto</div>
-                    <div id="sbGalleryGrid" class="sb-gallery-grid">
-                        <!-- Fotos inserted here -->
+                    <div class="sb-gallery-carousel">
+                        <div id="sbGallerySlides" class="sb-gallery-slides">
+                            <!-- Foto slides inserted here by JS -->
+                        </div>
+                        <div class="sb-gallery-nav" id="sbGalleryNav" style="display:none;">
+                            <button class="rp-carousel-btn" onclick="sbGalleryNav(-1)"><i class="fas fa-chevron-left"></i></button>
+                            <span class="rp-carousel-counter" id="sbGalleryCounter">1 / 1</span>
+                            <button class="rp-carousel-btn" onclick="sbGalleryNav(1)"><i class="fas fa-chevron-right"></i></button>
+                        </div>
                     </div>
                 </div>
 
@@ -370,12 +603,269 @@
 </script>
 </body>
 
+<!-- LIGHTBOX -->
+<div id="lightbox" class="rk-lightbox" onclick="if(event.target === this) closeLightbox()">
+    <div class="rk-lb-content">
+        <button class="rk-lb-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+        <img id="lightboxImg" class="rk-lb-img" src="" alt="Lightbox">
+    </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 <script>
     window.WEBGIS_URL = '{{ route("webgis.geojson") }}';
+    window.WEBGIS_RUANGAN_URL = '{{ route("webgis.geojson.ruangan") }}';
+    window.API_JADWAL_SEMESTER_URL = '{{ url('/api/gedung') }}';
 </script>
-<script src="{{ asset('js/public-peta.js') }}"></script>
+<script src="{{ asset('js/public-peta.js') }}?v={{ time() }}"></script>
+
+{{-- Bottom Sheet 3-State Gesture (mobile only)
+     Pattern Google Maps: peek (14vh) ↔ half (52vh) ↔ full (92vh)
+     - Tap drag handle: cycle state ke atas (peek → half → full → peek)
+     - Drag up: ke state lebih besar
+     - Drag down: ke state lebih kecil
+     - Drag down dari peek: close sidebar
+--}}
+<script>
+(function() {
+    'use strict';
+
+    var sidebar = document.getElementById('sidebar');
+    var dragArea = document.getElementById('sbDragArea');
+    if (!sidebar || !dragArea) return;
+
+    // States dalam urutan dari kecil ke besar
+    var STATES = ['peek', 'half', 'full'];
+    var DEFAULT_STATE = 'half';
+
+    function isMobile() {
+        return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    function getCurrentState() {
+        for (var i = 0; i < STATES.length; i++) {
+            if (sidebar.classList.contains(STATES[i])) return STATES[i];
+        }
+        return DEFAULT_STATE; // fallback
+    }
+
+    function setState(newState) {
+        STATES.forEach(function(s) { sidebar.classList.remove(s); });
+        sidebar.classList.remove('expanded'); // legacy class cleanup
+        sidebar.classList.add(newState);
+    }
+
+    // Tap drag handle: cycle state (peek → half → full → peek)
+    dragArea.addEventListener('click', function(e) {
+        if (!isMobile()) return;
+        var current = getCurrentState();
+        var idx = STATES.indexOf(current);
+        var next = STATES[(idx + 1) % STATES.length];
+        setState(next);
+    });
+
+    // Touch drag gesture
+    var touchStartY = 0;
+    var touchCurrentY = 0;
+    var isDragging = false;
+    var initialHeight = 0;
+
+    dragArea.addEventListener('touchstart', function(e) {
+        if (!isMobile()) return;
+        touchStartY = e.touches[0].clientY;
+        touchCurrentY = touchStartY;
+        isDragging = true;
+        initialHeight = sidebar.offsetHeight;
+        sidebar.style.transition = 'none';
+    }, { passive: true });
+
+    dragArea.addEventListener('touchmove', function(e) {
+        if (!isDragging || !isMobile()) return;
+        touchCurrentY = e.touches[0].clientY;
+        var deltaY = touchCurrentY - touchStartY;
+        // Live drag: ubah height inline (positive deltaY = drag down = shrink)
+        var newHeight = initialHeight - deltaY;
+        // Clamp ke 0–100vh
+        var minH = 0;
+        var maxH = window.innerHeight * 0.92;
+        newHeight = Math.max(minH, Math.min(maxH, newHeight));
+        sidebar.style.height = newHeight + 'px';
+    }, { passive: true });
+
+    dragArea.addEventListener('touchend', function(e) {
+        if (!isDragging || !isMobile()) return;
+        isDragging = false;
+        sidebar.style.transition = ''; // restore transisi
+        sidebar.style.height = ''; // clear inline, biar class CSS yg control
+
+        var deltaY = touchCurrentY - touchStartY;
+        var current = getCurrentState();
+        var idx = STATES.indexOf(current);
+
+        // Threshold: 60px untuk trigger state change
+        if (deltaY < -60) {
+            // Drag UP: state berikutnya yang lebih besar
+            if (idx < STATES.length - 1) {
+                setState(STATES[idx + 1]);
+            }
+        } else if (deltaY > 60) {
+            // Drag DOWN: state sebelumnya yang lebih kecil, atau close kalau sudah peek
+            if (idx > 0) {
+                setState(STATES[idx - 1]);
+            } else {
+                // Sudah di peek state, drag down = close
+                sidebar.classList.remove('show');
+                STATES.forEach(function(s) { sidebar.classList.remove(s); });
+            }
+        }
+        // Kalau delta < threshold, tetap di state sebelumnya (snap back via class)
+    });
+
+    // Klik X close: reset state ke default untuk next open
+    var sbClose = document.getElementById('sbClose');
+    if (sbClose) {
+        sbClose.addEventListener('click', function() {
+            STATES.forEach(function(s) { sidebar.classList.remove(s); });
+        });
+    }
+
+    // Saat sidebar baru open (via openSidebar), set ke default state (half)
+    // Observer untuk detect class 'show' added
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            if (m.attributeName === 'class' && isMobile()) {
+                if (sidebar.classList.contains('show')) {
+                    // Pastikan ada 1 state class
+                    var hasState = STATES.some(function(s) { return sidebar.classList.contains(s); });
+                    if (!hasState) {
+                        sidebar.classList.add(DEFAULT_STATE);
+                    }
+                }
+            }
+        });
+    });
+    observer.observe(sidebar, { attributes: true });
+
+    // ── Hide empty stat cards (FUNGSI/STATUS/LANTAI/TAHUN dengan value '-') ──
+    // Observer untuk detect content changes, lalu cek tiap .sb-stat
+    function hideEmptyStats() {
+        var stats = document.querySelectorAll('.sb-stat');
+        stats.forEach(function(stat) {
+            var valueEl = stat.querySelector('.sb-stat-v');
+            if (!valueEl) return;
+            var v = (valueEl.textContent || '').trim();
+            // Hide kalau empty, '-', '0', atau placeholder
+            if (v === '' || v === '-' || v === 'null') {
+                stat.classList.add('sb-stat-empty');
+            } else {
+                stat.classList.remove('sb-stat-empty');
+            }
+        });
+    }
+
+    // Listen for content updates di sb-content (after AJAX populated data)
+    var sbContent = document.getElementById('sbContent');
+    if (sbContent) {
+        var contentObserver = new MutationObserver(function() {
+            // Debounce sedikit supaya semua field ke-update dulu
+            setTimeout(hideEmptyStats, 50);
+        });
+        contentObserver.observe(sbContent, {
+            childList: true, subtree: true, characterData: true
+        });
+    }
+})();
+</script>
+
+@if(config('app.debug'))
+{{-- DEV SWITCHER toggle: hanya di-load saat APP_DEBUG=true --}}
+<script>
+(function () {
+    'use strict';
+    var btn = document.getElementById('btnDevSwitch');
+    var dropdown = document.getElementById('devSwitchDropdown');
+    if (!btn || !dropdown) return;
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('hide');
+    });
+
+    // Tap di luar dropdown untuk close
+    document.addEventListener('click', function (e) {
+        if (dropdown.classList.contains('hide')) return;
+        if (btn.contains(e.target) || dropdown.contains(e.target)) return;
+        dropdown.classList.add('hide');
+    });
+
+    // Escape key untuk close
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !dropdown.classList.contains('hide')) {
+            dropdown.classList.add('hide');
+        }
+    });
+
+    // Auto-close dropdown saat klik item login/logout (sebelum navigation ke server)
+    // dan tampilkan loading toast biar UX terasa responsive.
+    dropdown.querySelectorAll('.dev-dropdown-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+            dropdown.classList.add('hide');
+            if (typeof Swal !== 'undefined') {
+                var title = item.querySelector('.dev-item-title');
+                Swal.fire({
+                    title: title ? title.textContent.trim() + '...' : 'Memproses...',
+                    text: 'Mengalihkan halaman',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: function () { Swal.showLoading(); },
+                });
+            }
+        });
+    });
+})();
+</script>
+@endif
+
+@guest
+{{-- Need-login handler: tampil konfirmasi sebelum redirect ke /login. --}}
+{{-- Guard di @guest supaya tidak load script ini saat user sudah authenticated. --}}
+<script>
+(function () {
+    'use strict';
+    var loginUrl = @json(route('login'));
+    var msg = 'Anda harus login terlebih dahulu untuk mengakses fitur Pengajuan Ruangan.';
+
+    document.querySelectorAll('[data-need-login="1"]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            e.preventDefault();
+            // Pakai SweetAlert kalau tersedia (di public.blade.php sudah load),
+            // fallback ke confirm() native untuk halaman peta yg belum load Swal.
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Login Diperlukan',
+                    text: msg,
+                    showCancelButton: true,
+                    confirmButtonText: 'Login Sekarang',
+                    cancelButtonText: 'Nanti Saja',
+                    confirmButtonColor: '#3b82f6',
+                    cancelButtonColor: '#6b7280',
+                    reverseButtons: true,
+                }).then(function (r) {
+                    if (r.isConfirmed) window.location.href = loginUrl;
+                });
+            } else {
+                if (confirm(msg + '\n\nLogin sekarang?')) {
+                    window.location.href = loginUrl;
+                }
+            }
+        });
+    });
+})();
+</script>
+@endguest
 
 </body>
 </html>
