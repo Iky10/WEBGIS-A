@@ -122,7 +122,8 @@
             });
             labelGroup.addLayer(lbl);
         });
-
+            window.allData       = allData;
+            window.renderMarkers = renderMarkers;
         document.getElementById('fpCount').textContent = data.length;
         updateLabels();
     }
@@ -1554,26 +1555,32 @@
                 currentDist += segments[i];
                 if (i === segments.length - 1) pos = coords[coords.length - 1];
             }
-
-            animatingMarker.setLatLng(pos);
-
-            if (progress < 1) {
-                animationFrameId = requestAnimationFrame(step);
-            } else {
-                // Selesai, hapus marker dengan fade out
-                var el = animatingMarker.getElement();
-                if (el) el.style.opacity = '0';
-                setTimeout(function() {
-                    if (animatingMarker) {
-                        map.removeLayer(animatingMarker);
-                        animatingMarker = null;
-                    }
-                }, 500);
-            }
+            // --- TAMBAHKAN 4 BARIS PENGAMAN INI ---
+        if (!animatingMarker) {
+            cancelAnimationFrame(animationFrameId);
+            return; // Hentikan fungsi jika marker sudah null
         }
+        // --------------------------------------
 
-        animationFrameId = requestAnimationFrame(step);
+        animatingMarker.setLatLng(pos);
+
+        if (progress < 1) {
+            animationFrameId = requestAnimationFrame(step);
+        } else {
+            // Selesai, hapus marker dengan fade out
+            var el = animatingMarker.getElement();
+            if (el) el.style.opacity = '0';
+            setTimeout(function() {
+                if (animatingMarker) {
+                    map.removeLayer(animatingMarker);
+                    animatingMarker = null;
+                }
+            }, 500);
+        }
     }
+
+    animationFrameId = requestAnimationFrame(step);
+}
 
     window.selectRoute = function(index) {
         if (index < 0 || index >= routeLayers.length) return;
@@ -2199,4 +2206,7 @@
                 console.error('Gagal memuat data vegetasi:', err);
             });
     }
+
+    window._mapReady = true;  // ← TAMBAHKAN INI
+
 })();
