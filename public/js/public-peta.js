@@ -1231,7 +1231,6 @@
     var currentWaypoints = [];
     var currentCoordinates = { start: null, end: null };
     var userMarker = null; // Ini untuk marker Start (titik biru)
-    var routePoints = [];      // Untuk tracking klik user
     var routesData = [];         // Semua data route dari OSRM
     var routeLayers = [];        // Semua polyline layer yang digambar
     var routeLabels = [];        // Tooltip label pada rute (misal: +5 mnt)
@@ -1729,7 +1728,6 @@
         if (userMarker) map.removeLayer(userMarker);
         document.getElementById('btnResetRoute').style.display = 'none';
         currentCoordinates = { start: null, end: null };
-        routePoints = [];
         
         toast('Rute ditutup dan direset');
     };
@@ -1756,36 +1754,7 @@
 
     routingControl = createRoutingControl(routeProfile);
 
-    // KLIK 2 TITIK UNTUK RUTE
-    map.on('click', function (e) {
-        // Abaikan jika sedang klik marker atau UI
-        if (e.originalEvent.target.closest('.leaflet-marker-icon') || 
-            e.originalEvent.target.closest('#navPanel') ||
-            e.originalEvent.target.closest('#topbar')) return;
 
-        routePoints.push(e.latlng);
-
-        if (routePoints.length === 1) {
-            toast('Titik awal ditentukan. Pilih titik tujuan...');
-            // Tampilkan marker sementara
-            if (userMarker) map.removeLayer(userMarker);
-            userMarker = L.marker(e.latlng, { icon: startIcon }).addTo(map);
-        } 
-        else if (routePoints.length === 2) {
-            if (userMarker) map.removeLayer(userMarker);
-            
-            currentWaypoints = [
-                L.latLng(routePoints[0].lat, routePoints[0].lng),
-                L.latLng(routePoints[1].lat, routePoints[1].lng)
-            ];
-            
-            currentCoordinates.start = routePoints[0];
-            currentCoordinates.end = routePoints[1];
-
-            routingControl.setWaypoints(currentWaypoints);
-            routePoints = []; // Reset for next pair
-        }
-    });
 
     // Fungsi Rute ke Sini (dari Sidebar)
     window.setRoutingDest = function (lat, lng) {
@@ -1800,7 +1769,7 @@
                 routingControl.setWaypoints([start, end]);
                 toast('Menghitung rute dari lokasi Anda...');
             }, function() {
-                toast('Gagal akses lokasi. Klik 2 titik di peta untuk rute.');
+                toast('Gagal akses lokasi. Silakan pilih rute dari detail gedung.');
             });
         }
     };
