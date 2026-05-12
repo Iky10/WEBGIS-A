@@ -62,7 +62,7 @@ class ChatbotController extends Controller
 
         // ── Panggil Gemini API ─────────────────────────────────────────────
         $apiKey = env('GEMINI_API_KEY');
-        $url    = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
+        $url    = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={$apiKey}";
 
         try {
             $response = Http::withHeaders(['Content-Type' => 'application/json'])
